@@ -5,6 +5,11 @@ on:
     # Her gün TSİ 07:00 (UTC 04:00)
     - cron: "0 4 * * *"
   workflow_dispatch:
+    inputs:
+      pencere:
+        description: "Kaç gün içindeki ödemeler bildirilsin? (test için büyük gir, örn. 60)"
+        default: "3"
+        required: false
   push:
     paths:
       - "kartlar.json"
@@ -44,6 +49,8 @@ jobs:
 
       - name: Yaklaşan ödemeleri hesapla
         id: yaklasan
+        env:
+          PENCERE_GUN: ${{ github.event.inputs.pencere || '3' }}
         run: |
           DURUM=$(python3 bildirim.py)
           echo "durum=$DURUM" >> "$GITHUB_OUTPUT"
