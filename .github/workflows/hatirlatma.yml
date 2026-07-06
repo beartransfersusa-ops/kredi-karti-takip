@@ -63,3 +63,16 @@ jobs:
             gh issue create --title "$BASLIK" --body-file issue_govde.md
             echo "Yeni issue açıldı."
           fi
+
+      - name: Telegram bildirimi gönder
+        # Sadece yaklaşan ödeme varsa VE token/chat_id secret olarak tanımlıysa çalışır
+        if: steps.yaklasan.outputs.durum == 'VAR' && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@telegram_mesaj.txt" \
+            --data "disable_web_page_preview=true" \
+            -o /dev/null -w "Telegram gönderim durumu: %{http_code}\n"

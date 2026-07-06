@@ -53,6 +53,22 @@ Bu; `odemeler.json`, `odemeler.ics` dosyalarını üretir ve aşağıdaki tabloy
 1. Son ödeme tarihlerini yeniden hesaplar, dosyaları ve aşağıdaki tabloyu günceller.
 2. Önümüzdeki **3 gün** içinde ödemesi olan kart varsa **"⏰ Yaklaşan ödemeler"**
    başlıklı bir issue açar/günceller — telefonundaki GitHub uygulaması sana bildirim gönderir.
+3. Telegram kuruluysa (aşağıya bak) aynı özeti Telegram'dan da gönderir.
+
+## Telegram bildirimi (opsiyonel)
+
+Her sabah yaklaşan ödemeler Telegram'dan da gelebilir. Token repoya **yazılmaz**,
+GitHub Secret olarak saklanır. Kurulum:
+
+1. **Bot token'ı** al: Telegram'da [@BotFather](https://t.me/BotFather) → `/newbot`.
+2. **chat_id'yi** öğren: botunla bir mesajlaşma başlat, sonra tarayıcıdan
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` aç → `chat` → `id` değerini kopyala.
+3. Repoda **Settings → Secrets and variables → Actions → New repository secret** ile iki secret ekle:
+   - `TELEGRAM_BOT_TOKEN` = bot token'ın
+   - `TELEGRAM_CHAT_ID` = chat id'in
+4. Bitti. Secret'lar tanımlı değilse bu adım sessizce atlanır; sistem yine çalışır.
+
+> Not: Sunucu (Railway vb.) gerekmez — mesajı GitHub Actions gönderir.
 
 ## Takvime ekleme (.ics)
 

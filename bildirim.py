@@ -46,6 +46,20 @@ def main():
     with open(os.path.join(BASE, "issue_govde.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(govde))
 
+    # Telegram için düz metin mesajı (tablo yerine liste)
+    tg = ["⏰ Yaklaşan kredi kartı ödemeleri", ""]
+    for o in yaklasan:
+        d = dt.date.fromisoformat(o["son_odeme_tarihi"])
+        kalan = o["kalan_gun"]
+        kalan_str = "BUGÜN son gün!" if kalan == 0 else ("yarın" if kalan == 1 else f"{kalan} gün kaldı")
+        tg.append(f"💳 {o['kart']} ({o['banka']})")
+        tg.append(f"   Son ödeme: {tr_tarih(d)} — {kalan_str}")
+        if o.get("kaydirildi"):
+            tg.append(f"   ↪️ Tatil/hafta sonu nedeniyle bu güne kaydı")
+        tg.append("")
+    with open(os.path.join(BASE, "telegram_mesaj.txt"), "w", encoding="utf-8") as f:
+        f.write("\n".join(tg).strip() + "\n")
+
     print("VAR" if yaklasan else "YOK")
 
 
