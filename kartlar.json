@@ -1,19 +1,30 @@
 {
-  "_aciklama": "Kredi kartlarınız. Her kart için: 'ad' (kart adı), 'banka', 'kesim_gunu' (hesap kesim tarihi = ayın kaçı, 1-31), 'odeme_gun_farki' (kesimden kaç gün sonra son ödeme; boş bırakılırsa varsayilan_odeme_gun_farki kullanılır). Son ödeme günü hafta sonu/resmî tatile denk gelirse otomatik olarak bir sonraki iş gününe kaydırılır.",
+  "_aciklama": "Kredi kartları. İki mod var: (1) 'kesim_gunu' verirsen son ödeme = kesim + odeme_gun_farki. (2) 'son_odeme_gunu' verirsen son ödeme doğrudan ayın o günüdür (kesimi kayan Akbank Wings gibi kartlar için). Her iki modda da son ödeme günü hafta sonu/resmî tatile denk gelirse otomatik olarak sonraki iş gününe kaydırılır. 'odeme_gun_farki' boşsa varsayilan kullanılır. 'aciklama' notu tabloda/bildirimde görünür.",
   "varsayilan_odeme_gun_farki": 10,
   "kartlar": [
-    {
-      "id": "ornek-1",
-      "ad": "ÖRNEK KART 1",
-      "banka": "Banka Adı",
-      "kesim_gunu": 15,
-      "odeme_gun_farki": 10
-    },
-    {
-      "id": "ornek-2",
-      "ad": "ÖRNEK KART 2",
-      "banka": "Banka Adı",
-      "kesim_gunu": 26
-    }
+    { "id": "akbank-axess-platinum", "ad": "Axess Platinum", "banka": "Akbank", "kesim_gunu": 26, "odeme_gun_farki": 10 },
+
+    { "id": "akbank-wings-business", "ad": "Wings Business", "banka": "Akbank", "son_odeme_gunu": 1, "odeme_gun_farki": 5,
+      "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula." },
+
+    { "id": "enpara", "ad": "Enpara", "banka": "Enpara (QNB)", "kesim_gunu": 12, "odeme_gun_farki": 10 },
+
+    { "id": "garanti-bonus-diji", "ad": "Bonus Dijital", "banka": "Garanti BBVA", "kesim_gunu": 6, "odeme_gun_farki": 10 },
+
+    { "id": "garanti-bonus-business", "ad": "Bonus Business", "banka": "Garanti BBVA", "kesim_gunu": 7, "odeme_gun_farki": 5 },
+
+    { "id": "halkbank-paraf", "ad": "Paraf", "banka": "Halkbank", "kesim_gunu": 30, "odeme_gun_farki": 5 },
+
+    { "id": "denizbank-gold", "ad": "Gold", "banka": "DenizBank", "kesim_gunu": 7, "odeme_gun_farki": 10 },
+
+    { "id": "qnb-go", "ad": "GO", "banka": "QNB", "kesim_gunu": 3, "odeme_gun_farki": 10 },
+
+    { "id": "qnb-fix", "ad": "Fix", "banka": "QNB", "kesim_gunu": 2, "odeme_gun_farki": 10 },
+
+    { "id": "yapikredi-world", "ad": "World", "banka": "Yapı Kredi", "kesim_gunu": 22, "odeme_gun_farki": 10 },
+
+    { "id": "is-business", "ad": "Business", "banka": "İş Bankası", "kesim_gunu": 23, "odeme_gun_farki": 5 },
+
+    { "id": "isbank-troy", "ad": "Troy", "banka": "İş Bankası", "kesim_gunu": 8, "odeme_gun_farki": 10 }
   ]
 }

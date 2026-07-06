@@ -56,6 +56,8 @@ def main():
         tg.append(f"   Son ödeme: {tr_tarih(d)} — {kalan_str}")
         if o.get("kaydirildi"):
             tg.append(f"   ↪️ Tatil/hafta sonu nedeniyle bu güne kaydı")
+        if o.get("aciklama"):
+            tg.append(f"   ℹ️ {o['aciklama']}")
         tg.append("")
     with open(os.path.join(BASE, "telegram_mesaj.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(tg).strip() + "\n")

@@ -88,13 +88,22 @@ def odemeleri_hesapla(kartlar, tatiller):
     for kart in kartlar["kartlar"]:
         kart_id = kart.get("id") or kart["ad"].lower().replace(" ", "-")
         fark = kart.get("odeme_gun_farki", varsayilan_fark)
-        kesim_gunu = kart["kesim_gunu"]
+        # İki mod:
+        #  (a) kesim_gunu    -> son ödeme = kesim + fark  (çoğu banka)
+        #  (b) son_odeme_gunu -> son ödeme = ayın o günü   (kesimi kayan kartlar, örn. Akbank Wings)
+        son_odeme_gunu = kart.get("son_odeme_gunu")
+        kesim_gunu = kart.get("kesim_gunu")
+        aciklama = kart.get("aciklama", "")
 
         # İçinde bulunduğumuz aydan başlayarak ufuk kadar ay üret
         for i in range(UFUK_AY):
             yil, ay = ay_ekle(TODAY.year, TODAY.month, i)
-            kesim = ayin_gunu(yil, ay, kesim_gunu)
-            nominal = kesim + dt.timedelta(days=fark)
+            if son_odeme_gunu:
+                nominal = ayin_gunu(yil, ay, son_odeme_gunu)
+                kesim = nominal - dt.timedelta(days=fark)  # bilgi amaçlı yaklaşık kesim
+            else:
+                kesim = ayin_gunu(yil, ay, kesim_gunu)
+                nominal = kesim + dt.timedelta(days=fark)
             gercek = sonraki_is_gunu(nominal, tatiller)
             kaydi = gercek != nominal
 
@@ -111,6 +120,7 @@ def odemeleri_hesapla(kartlar, tatiller):
                 "son_odeme_tarihi": gercek.isoformat(),
                 "kaydirildi": kaydi,
                 "kaydirma_nedeni": _kaydirma_nedeni(nominal, gercek, tatiller) if kaydi else "",
+                "aciklama": aciklama,
                 "kalan_gun": (gercek - TODAY).days,
             })
 
@@ -206,7 +216,12 @@ def readme_tablo(odemeler):
         odeme = tr_tarih(dt.date.fromisoformat(o["son_odeme_tarihi"]))
         kalan = o["kalan_gun"]
         kalan_str = "🔴 Bugün" if kalan == 0 else ("🟠 Yarın" if kalan == 1 else f"{kalan} gün")
-        not_str = ("↪️ " + o["kaydirma_nedeni"]) if o["kaydirildi"] else "—"
+        notlar = []
+        if o["kaydirildi"]:
+            notlar.append("↪️ " + o["kaydirma_nedeni"])
+        if o.get("aciklama"):
+            notlar.append("ℹ️ " + o["aciklama"])
+        not_str = " · ".join(notlar) if notlar else "—"
         satir.append(f"| **{o['kart']}** | {o['banka']} | {kesim} | **{odeme}** | {kalan_str} | {not_str} |")
 
     return "\n".join(satir)
