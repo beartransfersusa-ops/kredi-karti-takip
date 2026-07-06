@@ -81,7 +81,8 @@ def tr_tarih(d):
 # --------------------------------------------------------------------------- #
 # Hesaplama
 # --------------------------------------------------------------------------- #
-def odemeleri_hesapla(kartlar, tatiller):
+def odemeleri_hesapla(kartlar, tatiller, bugun=None):
+    bugun = bugun or TODAY
     varsayilan_fark = kartlar.get("varsayilan_odeme_gun_farki", 10)
     sonuc = []
 
@@ -97,7 +98,7 @@ def odemeleri_hesapla(kartlar, tatiller):
 
         # İçinde bulunduğumuz aydan başlayarak ufuk kadar ay üret
         for i in range(UFUK_AY):
-            yil, ay = ay_ekle(TODAY.year, TODAY.month, i)
+            yil, ay = ay_ekle(bugun.year, bugun.month, i)
             if son_odeme_gunu:
                 nominal = ayin_gunu(yil, ay, son_odeme_gunu)
                 kesim = nominal - dt.timedelta(days=fark)  # bilgi amaçlı yaklaşık kesim
@@ -108,7 +109,7 @@ def odemeleri_hesapla(kartlar, tatiller):
             kaydi = gercek != nominal
 
             # Geçmişte kalan ödemeleri atla (bugün dahil ileri)
-            if gercek < TODAY:
+            if gercek < bugun:
                 continue
 
             sonuc.append({
@@ -121,7 +122,7 @@ def odemeleri_hesapla(kartlar, tatiller):
                 "kaydirildi": kaydi,
                 "kaydirma_nedeni": _kaydirma_nedeni(nominal, gercek, tatiller) if kaydi else "",
                 "aciklama": aciklama,
-                "kalan_gun": (gercek - TODAY).days,
+                "kalan_gun": (gercek - bugun).days,
             })
 
     sonuc.sort(key=lambda x: (x["son_odeme_tarihi"], x["kart"]))

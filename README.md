@@ -70,6 +70,23 @@ GitHub Secret olarak saklanır. Kurulum:
 
 > Not: Sunucu (Railway vb.) gerekmez — mesajı GitHub Actions gönderir.
 
+## Mobil web arayüzü (Railway)
+
+Telefondan açıp güncel durumu görebileceğin mobil uyumlu bir sayfa (`app.py`).
+Ödemeleri istek anında İstanbul saatiyle canlı hesaplar.
+
+**Railway'e deploy (tek seferlik, ~2 dk):**
+
+1. [railway.app](https://railway.app) → GitHub ile giriş yap.
+2. **New Project → Deploy from GitHub repo → `kredi-karti-takip`** seç.
+3. Railway `requirements.txt` + `Procfile`'ı otomatik tanır, kurar ve başlatır.
+4. Servise **Settings → Networking → Generate Domain** ile bir adres ver.
+5. Çıkan adresi telefonda aç; "Ana ekrana ekle" dersen uygulama gibi durur.
+
+Rotalar: `/` (mobil liste), `/odemeler.ics` (takvim), `/api/odemeler` (JSON).
+
+> Yerelde denemek için: `pip install -r requirements.txt && python3 app.py` → http://localhost:8000
+
 ## Takvime ekleme (.ics)
 
 `odemeler.ics` dosyasını indirip telefonunun/bilgisayarının takvimine içe aktarabilirsin;
