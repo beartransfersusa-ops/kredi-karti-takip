@@ -1,0 +1,19 @@
+{
+  "_aciklama": "Kredi kartlarınız. Her kart için: 'ad' (kart adı), 'banka', 'kesim_gunu' (hesap kesim tarihi = ayın kaçı, 1-31), 'odeme_gun_farki' (kesimden kaç gün sonra son ödeme; boş bırakılırsa varsayilan_odeme_gun_farki kullanılır). Son ödeme günü hafta sonu/resmî tatile denk gelirse otomatik olarak bir sonraki iş gününe kaydırılır.",
+  "varsayilan_odeme_gun_farki": 10,
+  "kartlar": [
+    {
+      "id": "ornek-1",
+      "ad": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_gunu": 15,
+      "odeme_gun_farki": 10
+    },
+    {
+      "id": "ornek-2",
+      "ad": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_gunu": 26
+    }
+  ]
+}

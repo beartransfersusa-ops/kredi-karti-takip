@@ -1,0 +1,313 @@
+{
+  "guncelleme": "2026-07-06",
+  "odemeler": [
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-07-15",
+      "nominal_son_odeme": "2026-07-25",
+      "son_odeme_tarihi": "2026-07-27",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "25 Temmuz: hafta sonu (Cumartesi); 26 Temmuz: hafta sonu (Pazar)",
+      "kalan_gun": 21
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-07-26",
+      "nominal_son_odeme": "2026-08-05",
+      "son_odeme_tarihi": "2026-08-05",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 30
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-08-15",
+      "nominal_son_odeme": "2026-08-25",
+      "son_odeme_tarihi": "2026-08-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 50
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-08-26",
+      "nominal_son_odeme": "2026-09-05",
+      "son_odeme_tarihi": "2026-09-07",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "5 Eylül: hafta sonu (Cumartesi); 6 Eylül: hafta sonu (Pazar)",
+      "kalan_gun": 63
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-09-15",
+      "nominal_son_odeme": "2026-09-25",
+      "son_odeme_tarihi": "2026-09-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 81
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-09-26",
+      "nominal_son_odeme": "2026-10-06",
+      "son_odeme_tarihi": "2026-10-06",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 92
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-10-15",
+      "nominal_son_odeme": "2026-10-25",
+      "son_odeme_tarihi": "2026-10-26",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "25 Ekim: hafta sonu (Pazar)",
+      "kalan_gun": 112
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-10-26",
+      "nominal_son_odeme": "2026-11-05",
+      "son_odeme_tarihi": "2026-11-05",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 122
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-11-15",
+      "nominal_son_odeme": "2026-11-25",
+      "son_odeme_tarihi": "2026-11-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 142
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-11-26",
+      "nominal_son_odeme": "2026-12-06",
+      "son_odeme_tarihi": "2026-12-07",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "6 Aralık: hafta sonu (Pazar)",
+      "kalan_gun": 154
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-12-15",
+      "nominal_son_odeme": "2026-12-25",
+      "son_odeme_tarihi": "2026-12-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 172
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2026-12-26",
+      "nominal_son_odeme": "2027-01-05",
+      "son_odeme_tarihi": "2027-01-05",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 183
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-01-15",
+      "nominal_son_odeme": "2027-01-25",
+      "son_odeme_tarihi": "2027-01-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 203
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-01-26",
+      "nominal_son_odeme": "2027-02-05",
+      "son_odeme_tarihi": "2027-02-05",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 214
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-02-15",
+      "nominal_son_odeme": "2027-02-25",
+      "son_odeme_tarihi": "2027-02-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 234
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-02-26",
+      "nominal_son_odeme": "2027-03-08",
+      "son_odeme_tarihi": "2027-03-08",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 245
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-03-15",
+      "nominal_son_odeme": "2027-03-25",
+      "son_odeme_tarihi": "2027-03-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 262
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-03-26",
+      "nominal_son_odeme": "2027-04-05",
+      "son_odeme_tarihi": "2027-04-05",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 273
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-04-15",
+      "nominal_son_odeme": "2027-04-25",
+      "son_odeme_tarihi": "2027-04-26",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "25 Nisan: hafta sonu (Pazar)",
+      "kalan_gun": 294
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-04-26",
+      "nominal_son_odeme": "2027-05-06",
+      "son_odeme_tarihi": "2027-05-06",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 304
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-05-15",
+      "nominal_son_odeme": "2027-05-25",
+      "son_odeme_tarihi": "2027-05-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 323
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-05-26",
+      "nominal_son_odeme": "2027-06-05",
+      "son_odeme_tarihi": "2027-06-07",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "5 Haziran: hafta sonu (Cumartesi); 6 Haziran: hafta sonu (Pazar)",
+      "kalan_gun": 336
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-06-15",
+      "nominal_son_odeme": "2027-06-25",
+      "son_odeme_tarihi": "2027-06-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 354
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-06-26",
+      "nominal_son_odeme": "2027-07-06",
+      "son_odeme_tarihi": "2027-07-06",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 365
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-07-15",
+      "nominal_son_odeme": "2027-07-25",
+      "son_odeme_tarihi": "2027-07-26",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "25 Temmuz: hafta sonu (Pazar)",
+      "kalan_gun": 385
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-07-26",
+      "nominal_son_odeme": "2027-08-05",
+      "son_odeme_tarihi": "2027-08-05",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 395
+    },
+    {
+      "kart_id": "ornek-1",
+      "kart": "ÖRNEK KART 1",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-08-15",
+      "nominal_son_odeme": "2027-08-25",
+      "son_odeme_tarihi": "2027-08-25",
+      "kaydirildi": false,
+      "kaydirma_nedeni": "",
+      "kalan_gun": 415
+    },
+    {
+      "kart_id": "ornek-2",
+      "kart": "ÖRNEK KART 2",
+      "banka": "Banka Adı",
+      "kesim_tarihi": "2027-08-26",
+      "nominal_son_odeme": "2027-09-05",
+      "son_odeme_tarihi": "2027-09-06",
+      "kaydirildi": true,
+      "kaydirma_nedeni": "5 Eylül: hafta sonu (Pazar)",
+      "kalan_gun": 427
+    }
+  ]
+}

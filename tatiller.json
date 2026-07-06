@@ -1,0 +1,33 @@
+{
+  "_aciklama": "Türkiye resmî tatilleri. Son ödeme günü bu tarihlerden birine veya hafta sonuna denk gelirse bir sonraki iş gününe kaydırılır. Dinî bayram tarihleri (Ramazan/Kurban) astronomik hesapla belirlenir ve Diyanet tarafından kesinleşir; 'tahmini: true' olanları resmî takvimle doğrulayın. Yeni yıllar için buraya satır ekleyin.",
+  "tatiller": [
+    { "tarih": "2026-01-01", "ad": "Yılbaşı" },
+    { "tarih": "2026-03-20", "ad": "Ramazan Bayramı 1. gün", "tahmini": true },
+    { "tarih": "2026-03-21", "ad": "Ramazan Bayramı 2. gün", "tahmini": true },
+    { "tarih": "2026-03-22", "ad": "Ramazan Bayramı 3. gün", "tahmini": true },
+    { "tarih": "2026-04-23", "ad": "Ulusal Egemenlik ve Çocuk Bayramı" },
+    { "tarih": "2026-05-01", "ad": "Emek ve Dayanışma Günü" },
+    { "tarih": "2026-05-19", "ad": "Atatürk'ü Anma, Gençlik ve Spor Bayramı" },
+    { "tarih": "2026-05-27", "ad": "Kurban Bayramı 1. gün", "tahmini": true },
+    { "tarih": "2026-05-28", "ad": "Kurban Bayramı 2. gün", "tahmini": true },
+    { "tarih": "2026-05-29", "ad": "Kurban Bayramı 3. gün", "tahmini": true },
+    { "tarih": "2026-05-30", "ad": "Kurban Bayramı 4. gün", "tahmini": true },
+    { "tarih": "2026-07-15", "ad": "Demokrasi ve Milli Birlik Günü" },
+    { "tarih": "2026-08-30", "ad": "Zafer Bayramı" },
+    { "tarih": "2026-10-29", "ad": "Cumhuriyet Bayramı" },
+
+    { "tarih": "2027-01-01", "ad": "Yılbaşı" },
+    { "tarih": "2027-03-10", "ad": "Ramazan Bayramı 1. gün", "tahmini": true },
+    { "tarih": "2027-03-11", "ad": "Ramazan Bayramı 2. gün", "tahmini": true },
+    { "tarih": "2027-03-12", "ad": "Ramazan Bayramı 3. gün", "tahmini": true },
+    { "tarih": "2027-04-23", "ad": "Ulusal Egemenlik ve Çocuk Bayramı" },
+    { "tarih": "2027-05-01", "ad": "Emek ve Dayanışma Günü" },
+    { "tarih": "2027-05-16", "ad": "Kurban Bayramı 1. gün", "tahmini": true },
+    { "tarih": "2027-05-17", "ad": "Kurban Bayramı 2. gün", "tahmini": true },
+    { "tarih": "2027-05-18", "ad": "Kurban Bayramı 3. gün", "tahmini": true },
+    { "tarih": "2027-05-19", "ad": "Atatürk'ü Anma, Gençlik ve Spor Bayramı / Kurban Bayramı 4. gün" },
+    { "tarih": "2027-07-15", "ad": "Demokrasi ve Milli Birlik Günü" },
+    { "tarih": "2027-08-30", "ad": "Zafer Bayramı" },
+    { "tarih": "2027-10-29", "ad": "Cumhuriyet Bayramı" }
+  ]
+}

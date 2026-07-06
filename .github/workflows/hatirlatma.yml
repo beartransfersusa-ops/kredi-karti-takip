@@ -1,0 +1,65 @@
+name: Ödeme hatırlatma
+
+on:
+  schedule:
+    # Her gün TSİ 07:00 (UTC 04:00)
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "kartlar.json"
+      - "tatiller.json"
+      - "takip.py"
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  hatirlat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ödemeleri hesapla ve dosyaları güncelle
+        run: python3 takip.py
+
+      - name: Değişiklikleri işle (commit & push)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add odemeler.json odemeler.ics README.md
+          if git diff --staged --quiet; then
+            echo "Değişiklik yok."
+          else
+            git commit -m "Ödeme tarihleri güncellendi [otomatik]"
+            git push
+          fi
+
+      - name: Yaklaşan ödemeleri hesapla
+        id: yaklasan
+        run: |
+          DURUM=$(python3 bildirim.py)
+          echo "durum=$DURUM" >> "$GITHUB_OUTPUT"
+
+      - name: Yaklaşan ödeme issue'sunu aç/güncelle
+        if: steps.yaklasan.outputs.durum == 'VAR'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASLIK="⏰ Yaklaşan ödemeler"
+          NUMARA=$(gh issue list --state open --search "$BASLIK in:title" --json number,title \
+                   --jq ".[] | select(.title==\"$BASLIK\") | .number" | head -n1)
+          if [ -n "$NUMARA" ]; then
+            gh issue edit "$NUMARA" --body-file issue_govde.md
+            echo "Issue #$NUMARA güncellendi."
+          else
+            gh issue create --title "$BASLIK" --body-file issue_govde.md
+            echo "Yeni issue açıldı."
+          fi
