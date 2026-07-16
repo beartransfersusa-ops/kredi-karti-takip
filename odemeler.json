@@ -1,5 +1,5 @@
 {
-  "guncelleme": "2026-07-15",
+  "guncelleme": "2026-07-16",
   "odemeler": [
     {
       "kart_id": "garanti-bonus-diji",
@@ -11,7 +11,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 1
+      "kalan_gun": 0
     },
     {
       "kart_id": "denizbank-gold",
@@ -23,7 +23,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 2
+      "kalan_gun": 1
     },
     {
       "kart_id": "isbank-troy",
@@ -35,7 +35,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "18 Temmuz: hafta sonu (Cumartesi); 19 Temmuz: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 5
+      "kalan_gun": 4
     },
     {
       "kart_id": "enpara",
@@ -47,7 +47,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 7
+      "kalan_gun": 6
     },
     {
       "kart_id": "is-business",
@@ -59,7 +59,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 13
+      "kalan_gun": 12
     },
     {
       "kart_id": "akbank-wings-business",
@@ -71,7 +71,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Ağustos: hafta sonu (Cumartesi); 2 Ağustos: hafta sonu (Pazar)",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 19
+      "kalan_gun": 18
     },
     {
       "kart_id": "yapikredi-world",
@@ -83,7 +83,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Ağustos: hafta sonu (Cumartesi); 2 Ağustos: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 19
+      "kalan_gun": 18
     },
     {
       "kart_id": "halkbank-paraf",
@@ -95,7 +95,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 20
+      "kalan_gun": 19
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -107,7 +107,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 21
+      "kalan_gun": 20
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -119,7 +119,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 28
+      "kalan_gun": 27
     },
     {
       "kart_id": "qnb-fix",
@@ -131,7 +131,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 28
+      "kalan_gun": 27
     },
     {
       "kart_id": "qnb-go",
@@ -143,7 +143,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 29
+      "kalan_gun": 28
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -155,7 +155,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "16 Ağustos: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 33
+      "kalan_gun": 32
     },
     {
       "kart_id": "denizbank-gold",
@@ -167,7 +167,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 33
+      "kalan_gun": 32
     },
     {
       "kart_id": "isbank-troy",
@@ -179,7 +179,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 34
+      "kalan_gun": 33
     },
     {
       "kart_id": "enpara",
@@ -191,7 +191,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "22 Ağustos: hafta sonu (Cumartesi); 23 Ağustos: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 40
+      "kalan_gun": 39
     },
     {
       "kart_id": "is-business",
@@ -203,7 +203,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 44
+      "kalan_gun": 43
     },
     {
       "kart_id": "akbank-wings-business",
@@ -215,7 +215,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 48
+      "kalan_gun": 47
     },
     {
       "kart_id": "yapikredi-world",
@@ -227,7 +227,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 48
+      "kalan_gun": 47
     },
     {
       "kart_id": "halkbank-paraf",
@@ -239,7 +239,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 51
+      "kalan_gun": 50
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -251,7 +251,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "5 Eylül: hafta sonu (Cumartesi); 6 Eylül: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 54
+      "kalan_gun": 53
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -263,7 +263,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 61
+      "kalan_gun": 60
     },
     {
       "kart_id": "qnb-fix",
@@ -275,7 +275,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 61
+      "kalan_gun": 60
     },
     {
       "kart_id": "qnb-go",
@@ -287,7 +287,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "13 Eylül: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 61
+      "kalan_gun": 60
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -299,7 +299,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 63
+      "kalan_gun": 62
     },
     {
       "kart_id": "denizbank-gold",
@@ -311,7 +311,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 64
+      "kalan_gun": 63
     },
     {
       "kart_id": "isbank-troy",
@@ -323,7 +323,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 65
+      "kalan_gun": 64
     },
     {
       "kart_id": "enpara",
@@ -335,7 +335,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 69
+      "kalan_gun": 68
     },
     {
       "kart_id": "is-business",
@@ -347,7 +347,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 75
+      "kalan_gun": 74
     },
     {
       "kart_id": "akbank-wings-business",
@@ -359,7 +359,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 78
+      "kalan_gun": 77
     },
     {
       "kart_id": "yapikredi-world",
@@ -371,7 +371,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 79
+      "kalan_gun": 78
     },
     {
       "kart_id": "halkbank-paraf",
@@ -383,7 +383,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 82
+      "kalan_gun": 81
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -395,7 +395,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 83
+      "kalan_gun": 82
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -407,7 +407,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 89
+      "kalan_gun": 88
     },
     {
       "kart_id": "qnb-fix",
@@ -419,7 +419,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 89
+      "kalan_gun": 88
     },
     {
       "kart_id": "qnb-go",
@@ -431,7 +431,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 90
+      "kalan_gun": 89
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -443,7 +443,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 93
+      "kalan_gun": 92
     },
     {
       "kart_id": "denizbank-gold",
@@ -455,7 +455,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "17 Ekim: hafta sonu (Cumartesi); 18 Ekim: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 96
+      "kalan_gun": 95
     },
     {
       "kart_id": "isbank-troy",
@@ -467,7 +467,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "18 Ekim: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 96
+      "kalan_gun": 95
     },
     {
       "kart_id": "enpara",
@@ -479,7 +479,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 99
+      "kalan_gun": 98
     },
     {
       "kart_id": "is-business",
@@ -491,7 +491,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 105
+      "kalan_gun": 104
     },
     {
       "kart_id": "akbank-wings-business",
@@ -503,7 +503,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Kasım: hafta sonu (Pazar)",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 110
+      "kalan_gun": 109
     },
     {
       "kart_id": "yapikredi-world",
@@ -515,7 +515,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Kasım: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 110
+      "kalan_gun": 109
     },
     {
       "kart_id": "halkbank-paraf",
@@ -527,7 +527,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 112
+      "kalan_gun": 111
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -539,7 +539,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 113
+      "kalan_gun": 112
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -551,7 +551,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 120
+      "kalan_gun": 119
     },
     {
       "kart_id": "qnb-fix",
@@ -563,7 +563,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 120
+      "kalan_gun": 119
     },
     {
       "kart_id": "qnb-go",
@@ -575,7 +575,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 121
+      "kalan_gun": 120
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -587,7 +587,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 124
+      "kalan_gun": 123
     },
     {
       "kart_id": "denizbank-gold",
@@ -599,7 +599,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 125
+      "kalan_gun": 124
     },
     {
       "kart_id": "isbank-troy",
@@ -611,7 +611,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 126
+      "kalan_gun": 125
     },
     {
       "kart_id": "enpara",
@@ -623,7 +623,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "22 Kasım: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 131
+      "kalan_gun": 130
     },
     {
       "kart_id": "is-business",
@@ -635,7 +635,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "28 Kasım: hafta sonu (Cumartesi); 29 Kasım: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 138
+      "kalan_gun": 137
     },
     {
       "kart_id": "akbank-wings-business",
@@ -647,7 +647,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 139
+      "kalan_gun": 138
     },
     {
       "kart_id": "yapikredi-world",
@@ -659,7 +659,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 140
+      "kalan_gun": 139
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -671,7 +671,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "6 Aralık: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 145
+      "kalan_gun": 144
     },
     {
       "kart_id": "halkbank-paraf",
@@ -683,7 +683,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "5 Aralık: hafta sonu (Cumartesi); 6 Aralık: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 145
+      "kalan_gun": 144
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -695,7 +695,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Aralık: hafta sonu (Cumartesi); 13 Aralık: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 152
+      "kalan_gun": 151
     },
     {
       "kart_id": "qnb-fix",
@@ -707,7 +707,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Aralık: hafta sonu (Cumartesi); 13 Aralık: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 152
+      "kalan_gun": 151
     },
     {
       "kart_id": "qnb-go",
@@ -719,7 +719,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "13 Aralık: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 152
+      "kalan_gun": 151
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -731,7 +731,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 154
+      "kalan_gun": 153
     },
     {
       "kart_id": "denizbank-gold",
@@ -743,7 +743,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 155
+      "kalan_gun": 154
     },
     {
       "kart_id": "isbank-troy",
@@ -755,7 +755,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 156
+      "kalan_gun": 155
     },
     {
       "kart_id": "enpara",
@@ -767,7 +767,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 160
+      "kalan_gun": 159
     },
     {
       "kart_id": "is-business",
@@ -779,7 +779,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 166
+      "kalan_gun": 165
     },
     {
       "kart_id": "halkbank-paraf",
@@ -791,7 +791,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 173
+      "kalan_gun": 172
     },
     {
       "kart_id": "akbank-wings-business",
@@ -803,7 +803,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Ocak: Yılbaşı; 2 Ocak: hafta sonu (Cumartesi); 3 Ocak: hafta sonu (Pazar)",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 173
+      "kalan_gun": 172
     },
     {
       "kart_id": "yapikredi-world",
@@ -815,7 +815,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Ocak: Yılbaşı; 2 Ocak: hafta sonu (Cumartesi); 3 Ocak: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 173
+      "kalan_gun": 172
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -827,7 +827,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 174
+      "kalan_gun": 173
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -839,7 +839,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 181
+      "kalan_gun": 180
     },
     {
       "kart_id": "qnb-fix",
@@ -851,7 +851,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 181
+      "kalan_gun": 180
     },
     {
       "kart_id": "qnb-go",
@@ -863,7 +863,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 182
+      "kalan_gun": 181
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -875,7 +875,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "16 Ocak: hafta sonu (Cumartesi); 17 Ocak: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 187
+      "kalan_gun": 186
     },
     {
       "kart_id": "denizbank-gold",
@@ -887,7 +887,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "17 Ocak: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 187
+      "kalan_gun": 186
     },
     {
       "kart_id": "isbank-troy",
@@ -899,7 +899,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 187
+      "kalan_gun": 186
     },
     {
       "kart_id": "enpara",
@@ -911,7 +911,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 191
+      "kalan_gun": 190
     },
     {
       "kart_id": "is-business",
@@ -923,7 +923,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 197
+      "kalan_gun": 196
     },
     {
       "kart_id": "akbank-wings-business",
@@ -935,7 +935,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 201
+      "kalan_gun": 200
     },
     {
       "kart_id": "yapikredi-world",
@@ -947,7 +947,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 201
+      "kalan_gun": 200
     },
     {
       "kart_id": "halkbank-paraf",
@@ -959,7 +959,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 204
+      "kalan_gun": 203
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -971,7 +971,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 205
+      "kalan_gun": 204
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -983,7 +983,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 212
+      "kalan_gun": 211
     },
     {
       "kart_id": "qnb-fix",
@@ -995,7 +995,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 212
+      "kalan_gun": 211
     },
     {
       "kart_id": "qnb-go",
@@ -1007,7 +1007,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "13 Şubat: hafta sonu (Cumartesi); 14 Şubat: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 215
+      "kalan_gun": 214
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1019,7 +1019,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 216
+      "kalan_gun": 215
     },
     {
       "kart_id": "denizbank-gold",
@@ -1031,7 +1031,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 217
+      "kalan_gun": 216
     },
     {
       "kart_id": "isbank-troy",
@@ -1043,7 +1043,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 218
+      "kalan_gun": 217
     },
     {
       "kart_id": "enpara",
@@ -1055,7 +1055,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 222
+      "kalan_gun": 221
     },
     {
       "kart_id": "is-business",
@@ -1067,7 +1067,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "28 Şubat: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 229
+      "kalan_gun": 228
     },
     {
       "kart_id": "akbank-wings-business",
@@ -1079,7 +1079,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 229
+      "kalan_gun": 228
     },
     {
       "kart_id": "yapikredi-world",
@@ -1091,7 +1091,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 232
+      "kalan_gun": 231
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1103,7 +1103,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 233
+      "kalan_gun": 232
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1115,7 +1115,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 236
+      "kalan_gun": 235
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -1127,7 +1127,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Mart: Ramazan Bayramı 3. gün; 13 Mart: hafta sonu (Cumartesi); 14 Mart: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 243
+      "kalan_gun": 242
     },
     {
       "kart_id": "qnb-fix",
@@ -1139,7 +1139,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Mart: Ramazan Bayramı 3. gün; 13 Mart: hafta sonu (Cumartesi); 14 Mart: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 243
+      "kalan_gun": 242
     },
     {
       "kart_id": "qnb-go",
@@ -1151,7 +1151,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "13 Mart: hafta sonu (Cumartesi); 14 Mart: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 243
+      "kalan_gun": 242
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1163,7 +1163,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 244
+      "kalan_gun": 243
     },
     {
       "kart_id": "denizbank-gold",
@@ -1175,7 +1175,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 245
+      "kalan_gun": 244
     },
     {
       "kart_id": "isbank-troy",
@@ -1187,7 +1187,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 246
+      "kalan_gun": 245
     },
     {
       "kart_id": "enpara",
@@ -1199,7 +1199,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 250
+      "kalan_gun": 249
     },
     {
       "kart_id": "is-business",
@@ -1211,7 +1211,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "28 Mart: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 257
+      "kalan_gun": 256
     },
     {
       "kart_id": "akbank-wings-business",
@@ -1223,7 +1223,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 260
+      "kalan_gun": 259
     },
     {
       "kart_id": "yapikredi-world",
@@ -1235,7 +1235,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 260
+      "kalan_gun": 259
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1247,7 +1247,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 264
+      "kalan_gun": 263
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1259,7 +1259,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "4 Nisan: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 264
+      "kalan_gun": 263
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -1271,7 +1271,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 271
+      "kalan_gun": 270
     },
     {
       "kart_id": "qnb-fix",
@@ -1283,7 +1283,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 271
+      "kalan_gun": 270
     },
     {
       "kart_id": "qnb-go",
@@ -1295,7 +1295,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 272
+      "kalan_gun": 271
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1307,7 +1307,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 275
+      "kalan_gun": 274
     },
     {
       "kart_id": "denizbank-gold",
@@ -1319,7 +1319,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "17 Nisan: hafta sonu (Cumartesi); 18 Nisan: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 278
+      "kalan_gun": 277
     },
     {
       "kart_id": "isbank-troy",
@@ -1331,7 +1331,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "18 Nisan: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 278
+      "kalan_gun": 277
     },
     {
       "kart_id": "enpara",
@@ -1343,7 +1343,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 281
+      "kalan_gun": 280
     },
     {
       "kart_id": "is-business",
@@ -1355,7 +1355,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 287
+      "kalan_gun": 286
     },
     {
       "kart_id": "akbank-wings-business",
@@ -1367,7 +1367,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Mayıs: Emek ve Dayanışma Günü; 2 Mayıs: hafta sonu (Pazar)",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 292
+      "kalan_gun": 291
     },
     {
       "kart_id": "yapikredi-world",
@@ -1379,7 +1379,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "2 Mayıs: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 292
+      "kalan_gun": 291
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1391,7 +1391,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 294
+      "kalan_gun": 293
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1403,7 +1403,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 295
+      "kalan_gun": 294
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -1415,7 +1415,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 301
+      "kalan_gun": 300
     },
     {
       "kart_id": "qnb-fix",
@@ -1427,7 +1427,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 301
+      "kalan_gun": 300
     },
     {
       "kart_id": "qnb-go",
@@ -1439,7 +1439,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 302
+      "kalan_gun": 301
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1451,7 +1451,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "16 Mayıs: Kurban Bayramı 1. gün; 17 Mayıs: Kurban Bayramı 2. gün; 18 Mayıs: Kurban Bayramı 3. gün; 19 Mayıs: Atatürk'ü Anma, Gençlik ve Spor Bayramı / Kurban Bayramı 4. gün",
       "aciklama": "",
-      "kalan_gun": 309
+      "kalan_gun": 308
     },
     {
       "kart_id": "denizbank-gold",
@@ -1463,7 +1463,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "17 Mayıs: Kurban Bayramı 2. gün; 18 Mayıs: Kurban Bayramı 3. gün; 19 Mayıs: Atatürk'ü Anma, Gençlik ve Spor Bayramı / Kurban Bayramı 4. gün",
       "aciklama": "",
-      "kalan_gun": 309
+      "kalan_gun": 308
     },
     {
       "kart_id": "isbank-troy",
@@ -1475,7 +1475,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "18 Mayıs: Kurban Bayramı 3. gün; 19 Mayıs: Atatürk'ü Anma, Gençlik ve Spor Bayramı / Kurban Bayramı 4. gün",
       "aciklama": "",
-      "kalan_gun": 309
+      "kalan_gun": 308
     },
     {
       "kart_id": "enpara",
@@ -1487,7 +1487,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "22 Mayıs: hafta sonu (Cumartesi); 23 Mayıs: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 313
+      "kalan_gun": 312
     },
     {
       "kart_id": "is-business",
@@ -1499,7 +1499,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 317
+      "kalan_gun": 316
     },
     {
       "kart_id": "akbank-wings-business",
@@ -1511,7 +1511,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 321
+      "kalan_gun": 320
     },
     {
       "kart_id": "yapikredi-world",
@@ -1523,7 +1523,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 321
+      "kalan_gun": 320
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1535,7 +1535,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 324
+      "kalan_gun": 323
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1547,7 +1547,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "5 Haziran: hafta sonu (Cumartesi); 6 Haziran: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 327
+      "kalan_gun": 326
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -1559,7 +1559,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Haziran: hafta sonu (Cumartesi); 13 Haziran: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 334
+      "kalan_gun": 333
     },
     {
       "kart_id": "qnb-fix",
@@ -1571,7 +1571,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "12 Haziran: hafta sonu (Cumartesi); 13 Haziran: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 334
+      "kalan_gun": 333
     },
     {
       "kart_id": "qnb-go",
@@ -1583,7 +1583,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "13 Haziran: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 334
+      "kalan_gun": 333
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1595,7 +1595,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 336
+      "kalan_gun": 335
     },
     {
       "kart_id": "denizbank-gold",
@@ -1607,7 +1607,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 337
+      "kalan_gun": 336
     },
     {
       "kart_id": "isbank-troy",
@@ -1619,7 +1619,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 338
+      "kalan_gun": 337
     },
     {
       "kart_id": "enpara",
@@ -1631,7 +1631,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 342
+      "kalan_gun": 341
     },
     {
       "kart_id": "is-business",
@@ -1643,7 +1643,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 348
+      "kalan_gun": 347
     },
     {
       "kart_id": "akbank-wings-business",
@@ -1655,7 +1655,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 351
+      "kalan_gun": 350
     },
     {
       "kart_id": "yapikredi-world",
@@ -1667,7 +1667,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 352
+      "kalan_gun": 351
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1679,7 +1679,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 355
+      "kalan_gun": 354
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1691,7 +1691,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 356
+      "kalan_gun": 355
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -1703,7 +1703,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 362
+      "kalan_gun": 361
     },
     {
       "kart_id": "qnb-fix",
@@ -1715,7 +1715,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 362
+      "kalan_gun": 361
     },
     {
       "kart_id": "qnb-go",
@@ -1727,7 +1727,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 363
+      "kalan_gun": 362
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1739,7 +1739,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 366
+      "kalan_gun": 365
     },
     {
       "kart_id": "denizbank-gold",
@@ -1751,7 +1751,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "17 Temmuz: hafta sonu (Cumartesi); 18 Temmuz: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 369
+      "kalan_gun": 368
     },
     {
       "kart_id": "isbank-troy",
@@ -1763,7 +1763,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "18 Temmuz: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 369
+      "kalan_gun": 368
     },
     {
       "kart_id": "enpara",
@@ -1775,7 +1775,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 372
+      "kalan_gun": 371
     },
     {
       "kart_id": "is-business",
@@ -1787,7 +1787,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 378
+      "kalan_gun": 377
     },
     {
       "kart_id": "akbank-wings-business",
@@ -1799,7 +1799,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Ağustos: hafta sonu (Pazar)",
       "aciklama": "Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula.",
-      "kalan_gun": 383
+      "kalan_gun": 382
     },
     {
       "kart_id": "yapikredi-world",
@@ -1811,7 +1811,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "1 Ağustos: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 383
+      "kalan_gun": 382
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1823,7 +1823,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 385
+      "kalan_gun": 384
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1835,7 +1835,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 386
+      "kalan_gun": 385
     },
     {
       "kart_id": "garanti-bonus-business",
@@ -1847,7 +1847,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 393
+      "kalan_gun": 392
     },
     {
       "kart_id": "qnb-fix",
@@ -1859,7 +1859,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 393
+      "kalan_gun": 392
     },
     {
       "kart_id": "qnb-go",
@@ -1871,7 +1871,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 394
+      "kalan_gun": 393
     },
     {
       "kart_id": "garanti-bonus-diji",
@@ -1883,7 +1883,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 397
+      "kalan_gun": 396
     },
     {
       "kart_id": "denizbank-gold",
@@ -1895,7 +1895,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 398
+      "kalan_gun": 397
     },
     {
       "kart_id": "isbank-troy",
@@ -1907,7 +1907,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 399
+      "kalan_gun": 398
     },
     {
       "kart_id": "enpara",
@@ -1919,7 +1919,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "22 Ağustos: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 404
+      "kalan_gun": 403
     },
     {
       "kart_id": "is-business",
@@ -1931,7 +1931,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "28 Ağustos: hafta sonu (Cumartesi); 29 Ağustos: hafta sonu (Pazar); 30 Ağustos: Zafer Bayramı",
       "aciklama": "",
-      "kalan_gun": 412
+      "kalan_gun": 411
     },
     {
       "kart_id": "yapikredi-world",
@@ -1943,7 +1943,7 @@
       "kaydirildi": false,
       "kaydirma_nedeni": "",
       "aciklama": "",
-      "kalan_gun": 413
+      "kalan_gun": 412
     },
     {
       "kart_id": "akbank-axess-platinum",
@@ -1955,7 +1955,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "5 Eylül: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 418
+      "kalan_gun": 417
     },
     {
       "kart_id": "halkbank-paraf",
@@ -1967,7 +1967,7 @@
       "kaydirildi": true,
       "kaydirma_nedeni": "4 Eylül: hafta sonu (Cumartesi); 5 Eylül: hafta sonu (Pazar)",
       "aciklama": "",
-      "kalan_gun": 418
+      "kalan_gun": 417
     }
   ]
 }
