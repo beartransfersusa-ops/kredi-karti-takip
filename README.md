@@ -99,37 +99,37 @@ her ödeme, 2 gün önce ve ödeme günü sabahı hatırlatmayla takvimine düş
 ## Yaklaşan Ödemeler
 
 <!-- ODEMELER:BASLANGIC -->
-_Son güncelleme: 25 Ağustos 2026 Salı_
+_Son güncelleme: 26 Ağustos 2026 Çarşamba_
 
 | Kart | Banka | Kesim tarihi | Son ödeme tarihi | Kalan | Not |
 |------|-------|--------------|------------------|:-----:|-----|
-| **Business** | İş Bankası | 23 Ağustos 2026 Pazar | **28 Ağustos 2026 Cuma** | 3 gün | — |
-| **Wings Business** | Akbank | 27 Ağustos 2026 Perşembe | **1 Eylül 2026 Salı** | 7 gün | ℹ️ Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula. |
-| **World** | Yapı Kredi | 22 Ağustos 2026 Cumartesi | **1 Eylül 2026 Salı** | 7 gün | — |
-| **Paraf** | Halkbank | 30 Ağustos 2026 Pazar | **4 Eylül 2026 Cuma** | 10 gün | — |
-| **Axess Platinum** | Akbank | 26 Ağustos 2026 Çarşamba | **7 Eylül 2026 Pazartesi** | 13 gün | ↪️ 5 Eylül: hafta sonu (Cumartesi); 6 Eylül: hafta sonu (Pazar) |
-| **Bonus Business** | Garanti BBVA | 7 Eylül 2026 Pazartesi | **14 Eylül 2026 Pazartesi** | 20 gün | ↪️ 12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar) |
-| **Fix** | QNB | 2 Eylül 2026 Çarşamba | **14 Eylül 2026 Pazartesi** | 20 gün | ↪️ 12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar) |
-| **GO** | QNB | 3 Eylül 2026 Perşembe | **14 Eylül 2026 Pazartesi** | 20 gün | ↪️ 13 Eylül: hafta sonu (Pazar) |
-| **Bonus Dijital** | Garanti BBVA | 6 Eylül 2026 Pazar | **16 Eylül 2026 Çarşamba** | 22 gün | — |
-| **Gold** | DenizBank | 7 Eylül 2026 Pazartesi | **17 Eylül 2026 Perşembe** | 23 gün | — |
-| **Troy** | İş Bankası | 8 Eylül 2026 Salı | **18 Eylül 2026 Cuma** | 24 gün | — |
-| **Enpara** | Enpara (QNB) | 12 Eylül 2026 Cumartesi | **22 Eylül 2026 Salı** | 28 gün | — |
-| **Business** | İş Bankası | 23 Eylül 2026 Çarşamba | **28 Eylül 2026 Pazartesi** | 34 gün | — |
-| **Wings Business** | Akbank | 26 Eylül 2026 Cumartesi | **1 Ekim 2026 Perşembe** | 37 gün | ℹ️ Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula. |
-| **World** | Yapı Kredi | 22 Eylül 2026 Salı | **2 Ekim 2026 Cuma** | 38 gün | — |
-| **Paraf** | Halkbank | 30 Eylül 2026 Çarşamba | **5 Ekim 2026 Pazartesi** | 41 gün | — |
-| **Axess Platinum** | Akbank | 26 Eylül 2026 Cumartesi | **6 Ekim 2026 Salı** | 42 gün | — |
-| **Bonus Business** | Garanti BBVA | 7 Ekim 2026 Çarşamba | **12 Ekim 2026 Pazartesi** | 48 gün | — |
-| **Fix** | QNB | 2 Ekim 2026 Cuma | **12 Ekim 2026 Pazartesi** | 48 gün | — |
-| **GO** | QNB | 3 Ekim 2026 Cumartesi | **13 Ekim 2026 Salı** | 49 gün | — |
-| **Bonus Dijital** | Garanti BBVA | 6 Ekim 2026 Salı | **16 Ekim 2026 Cuma** | 52 gün | — |
-| **Gold** | DenizBank | 7 Ekim 2026 Çarşamba | **19 Ekim 2026 Pazartesi** | 55 gün | ↪️ 17 Ekim: hafta sonu (Cumartesi); 18 Ekim: hafta sonu (Pazar) |
-| **Troy** | İş Bankası | 8 Ekim 2026 Perşembe | **19 Ekim 2026 Pazartesi** | 55 gün | ↪️ 18 Ekim: hafta sonu (Pazar) |
-| **Enpara** | Enpara (QNB) | 12 Ekim 2026 Pazartesi | **22 Ekim 2026 Perşembe** | 58 gün | — |
-| **Business** | İş Bankası | 23 Ekim 2026 Cuma | **28 Ekim 2026 Çarşamba** | 64 gün | — |
-| **Wings Business** | Akbank | 27 Ekim 2026 Salı | **2 Kasım 2026 Pazartesi** | 69 gün | ↪️ 1 Kasım: hafta sonu (Pazar) · ℹ️ Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula. |
-| **World** | Yapı Kredi | 22 Ekim 2026 Perşembe | **2 Kasım 2026 Pazartesi** | 69 gün | ↪️ 1 Kasım: hafta sonu (Pazar) |
-| **Paraf** | Halkbank | 30 Ekim 2026 Cuma | **4 Kasım 2026 Çarşamba** | 71 gün | — |
-| **Axess Platinum** | Akbank | 26 Ekim 2026 Pazartesi | **5 Kasım 2026 Perşembe** | 72 gün | — |
+| **Business** | İş Bankası | 23 Ağustos 2026 Pazar | **28 Ağustos 2026 Cuma** | 2 gün | — |
+| **Wings Business** | Akbank | 27 Ağustos 2026 Perşembe | **1 Eylül 2026 Salı** | 6 gün | ℹ️ Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula. |
+| **World** | Yapı Kredi | 22 Ağustos 2026 Cumartesi | **1 Eylül 2026 Salı** | 6 gün | — |
+| **Paraf** | Halkbank | 30 Ağustos 2026 Pazar | **4 Eylül 2026 Cuma** | 9 gün | — |
+| **Axess Platinum** | Akbank | 26 Ağustos 2026 Çarşamba | **7 Eylül 2026 Pazartesi** | 12 gün | ↪️ 5 Eylül: hafta sonu (Cumartesi); 6 Eylül: hafta sonu (Pazar) |
+| **Bonus Business** | Garanti BBVA | 7 Eylül 2026 Pazartesi | **14 Eylül 2026 Pazartesi** | 19 gün | ↪️ 12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar) |
+| **Fix** | QNB | 2 Eylül 2026 Çarşamba | **14 Eylül 2026 Pazartesi** | 19 gün | ↪️ 12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar) |
+| **GO** | QNB | 3 Eylül 2026 Perşembe | **14 Eylül 2026 Pazartesi** | 19 gün | ↪️ 13 Eylül: hafta sonu (Pazar) |
+| **Bonus Dijital** | Garanti BBVA | 6 Eylül 2026 Pazar | **16 Eylül 2026 Çarşamba** | 21 gün | — |
+| **Gold** | DenizBank | 7 Eylül 2026 Pazartesi | **17 Eylül 2026 Perşembe** | 22 gün | — |
+| **Troy** | İş Bankası | 8 Eylül 2026 Salı | **18 Eylül 2026 Cuma** | 23 gün | — |
+| **Enpara** | Enpara (QNB) | 12 Eylül 2026 Cumartesi | **22 Eylül 2026 Salı** | 27 gün | — |
+| **Business** | İş Bankası | 23 Eylül 2026 Çarşamba | **28 Eylül 2026 Pazartesi** | 33 gün | — |
+| **Wings Business** | Akbank | 26 Eylül 2026 Cumartesi | **1 Ekim 2026 Perşembe** | 36 gün | ℹ️ Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula. |
+| **World** | Yapı Kredi | 22 Eylül 2026 Salı | **2 Ekim 2026 Cuma** | 37 gün | — |
+| **Paraf** | Halkbank | 30 Eylül 2026 Çarşamba | **5 Ekim 2026 Pazartesi** | 40 gün | — |
+| **Axess Platinum** | Akbank | 26 Eylül 2026 Cumartesi | **6 Ekim 2026 Salı** | 41 gün | — |
+| **Bonus Business** | Garanti BBVA | 7 Ekim 2026 Çarşamba | **12 Ekim 2026 Pazartesi** | 47 gün | — |
+| **Fix** | QNB | 2 Ekim 2026 Cuma | **12 Ekim 2026 Pazartesi** | 47 gün | — |
+| **GO** | QNB | 3 Ekim 2026 Cumartesi | **13 Ekim 2026 Salı** | 48 gün | — |
+| **Bonus Dijital** | Garanti BBVA | 6 Ekim 2026 Salı | **16 Ekim 2026 Cuma** | 51 gün | — |
+| **Gold** | DenizBank | 7 Ekim 2026 Çarşamba | **19 Ekim 2026 Pazartesi** | 54 gün | ↪️ 17 Ekim: hafta sonu (Cumartesi); 18 Ekim: hafta sonu (Pazar) |
+| **Troy** | İş Bankası | 8 Ekim 2026 Perşembe | **19 Ekim 2026 Pazartesi** | 54 gün | ↪️ 18 Ekim: hafta sonu (Pazar) |
+| **Enpara** | Enpara (QNB) | 12 Ekim 2026 Pazartesi | **22 Ekim 2026 Perşembe** | 57 gün | — |
+| **Business** | İş Bankası | 23 Ekim 2026 Cuma | **28 Ekim 2026 Çarşamba** | 63 gün | — |
+| **Wings Business** | Akbank | 27 Ekim 2026 Salı | **2 Kasım 2026 Pazartesi** | 68 gün | ↪️ 1 Kasım: hafta sonu (Pazar) · ℹ️ Akbank kesim tarihini kaydırıyor; son ödeme ayın 1'i baz alınır (hafta sonu/tatilde sonraki iş günü). Ara sıra uygulamadan doğrula. |
+| **World** | Yapı Kredi | 22 Ekim 2026 Perşembe | **2 Kasım 2026 Pazartesi** | 68 gün | ↪️ 1 Kasım: hafta sonu (Pazar) |
+| **Paraf** | Halkbank | 30 Ekim 2026 Cuma | **4 Kasım 2026 Çarşamba** | 70 gün | — |
+| **Axess Platinum** | Akbank | 26 Ekim 2026 Pazartesi | **5 Kasım 2026 Perşembe** | 71 gün | — |
 <!-- ODEMELER:BITIS -->
