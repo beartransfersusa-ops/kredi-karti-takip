@@ -472,6 +472,43 @@ Bir tam rotasyon (5 antrenman) sonunda kas başına **direkt working set** sayı
 
 **Alternatif ilişkileri** (`exercise_relations`, öncelik sırasıyla): `cable-lateral-raise` → `machine-lateral-raise`, `dumbbell-lateral-raise` · `lat-pulldown` → `assisted-pullup`, `plate-loaded-pulldown` · `hack-squat` → `leg-press`, `smith-squat` · `machine-preacher-curl` → `ez-bar-curl`, `bayesian-cable-curl` · `chest-supported-row` → `seated-cable-row` · `overhead-cable-triceps-extension` → `dip-machine`, `rope-pushdown` · `seated-leg-curl` → `lying-leg-curl` · `machine-chest-press` → `incline-smith-press`, `pec-deck`.
 
+**Teknik ipuçları (`cues`)** — video yüklenemediğinde gösterilen çekirdek içerik (§32.2, §114.4 Bölüm II):
+
+| `id` | İpuçları |
+|------|----------|
+| `incline-smith-press` | Bank 30°, kürek kemikleri sıkışık ve sabit · Bar göğsün üst kısmına inecek · Dirsekler gövdeyle ~45° açı · Altta 1 sn kontrollü duraklama |
+| `machine-chest-press` | Oturak yüksekliği tutamaklar göğüs hizasında olacak şekilde · Sırt desteğe yapışık · Sonda dirsekleri kilitleme · Kontrollü geri dönüş |
+| `pec-deck` | Dirsek açısı sabit kalır, kol açılıp kapanmaz · Gerilmiş pozisyonda 1 sn bekle · Göğüsle sıkıştır, kollarla itme |
+| `cable-lateral-raise` | Makara en alt konumda, kol gövdenin önünden başlar · Kolu omuz hizasına kadar kaldır, daha yukarı çıkma · Bilek nötr, serçe parmak hafif yukarıda · İnişi 2 sn kontrol et |
+| `machine-lateral-raise` | Ped kolun üst kısmına gelsin, dirseğe değil · Omuz yukarı kaçmadan sadece kolu kaldır · Tepe noktada kısa duraklama |
+| `single-arm-cable-lateral-raise` | Boştaki elle sabit bir noktadan destek al · Gövdeyi sallandırma · Her iki tarafta aynı tutuş ve mesafe |
+| `dumbbell-lateral-raise` | Hafif öne eğil, dirsekler hafif bükülü · Ağırlığı savurmadan kaldır · Zirvede omuzları kulağa çekme |
+| `overhead-cable-triceps-extension` | Dirsekler baş hizasında sabit, dışa açılmasın · Kolu tam gerdirmeden önce uzamış pozisyonu hisset · Gövdeyi öne eğerek sabitle |
+| `rope-pushdown` | Dirsekler gövdeye yapışık · Sonda ipi hafifçe dışa aç · Omuz öne düşmesin |
+| `cross-body-cable-extension` | Kolu gövdenin çaprazına doğru uzat · Dirsek sabit, yalnızca ön kol hareket eder · Zirvede 1 sn sık |
+| `dip-machine` | Sırt desteğe yapışık, omuzlar aşağıda · Dirsekleri gövdeye yakın tut · Tam kilitleme yapma |
+| `lat-pulldown` | Omuz genişliğinin biraz dışında tutuş · Önce omuzları aşağı indir, sonra çek · Barı köprücük kemiğine getir, boyna değil · Yukarıda lat gerilmesini hisset |
+| `plate-loaded-pulldown` | Nötr tutuş, göğüs yukarı · Dirsekleri cebe doğru çek · Üst pozisyonda kontrollü uzama |
+| `assisted-pullup` | Yardım ağırlığını azaltmak ilerlemedir · Tam asılı pozisyondan başla · Çeneyi bara zorlamadan göğsü yukarı taşı |
+| `pullup` | Kürek kemiklerini önce aşağı-geri kilitle · Sallanma ve tekme yok · İnişi 2 sn kontrol et |
+| `chest-supported-row` | Göğüs pede yapışık, gövde sabit · Dirsekleri geriye ve aşağıya çek · Zirvede kürekleri sık, gövdeyi kaldırma |
+| `seated-cable-row` | Diz hafif bükülü, bel nötr · Gövdeyi geriye yatırma · Çekişte omuzları geriye ve aşağıya |
+| `reverse-pec-deck` | Kolları omuz hizasında yatay tut · Dirsek açısı sabit · Trapezi kasmadan arka omuzla aç |
+| `incline-dumbbell-curl` | Bank 45–60°, kollar gövdenin gerisinde serbest · Alt pozisyonda tam uzama, bu hareketin amacı budur · Dirseği öne getirme |
+| `cable-hammer-curl` | Nötr tutuş, bilek sabit · Dirsek gövde yanında kalır · İnişi kontrol et |
+| `machine-preacher-curl` | Koltuk altı pede tam otursun · Alt pozisyonda dirseği tamamen açma, gerilimi koru · Zirvede 1 sn sık |
+| `bayesian-cable-curl` | Kablo arkadan gelir, kol gövdenin gerisinde · Uzamış pozisyonda gerilim maksimum · Gövdeyi sabit tut |
+| `ez-bar-curl` | Bilek nötr, EZ barın açılı yerinden tut · Dirsekler sabit, gövde sallanmaz · İnişi 2 sn |
+| `hack-squat` | Ayaklar platformun ortasında, omuz genişliğinde · Topuklar yerde, diz ayak ucu yönünde · Kalçayı pedden ayırmadan in · Dizleri sonda kilitleme |
+| `leg-press` | Ayaklar platformda orta-yüksek · Bel destekten kalkmadan in · Diz ~90° veya rahat olduğun kadar · Sonda kilitleme yok |
+| `smith-squat` | Ayaklar bardan biraz önde · Gövde dik, bel nötr · Kontrollü in, dipte duraklama yok |
+| `leg-extension` | Diz eklemi makinenin dönüş ekseniyle hizalı · Sonda 1 sn sık · İnişi kontrol et, ağırlığı bırakma |
+| `seated-leg-curl` | Kalça sabit, gövde dik · Uzamış pozisyonda hamstring gerilmesini hisset · Kalçayı kaldırma |
+| `lying-leg-curl` | Kalça pede yapışık · Topuğu kalçaya doğru çek · İnişi kontrol et |
+| `romanian-deadlift` | Bel nötr, kürekler sıkışık · Kalçayı geriye it, diz hafif bükülü sabit · Bar bacağa yakın seyreder · Hamstring gerilmesi bitince dur, yere kadar inme |
+| `standing-calf-raise` | Ayak ön kısmı basamakta, topuk boşta · Altta tam uzama, üstte 1 sn sıkma · Diz sabit |
+| `cable-crunch` | Kalça sabit, hareket yalnızca omurgadan · Gövdeyi kıvırarak in, kalçadan bükme · Nefesi vererek sık |
+
 | ID | Gereksinim |
 |----|-----------|
 | R35.1 | Katalog **küratörlüdür**: her hareketin tüm alanları elle doldurulur, otomatik veya tahmini üretilmez. |

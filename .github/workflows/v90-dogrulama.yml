@@ -1,0 +1,34 @@
+name: V90 doğrulama
+
+on:
+  push:
+    paths: ['docs/v90/**', 'v90/**', '.github/workflows/v90-dogrulama.yml']
+  pull_request:
+    paths: ['docs/v90/**', 'v90/**']
+  workflow_dispatch:
+
+jobs:
+  dogrula:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Belge ile üretilmiş dosyalar arasında kayma var mı?
+      # (Belge güncellenip `npm run gen` çalıştırılmadıysa burada durur.)
+      - name: Kayma denetimi
+        working-directory: v90
+        run: npm run verify:drift
+
+      # Seed: enum uyumu, referans bütünlüğü, §27/§106 hacim pariteleri,
+      # başlangıç profili ve gerçek SQLite şemasına yüklenebilirlik.
+      - name: Seed doğrulaması
+        working-directory: v90
+        run: npm run verify:seed

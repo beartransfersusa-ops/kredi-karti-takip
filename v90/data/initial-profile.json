@@ -1,0 +1,18 @@
+{
+  "profile": {
+    "heightCm": 187.0
+  },
+  "weightKg": 107.0,
+  "measurementsCm": {
+    "waist": 95.0,
+    "abdomen": 114.0,
+    "shoulder": 137.0,
+    "hip": 119.0,
+    "chest": 110.0,
+    "forearm": 37.0
+  },
+  "unknown": [
+    "bicepsFlexed"
+  ],
+  "note": "Bükülü üst kol BİLİNMİYOR — onboarding'de istenir (§11.2, R96.1)."
+}

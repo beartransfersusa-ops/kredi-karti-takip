@@ -1,0 +1,101 @@
+{
+  "seedVersion": 1,
+  "targets": [
+    {
+      "muscle": "lateralDelts",
+      "baselineWeeklyDirectSets": 12,
+      "maxRecommendedWeeklySets": 20,
+      "isPriority": true
+    },
+    {
+      "muscle": "biceps",
+      "baselineWeeklyDirectSets": 13,
+      "maxRecommendedWeeklySets": 20,
+      "isPriority": true
+    },
+    {
+      "muscle": "triceps",
+      "baselineWeeklyDirectSets": 13,
+      "maxRecommendedWeeklySets": 20,
+      "isPriority": true
+    },
+    {
+      "muscle": "lats",
+      "baselineWeeklyDirectSets": 9,
+      "maxRecommendedWeeklySets": 16,
+      "isPriority": true
+    },
+    {
+      "muscle": "upperBack",
+      "baselineWeeklyDirectSets": 6,
+      "maxRecommendedWeeklySets": 12,
+      "isPriority": false
+    },
+    {
+      "muscle": "chest",
+      "baselineWeeklyDirectSets": 10,
+      "maxRecommendedWeeklySets": 16,
+      "isPriority": false
+    },
+    {
+      "muscle": "hamstrings",
+      "baselineWeeklyDirectSets": 8,
+      "maxRecommendedWeeklySets": 12,
+      "isPriority": false
+    },
+    {
+      "muscle": "quads",
+      "baselineWeeklyDirectSets": 7,
+      "maxRecommendedWeeklySets": 12,
+      "isPriority": false
+    },
+    {
+      "muscle": "rearDelts",
+      "baselineWeeklyDirectSets": 3,
+      "maxRecommendedWeeklySets": 9,
+      "isPriority": false
+    },
+    {
+      "muscle": "calves",
+      "baselineWeeklyDirectSets": 3,
+      "maxRecommendedWeeklySets": 9,
+      "isPriority": false
+    },
+    {
+      "muscle": "abs",
+      "baselineWeeklyDirectSets": 3,
+      "maxRecommendedWeeklySets": 9,
+      "isPriority": false
+    },
+    {
+      "muscle": "glutes",
+      "baselineWeeklyDirectSets": 0,
+      "maxRecommendedWeeklySets": 6,
+      "isPriority": false
+    },
+    {
+      "muscle": "forearms",
+      "baselineWeeklyDirectSets": 0,
+      "maxRecommendedWeeklySets": 6,
+      "isPriority": false
+    },
+    {
+      "muscle": "frontDelts",
+      "baselineWeeklyDirectSets": 0,
+      "maxRecommendedWeeklySets": 6,
+      "isPriority": false
+    },
+    {
+      "muscle": "lowerBack",
+      "baselineWeeklyDirectSets": 0,
+      "maxRecommendedWeeklySets": 6,
+      "isPriority": false
+    },
+    {
+      "muscle": "neck",
+      "baselineWeeklyDirectSets": 0,
+      "maxRecommendedWeeklySets": 4,
+      "isPriority": false
+    }
+  ]
+}

@@ -1,0 +1,359 @@
+{
+  "id": "v90",
+  "name": "V90",
+  "version": 1,
+  "isCyclic": true,
+  "durationDays": 90,
+  "workoutTemplates": [
+    {
+      "id": "v90-d1-push",
+      "sequenceOrder": 0,
+      "name": "Day 1 – Push",
+      "nameTr": "Gün 1 – İtiş",
+      "estimatedMinutes": 60,
+      "declaredWorkingSets": 17,
+      "exercises": [
+        {
+          "orderIndex": 0,
+          "exerciseId": "incline-smith-press",
+          "workingSets": 3,
+          "warmupSets": 2,
+          "repMin": 8,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 150
+        },
+        {
+          "orderIndex": 1,
+          "exerciseId": "machine-chest-press",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        },
+        {
+          "orderIndex": 2,
+          "exerciseId": "pec-deck",
+          "workingSets": 2,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 3,
+          "exerciseId": "cable-lateral-raise",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 4,
+          "exerciseId": "overhead-cable-triceps-extension",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 14,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 5,
+          "exerciseId": "rope-pushdown",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 75
+        }
+      ]
+    },
+    {
+      "id": "v90-d2-pull",
+      "sequenceOrder": 1,
+      "name": "Day 2 – Pull",
+      "nameTr": "Gün 2 – Çekiş",
+      "estimatedMinutes": 62,
+      "declaredWorkingSets": 18,
+      "exercises": [
+        {
+          "orderIndex": 0,
+          "exerciseId": "lat-pulldown",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        },
+        {
+          "orderIndex": 1,
+          "exerciseId": "chest-supported-row",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        },
+        {
+          "orderIndex": 2,
+          "exerciseId": "plate-loaded-pulldown",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        },
+        {
+          "orderIndex": 3,
+          "exerciseId": "reverse-pec-deck",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 75
+        },
+        {
+          "orderIndex": 4,
+          "exerciseId": "incline-dumbbell-curl",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 5,
+          "exerciseId": "cable-hammer-curl",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 10,
+          "repMax": 14,
+          "targetRir": 1,
+          "restSeconds": 75
+        }
+      ]
+    },
+    {
+      "id": "v90-d3-legs",
+      "sequenceOrder": 2,
+      "name": "Day 3 – Legs",
+      "nameTr": "Gün 3 – Bacak",
+      "estimatedMinutes": 70,
+      "declaredWorkingSets": 18,
+      "exercises": [
+        {
+          "orderIndex": 0,
+          "exerciseId": "hack-squat",
+          "workingSets": 3,
+          "warmupSets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 180
+        },
+        {
+          "orderIndex": 1,
+          "exerciseId": "leg-press",
+          "workingSets": 2,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 14,
+          "targetRir": 2,
+          "restSeconds": 150
+        },
+        {
+          "orderIndex": 2,
+          "exerciseId": "leg-extension",
+          "workingSets": 2,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 3,
+          "exerciseId": "seated-leg-curl",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 14,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 4,
+          "exerciseId": "lying-leg-curl",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 10,
+          "repMax": 14,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 5,
+          "exerciseId": "romanian-deadlift",
+          "workingSets": 2,
+          "warmupSets": 2,
+          "repMin": 8,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 150
+        },
+        {
+          "orderIndex": 6,
+          "exerciseId": "standing-calf-raise",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 90
+        }
+      ]
+    },
+    {
+      "id": "v90-d4-arms-delts",
+      "sequenceOrder": 3,
+      "name": "Day 4 – Arms & Delts",
+      "nameTr": "Gün 4 – Kol ve Omuz",
+      "estimatedMinutes": 55,
+      "declaredWorkingSets": 17,
+      "exercises": [
+        {
+          "orderIndex": 0,
+          "exerciseId": "machine-lateral-raise",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 1,
+          "exerciseId": "single-arm-cable-lateral-raise",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 75
+        },
+        {
+          "orderIndex": 2,
+          "exerciseId": "machine-preacher-curl",
+          "workingSets": 4,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 3,
+          "exerciseId": "cross-body-cable-extension",
+          "workingSets": 4,
+          "warmupSets": 1,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 75
+        },
+        {
+          "orderIndex": 4,
+          "exerciseId": "cable-crunch",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 20,
+          "targetRir": 1,
+          "restSeconds": 60
+        }
+      ]
+    },
+    {
+      "id": "v90-d5-vtaper-upper",
+      "sequenceOrder": 4,
+      "name": "Day 5 – V-Taper Upper",
+      "nameTr": "Gün 5 – V-Taper Üst",
+      "estimatedMinutes": 58,
+      "declaredWorkingSets": 17,
+      "exercises": [
+        {
+          "orderIndex": 0,
+          "exerciseId": "lat-pulldown",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        },
+        {
+          "orderIndex": 1,
+          "exerciseId": "seated-cable-row",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        },
+        {
+          "orderIndex": 2,
+          "exerciseId": "cable-lateral-raise",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 12,
+          "repMax": 15,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 3,
+          "exerciseId": "incline-dumbbell-curl",
+          "workingSets": 3,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 4,
+          "exerciseId": "overhead-cable-triceps-extension",
+          "workingSets": 3,
+          "warmupSets": 0,
+          "repMin": 10,
+          "repMax": 14,
+          "targetRir": 1,
+          "restSeconds": 90
+        },
+        {
+          "orderIndex": 5,
+          "exerciseId": "machine-chest-press",
+          "workingSets": 2,
+          "warmupSets": 1,
+          "repMin": 10,
+          "repMax": 12,
+          "targetRir": 2,
+          "restSeconds": 120
+        }
+      ]
+    }
+  ]
+}

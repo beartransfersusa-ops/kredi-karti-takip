@@ -1,0 +1,941 @@
+{
+  "seedVersion": 1,
+  "exercises": [
+    {
+      "id": "incline-smith-press",
+      "name": "Incline Smith Press",
+      "nameTr": "Incline Smith Press",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "frontDelts",
+        "triceps"
+      ],
+      "movementPattern": "horizontalPush",
+      "equipment": [
+        "smithMachine",
+        "adjustableBench"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "intermediate",
+      "jointStressProfile": {
+        "shoulder": 2,
+        "elbow": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Bank 30°, kürek kemikleri sıkışık ve sabit",
+        "Bar göğsün üst kısmına inecek",
+        "Dirsekler gövdeyle ~45° açı",
+        "Altta 1 sn kontrollü duraklama"
+      ]
+    },
+    {
+      "id": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "nameTr": "Machine Chest Press",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "frontDelts",
+        "triceps"
+      ],
+      "movementPattern": "horizontalPush",
+      "equipment": [
+        "selectorizedMachine"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Oturak yüksekliği tutamaklar göğüs hizasında olacak şekilde",
+        "Sırt desteğe yapışık",
+        "Sonda dirsekleri kilitleme",
+        "Kontrollü geri dönüş"
+      ]
+    },
+    {
+      "id": "pec-deck",
+      "name": "Pec Deck",
+      "nameTr": "Pec Deck",
+      "primaryMuscle": "chest",
+      "secondaryMuscles": [
+        "frontDelts"
+      ],
+      "movementPattern": "horizontalPush",
+      "equipment": [
+        "pecDeck"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "shoulder": 2
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Dirsek açısı sabit kalır, kol açılıp kapanmaz",
+        "Gerilmiş pozisyonda 1 sn bekle",
+        "Göğüsle sıkıştır, kollarla itme"
+      ]
+    },
+    {
+      "id": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "nameTr": "Cable Lateral Raise",
+      "primaryMuscle": "lateralDelts",
+      "secondaryMuscles": [
+        "frontDelts"
+      ],
+      "movementPattern": "lateralRaise",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "shoulder": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Makara en alt konumda, kol gövdenin önünden başlar",
+        "Kolu omuz hizasına kadar kaldır, daha yukarı çıkma",
+        "Bilek nötr, serçe parmak hafif yukarıda",
+        "İnişi 2 sn kontrol et"
+      ]
+    },
+    {
+      "id": "machine-lateral-raise",
+      "name": "Machine Lateral Raise",
+      "nameTr": "Machine Lateral Raise",
+      "primaryMuscle": "lateralDelts",
+      "secondaryMuscles": [],
+      "movementPattern": "lateralRaise",
+      "equipment": [
+        "selectorizedMachine"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "shoulder": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Ped kolun üst kısmına gelsin, dirseğe değil",
+        "Omuz yukarı kaçmadan sadece kolu kaldır",
+        "Tepe noktada kısa duraklama"
+      ]
+    },
+    {
+      "id": "single-arm-cable-lateral-raise",
+      "name": "Single-Arm Cable Lateral Raise",
+      "nameTr": "Single-Arm Cable Lateral Raise",
+      "primaryMuscle": "lateralDelts",
+      "secondaryMuscles": [],
+      "movementPattern": "lateralRaise",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": true,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Boştaki elle sabit bir noktadan destek al",
+        "Gövdeyi sallandırma",
+        "Her iki tarafta aynı tutuş ve mesafe"
+      ]
+    },
+    {
+      "id": "dumbbell-lateral-raise",
+      "name": "Dumbbell Lateral Raise",
+      "nameTr": "Dumbbell Lateral Raise",
+      "primaryMuscle": "lateralDelts",
+      "secondaryMuscles": [],
+      "movementPattern": "lateralRaise",
+      "equipment": [
+        "dumbbells"
+      ],
+      "lengthenedBias": 1,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.0,
+      "cues": [
+        "Hafif öne eğil, dirsekler hafif bükülü",
+        "Ağırlığı savurmadan kaldır",
+        "Zirvede omuzları kulağa çekme"
+      ]
+    },
+    {
+      "id": "overhead-cable-triceps-extension",
+      "name": "Overhead Cable Triceps Extension",
+      "nameTr": "Overhead Cable Triceps Extension",
+      "primaryMuscle": "triceps",
+      "secondaryMuscles": [],
+      "movementPattern": "elbowExtension",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "elbow": 2,
+        "shoulder": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Dirsekler baş hizasında sabit, dışa açılmasın",
+        "Kolu tam gerdirmeden önce uzamış pozisyonu hisset",
+        "Gövdeyi öne eğerek sabitle"
+      ]
+    },
+    {
+      "id": "rope-pushdown",
+      "name": "Rope Pushdown",
+      "nameTr": "Rope Pushdown",
+      "primaryMuscle": "triceps",
+      "secondaryMuscles": [],
+      "movementPattern": "elbowExtension",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 1,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "elbow": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Dirsekler gövdeye yapışık",
+        "Sonda ipi hafifçe dışa aç",
+        "Omuz öne düşmesin"
+      ]
+    },
+    {
+      "id": "cross-body-cable-extension",
+      "name": "Cross-Body Cable Extension",
+      "nameTr": "Cross-Body Cable Extension",
+      "primaryMuscle": "triceps",
+      "secondaryMuscles": [],
+      "movementPattern": "elbowExtension",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": true,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Kolu gövdenin çaprazına doğru uzat",
+        "Dirsek sabit, yalnızca ön kol hareket eder",
+        "Zirvede 1 sn sık"
+      ]
+    },
+    {
+      "id": "dip-machine",
+      "name": "Triceps Dip Machine",
+      "nameTr": "Triceps Dip Machine",
+      "primaryMuscle": "triceps",
+      "secondaryMuscles": [
+        "chest",
+        "frontDelts"
+      ],
+      "movementPattern": "elbowExtension",
+      "equipment": [
+        "selectorizedMachine"
+      ],
+      "lengthenedBias": 1,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Sırt desteğe yapışık, omuzlar aşağıda",
+        "Dirsekleri gövdeye yakın tut",
+        "Tam kilitleme yapma"
+      ]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "nameTr": "Lat Pulldown",
+      "primaryMuscle": "lats",
+      "secondaryMuscles": [
+        "biceps",
+        "upperBack"
+      ],
+      "movementPattern": "verticalPull",
+      "equipment": [
+        "latPulldown"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "shoulder": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Omuz genişliğinin biraz dışında tutuş",
+        "Önce omuzları aşağı indir, sonra çek",
+        "Barı köprücük kemiğine getir, boyna değil",
+        "Yukarıda lat gerilmesini hisset"
+      ]
+    },
+    {
+      "id": "plate-loaded-pulldown",
+      "name": "Plate-Loaded Pulldown",
+      "nameTr": "Plate-Loaded Pulldown",
+      "primaryMuscle": "lats",
+      "secondaryMuscles": [
+        "biceps",
+        "upperBack"
+      ],
+      "movementPattern": "verticalPull",
+      "equipment": [
+        "plateLoadedMachine"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Nötr tutuş, göğüs yukarı",
+        "Dirsekleri cebe doğru çek",
+        "Üst pozisyonda kontrollü uzama"
+      ]
+    },
+    {
+      "id": "assisted-pullup",
+      "name": "Assisted Pull-up",
+      "nameTr": "Assisted Pull-up",
+      "primaryMuscle": "lats",
+      "secondaryMuscles": [
+        "biceps",
+        "upperBack"
+      ],
+      "movementPattern": "verticalPull",
+      "equipment": [
+        "assistedPullupMachine"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "assistanceLowerIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Yardım ağırlığını azaltmak ilerlemedir",
+        "Tam asılı pozisyondan başla",
+        "Çeneyi bara zorlamadan göğsü yukarı taşı"
+      ]
+    },
+    {
+      "id": "pullup",
+      "name": "Pull-up",
+      "nameTr": "Pull-up",
+      "primaryMuscle": "lats",
+      "secondaryMuscles": [
+        "biceps",
+        "upperBack"
+      ],
+      "movementPattern": "verticalPull",
+      "equipment": [
+        "pullupBar"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "advanced",
+      "jointStressProfile": {
+        "shoulder": 2,
+        "elbow": 1
+      },
+      "loadProgressionType": "bodyweightPlusExternalLoad",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Kürek kemiklerini önce aşağı-geri kilitle",
+        "Sallanma ve tekme yok",
+        "İnişi 2 sn kontrol et"
+      ]
+    },
+    {
+      "id": "chest-supported-row",
+      "name": "Chest Supported Row",
+      "nameTr": "Chest Supported Row",
+      "primaryMuscle": "upperBack",
+      "secondaryMuscles": [
+        "lats",
+        "biceps",
+        "rearDelts"
+      ],
+      "movementPattern": "horizontalPull",
+      "equipment": [
+        "chestSupportedRow"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "shoulder": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Göğüs pede yapışık, gövde sabit",
+        "Dirsekleri geriye ve aşağıya çek",
+        "Zirvede kürekleri sık, gövdeyi kaldırma"
+      ]
+    },
+    {
+      "id": "seated-cable-row",
+      "name": "Seated Cable Row",
+      "nameTr": "Seated Cable Row",
+      "primaryMuscle": "upperBack",
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "movementPattern": "horizontalPull",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Diz hafif bükülü, bel nötr",
+        "Gövdeyi geriye yatırma",
+        "Çekişte omuzları geriye ve aşağıya"
+      ]
+    },
+    {
+      "id": "reverse-pec-deck",
+      "name": "Reverse Pec Deck",
+      "nameTr": "Reverse Pec Deck",
+      "primaryMuscle": "rearDelts",
+      "secondaryMuscles": [
+        "upperBack"
+      ],
+      "movementPattern": "rearDeltFly",
+      "equipment": [
+        "pecDeck"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Kolları omuz hizasında yatay tut",
+        "Dirsek açısı sabit",
+        "Trapezi kasmadan arka omuzla aç"
+      ]
+    },
+    {
+      "id": "incline-dumbbell-curl",
+      "name": "Incline Dumbbell Curl",
+      "nameTr": "Incline Dumbbell Curl",
+      "primaryMuscle": "biceps",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "movementPattern": "elbowFlexion",
+      "equipment": [
+        "dumbbells",
+        "adjustableBench"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "elbow": 2
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.0,
+      "cues": [
+        "Bank 45–60°, kollar gövdenin gerisinde serbest",
+        "Alt pozisyonda tam uzama, bu hareketin amacı budur",
+        "Dirseği öne getirme"
+      ]
+    },
+    {
+      "id": "cable-hammer-curl",
+      "name": "Cable Hammer Curl",
+      "nameTr": "Cable Hammer Curl",
+      "primaryMuscle": "biceps",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "movementPattern": "elbowFlexion",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Nötr tutuş, bilek sabit",
+        "Dirsek gövde yanında kalır",
+        "İnişi kontrol et"
+      ]
+    },
+    {
+      "id": "machine-preacher-curl",
+      "name": "Machine Preacher Curl",
+      "nameTr": "Machine Preacher Curl",
+      "primaryMuscle": "biceps",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "movementPattern": "elbowFlexion",
+      "equipment": [
+        "preacherBench",
+        "selectorizedMachine"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "elbow": 2
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Koltuk altı pede tam otursun",
+        "Alt pozisyonda dirseği tamamen açma, gerilimi koru",
+        "Zirvede 1 sn sık"
+      ]
+    },
+    {
+      "id": "bayesian-cable-curl",
+      "name": "Bayesian Cable Curl",
+      "nameTr": "Bayesian Cable Curl",
+      "primaryMuscle": "biceps",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "movementPattern": "elbowFlexion",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "intermediate",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": true,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Kablo arkadan gelir, kol gövdenin gerisinde",
+        "Uzamış pozisyonda gerilim maksimum",
+        "Gövdeyi sabit tut"
+      ]
+    },
+    {
+      "id": "ez-bar-curl",
+      "name": "EZ Bar Curl",
+      "nameTr": "EZ Bar Curl",
+      "primaryMuscle": "biceps",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "movementPattern": "elbowFlexion",
+      "equipment": [
+        "barbells"
+      ],
+      "lengthenedBias": 1,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "wrist": 2,
+        "elbow": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Bilek nötr, EZ barın açılı yerinden tut",
+        "Dirsekler sabit, gövde sallanmaz",
+        "İnişi 2 sn"
+      ]
+    },
+    {
+      "id": "hack-squat",
+      "name": "Hack Squat",
+      "nameTr": "Hack Squat",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "movementPattern": "kneeDominant",
+      "equipment": [
+        "hackSquat"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "intermediate",
+      "jointStressProfile": {
+        "knee": 2,
+        "lowerBack": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Ayaklar platformun ortasında, omuz genişliğinde",
+        "Topuklar yerde, diz ayak ucu yönünde",
+        "Kalçayı pedden ayırmadan in",
+        "Dizleri sonda kilitleme"
+      ]
+    },
+    {
+      "id": "leg-press",
+      "name": "Leg Press",
+      "nameTr": "Leg Press",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "movementPattern": "kneeDominant",
+      "equipment": [
+        "legPress"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "knee": 2,
+        "lowerBack": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Ayaklar platformda orta-yüksek",
+        "Bel destekten kalkmadan in",
+        "Diz ~90° veya rahat olduğun kadar",
+        "Sonda kilitleme yok"
+      ]
+    },
+    {
+      "id": "smith-squat",
+      "name": "Smith Machine Squat",
+      "nameTr": "Smith Machine Squat",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "movementPattern": "kneeDominant",
+      "equipment": [
+        "smithMachine"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "intermediate",
+      "jointStressProfile": {
+        "knee": 2,
+        "lowerBack": 2
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Ayaklar bardan biraz önde",
+        "Gövde dik, bel nötr",
+        "Kontrollü in, dipte duraklama yok"
+      ]
+    },
+    {
+      "id": "leg-extension",
+      "name": "Leg Extension",
+      "nameTr": "Leg Extension",
+      "primaryMuscle": "quads",
+      "secondaryMuscles": [],
+      "movementPattern": "kneeExtension",
+      "equipment": [
+        "legExtension"
+      ],
+      "lengthenedBias": 1,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "knee": 2
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Diz eklemi makinenin dönüş ekseniyle hizalı",
+        "Sonda 1 sn sık",
+        "İnişi kontrol et, ağırlığı bırakma"
+      ]
+    },
+    {
+      "id": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "nameTr": "Seated Leg Curl",
+      "primaryMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "calves"
+      ],
+      "movementPattern": "kneeFlexion",
+      "equipment": [
+        "legCurl"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Kalça sabit, gövde dik",
+        "Uzamış pozisyonda hamstring gerilmesini hisset",
+        "Kalçayı kaldırma"
+      ]
+    },
+    {
+      "id": "lying-leg-curl",
+      "name": "Lying Leg Curl",
+      "nameTr": "Lying Leg Curl",
+      "primaryMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "calves"
+      ],
+      "movementPattern": "kneeFlexion",
+      "equipment": [
+        "legCurl"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Kalça pede yapışık",
+        "Topuğu kalçaya doğru çek",
+        "İnişi kontrol et"
+      ]
+    },
+    {
+      "id": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "nameTr": "Romanian Deadlift",
+      "primaryMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "glutes",
+        "lowerBack"
+      ],
+      "movementPattern": "hipHinge",
+      "equipment": [
+        "barbells"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "intermediate",
+      "jointStressProfile": {
+        "lowerBack": 3,
+        "hip": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Bel nötr, kürekler sıkışık",
+        "Kalçayı geriye it, diz hafif bükülü sabit",
+        "Bar bacağa yakın seyreder",
+        "Hamstring gerilmesi bitince dur, yere kadar inme"
+      ]
+    },
+    {
+      "id": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "nameTr": "Standing Calf Raise",
+      "primaryMuscle": "calves",
+      "secondaryMuscles": [],
+      "movementPattern": "calfRaise",
+      "equipment": [
+        "selectorizedMachine"
+      ],
+      "lengthenedBias": 3,
+      "skillLevel": "beginner",
+      "jointStressProfile": {
+        "ankle": 1
+      },
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 5.0,
+      "cues": [
+        "Ayak ön kısmı basamakta, topuk boşta",
+        "Altta tam uzama, üstte 1 sn sıkma",
+        "Diz sabit"
+      ]
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Cable Crunch",
+      "nameTr": "Cable Crunch",
+      "primaryMuscle": "abs",
+      "secondaryMuscles": [],
+      "movementPattern": "trunkFlexion",
+      "equipment": [
+        "cableStation"
+      ],
+      "lengthenedBias": 2,
+      "skillLevel": "beginner",
+      "jointStressProfile": {},
+      "loadProgressionType": "externalLoadHigherIsHarder",
+      "isUnilateral": false,
+      "volumeMultiplier": 1,
+      "defaultIncrementKg": 2.5,
+      "cues": [
+        "Kalça sabit, hareket yalnızca omurgadan",
+        "Gövdeyi kıvırarak in, kalçadan bükme",
+        "Nefesi vererek sık"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "exerciseId": "cable-lateral-raise",
+      "relatedExerciseId": "machine-lateral-raise",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "cable-lateral-raise",
+      "relatedExerciseId": "dumbbell-lateral-raise",
+      "relation": "substitute",
+      "priority": 20
+    },
+    {
+      "exerciseId": "lat-pulldown",
+      "relatedExerciseId": "assisted-pullup",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "lat-pulldown",
+      "relatedExerciseId": "plate-loaded-pulldown",
+      "relation": "substitute",
+      "priority": 20
+    },
+    {
+      "exerciseId": "hack-squat",
+      "relatedExerciseId": "leg-press",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "hack-squat",
+      "relatedExerciseId": "smith-squat",
+      "relation": "substitute",
+      "priority": 20
+    },
+    {
+      "exerciseId": "machine-preacher-curl",
+      "relatedExerciseId": "ez-bar-curl",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "machine-preacher-curl",
+      "relatedExerciseId": "bayesian-cable-curl",
+      "relation": "substitute",
+      "priority": 20
+    },
+    {
+      "exerciseId": "chest-supported-row",
+      "relatedExerciseId": "seated-cable-row",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "overhead-cable-triceps-extension",
+      "relatedExerciseId": "dip-machine",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "overhead-cable-triceps-extension",
+      "relatedExerciseId": "rope-pushdown",
+      "relation": "substitute",
+      "priority": 20
+    },
+    {
+      "exerciseId": "seated-leg-curl",
+      "relatedExerciseId": "lying-leg-curl",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "machine-chest-press",
+      "relatedExerciseId": "incline-smith-press",
+      "relation": "substitute",
+      "priority": 10
+    },
+    {
+      "exerciseId": "machine-chest-press",
+      "relatedExerciseId": "pec-deck",
+      "relation": "substitute",
+      "priority": 20
+    }
+  ]
+}
