@@ -1929,6 +1929,6 @@ Aktif antrenman ekranında boundary tetiklenirse veri kaybı yoktur (her şey za
 - **Yedekleme ayar anahtarları tanımsız:** "Son yedek" zamanı ve "ayda bir hatırlatma" tercihi için `settings` anahtar adları 03'te yok (liste "…" ile açık uçlu). Öneri: `backup.lastExportAtUtc`, `backup.reminderEnabled`.
 - **`schemaVersion` çift kaynak:** Hem `manifest.json` hem `data.json` `schemaVersion` taşır; hangisinin otoriter olduğu ve uyuşmazlıkta ne yapılacağı tanımsız.
 - **"Lats/Back" görüntü grubu:** R106.1 örneğinde "Lats/Back 15" tek satırdır; `MuscleGroup`'ta `lats` ve `upperBack` ayrıdır. Progress ekranında birleştirilip birleştirilmeyeceği tanımsız; bu belge ayrı gösterdi.
-- **Trend etiketi eşikleri:** `TrendCalculator` "up/down/stable" eşikleri 02'de yok; `04-domain-engines.md`'ye atıfta bulunuluyor ancak bu belge repoda bulunmuyor.
+- **Trend etiketi eşikleri (ÇÖZÜLDÜ):** eşikler tanımlandı — kilo `|kg/hafta| < 0.2` → `stable`, ölçüm `|Δ| < 0.5 cm` → `stable` (02 §9.7 ve `04-domain-engines.md` §9.2).
 - **App lock ayarı şifreli DB içinde:** `'appLock.enabled'` `settings` tablosundadır; DB açılmadan kilit durumu bilinemez. Splash'ta veri gösterilmediği için pratik sorun yok, ancak `DbOpenError` ekranı kilit olmadan görünür (hassas veri içermez). İsteğe bağlı olarak anahtarın SecureStore'a aynalanması değerlendirilebilir.
 - **Onboarding "sonra" seçeneği ve hatırlatma:** R96 dashboard CTA'sını tanımlar; "sonra" seçildiğinde ek bildirim/hatırlatma olup olmayacağı tanımsız. Bu belge yalnızca kalıcı CTA kullandı.

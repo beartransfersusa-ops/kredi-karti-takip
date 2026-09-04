@@ -283,8 +283,8 @@
   - Adım 4: `forDay('2026-09-20')` → 0 satır; `forDay('2026-09-21')` → 1 satır; `challengeDay = 14` (en fazla ±1 gün kayma **beklenen** davranış, 02 §5.5); UI `"Day 14 / 90"`.
   - Adım 5: `DAY_CHANGED` yayılır; `todayKey() = '2026-09-21'`; `challengeDay = 15`; öğün "bugün" görünümünde.
   - Adım 6: `workout_sessions`: `started_at_utc = '2026-09-21T20:50:00.000Z'`, `calendar_date_key = '2026-09-21'`, `time_zone = 'Europe/Istanbul'`, `utc_offset_minutes = 180`, `calendar_date_overridden = 0`.
-  - Adım 7: `set_logs.completed_at_utc = '2026-09-21T21:10:00.000Z'`, `set_logs.local_date_key = '2026-09-22'` (yazıldığı andaki yerel tarih, 02 §5.1); `workout_sessions.completed_at_utc = '2026-09-21T21:10:00.000Z'`, `calendar_date_key` **hâlâ** `'2026-09-21'` (R113.3). `v_weekly_direct_sets` seti `2026-09-21` altında sayar.
-  - Adım 8: `calendar_date_key = '2026-09-22'`, `calendar_date_overridden = 1`, `started_at_utc` değişmez.
+  - Adım 7: `set_logs.completed_at_utc = '2026-09-21T21:10:00.000Z'`, `set_logs.local_date_key = '2026-09-21'` — oturuma bağlı kayıtlar günü `workout_sessions.calendar_date_key`'ten alır (02 §5.1 istisnası, R113.1); yazma anının yerel tarihi (22 Eylül) **kullanılmaz**. `workout_sessions.completed_at_utc = '2026-09-21T21:10:00.000Z'`, `calendar_date_key` **hâlâ** `'2026-09-21'` (R113.3). `v_weekly_direct_sets` seti `2026-09-21` altında sayar.
+  - Adım 8: `calendar_date_key = '2026-09-22'`, `calendar_date_overridden = 1`, `started_at_utc` değişmez; aynı transaction'da oturumun `set_logs.local_date_key` ve varsa `personal_records.local_date_key` satırları da `'2026-09-22'`'ye taşınır (02 §12.5).
   - Adım 9: `remaining = 30` (tz'den bağımsız, UTC farkından; R91.3).
   - Adım 10: Öğün `2026-09-21` altında görünür, `2026-09-20` altında görünmez; `"Day 14 / 90"` (veya cihaz saati 21 Eylül'e geçtiyse `"Day 15 / 90"`); uygulama çökmez.
 - **Otomatik test kimlikleri:**
@@ -298,7 +298,7 @@
   - `domain/workout/RestTimerService.test.ts::remainingIsTimezoneIndependent`
   - `e2e/at-13-timezone-change.yaml`
 - **Manuel doğrulama notu:** iOS'ta tz değişimi Maestro ile otomatikleştirilemez: gerçek iPhone'da Ayarlar > Genel > Tarih ve Saat > "Otomatik ayarla" kapat, saat dilimini `New York` yap, uygulamayı ön plana getir; öğün/kilo/antrenmanın günü değişmemeli, `Day X / 90` en fazla 1 gün oynamalı. Gerçek seyahat senaryosu (uçak modu + tz değişimi) ayrıca önerilir.
-- **Başarısızlık belirtileri:** Öğün bir gün geriye kayıyor; `local_date_key` tz değişiminde yeniden hesaplanıyor (UPDATE); `calendar_date_key` bitiş tarihini alıyor (`'2026-09-22'`); `challengeDay` 2+ gün oynuyor; gece yarısı ekran güncellenmiyor (`DAY_CHANGED` yok); rest timer tz değişiminde sıfırlanıyor/negatif.
+- **Başarısızlık belirtileri:** Öğün bir gün geriye kayıyor; `local_date_key` tz değişiminde yeniden hesaplanıyor (UPDATE); `calendar_date_key` bitiş tarihini alıyor (`'2026-09-22'`); gece yarısından sonra loglanan set oturumun değil yazma anının gününe düşüyor; `challengeDay` 2+ gün oynuyor; gece yarısı ekran güncellenmiyor (`DAY_CHANGED` yok); rest timer tz değişiminde sıfırlanıyor/negatif.
 
 ### AT-14 · Backup export → app reset → import → tüm veri geri geliyor
 - **Gereksinimler:** R95.1, R95.2, R95.3, R95.4, R95.5, R95.6, R95.8, R93.5, R116.1, R116.4, R92.2
@@ -624,8 +624,8 @@
 - **AT-12/AT-20 – baseline kaynağı çift:** 02 §11.2 `BaselineResolver` = "program başlangıcına en yakın (±7 gün) **ilk** kayıt" (en yakın mı, ilk mi belirsiz) derken 03 `body_measurements.is_baseline` bayrağı tanımlar; bayrağı kimin ne zaman set ettiği ve iki kaynak çeliştiğinde hangisinin kazandığı yazılı değil.
 - **AT-12 – pencere dışı ilk ölçüm UX'i:** Kullanıcı ilk biceps ölçümünü başlangıçtan 8+ gün sonra girerse 02 §11.2'ye göre baseline `null` kalır ve CTA sürekli görünür; kabul edilebilir mi, yoksa "ilk kayıt = baseline (geç)" kuralı mı gerekir, tanımlı değil.
 - **AT-12 – alan adı eşlemesi:** R96.2 `leftBicepsCm`/`rightBicepsCm`/`bicepsCm` derken 02/03 `bicepsLeftFlexed`/`bicepsRightFlexed`/`bicepsFlexed` site enum'ları kullanır; eşleme belgelenmeli.
-- **AT-13 – `Timestamped.utcOffsetMinutes`:** 02 §5.1'de opsiyonel (`?`, "yalnızca workout_sessions'ta saklanır"), 03 §3'te zorunlu `number`.
-- **AT-13 – `set_logs.local_date_key` anlamı:** 02 §5.1 "yazıldığı anda sabitlenir" kuralına göre gece yarısından sonraki set `'2026-09-22'` alır, oturum ise `calendar_date_key = '2026-09-21'`; set bazlı sorguların hangi anahtarı kullanacağı (özellikle `calendar_date_overridden = 1` durumunda) belirtilmemiş.
+- **AT-13 – `Timestamped.utcOffsetMinutes` (ÇÖZÜLDÜ):** 03 §3'te de opsiyonel yapıldı; yalnızca `workout_sessions` saklar.
+- **AT-13 – `set_logs.local_date_key` anlamı (ÇÖZÜLDÜ):** taslak turunda 02 §5.1'in genel kuralı ile R113.1 çelişiyordu. Karar: oturuma bağlı kayıtlar (`set_logs`, `rest_timers`, `personal_records`) günü oturumun `calendar_date_key`'inden alır; 02 §5.1'e istisna olarak eklendi. Bu testin 7. adımı bu kuralı kilitler. Eski (çözülmemiş) not: (özellikle `calendar_date_overridden = 1` durumunda) belirtilmemiş.
 - **AT-14 – `command_log` yedekte yok:** `TableRegistry` (dolayısıyla `data.json`) `command_log`'u kapsamaz; import sonrası idempotent tekrar koruması sıfırlanır. Bilinçli ise 02 §12.3'te belirtilmeli.
 - **AT-14/15 – migrator adı:** 02 §12.3 `backupMigrators[v]`, 03 §2 `BACKUP_MIGRATORS[k]` (`core/backup/migrators/00k.ts`); tek ad seçilmeli. Bu belge 03'ü kullanır.
 - **AT-16 – fixture yolu:** 02 §12.1 `fixtures/db-v001.sql … v00N.sql`, 03 §2 `test/fixtures/db/v001.sql`. Bu belge 03'ü kullanır.
