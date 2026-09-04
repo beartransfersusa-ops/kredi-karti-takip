@@ -4,7 +4,8 @@ Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifr
 
 | Belge | İçerik | Kim okur |
 |-------|--------|----------|
-| [`01-specification.md`](01-specification.md) | Bölüm II gereksinimleri (§87–§124), `R<bölüm>.<sıra>` kimlikleriyle; 20 kabul senaryosu (AT-01..AT-20) | Herkes |
+| [`00-specification-part1.md`](00-specification-part1.md) | **Bölüm I** (§1–§86): ürün ve kullanıcı, başlangıç durumu, V90 programı (5 antrenman rotasyonu, hareket kataloğu, hacim hedefleri), beslenme, toparlanma, ekran listesi, içerik kuralları | Herkes |
+| [`01-specification.md`](01-specification.md) | **Bölüm II** (§87–§124): kritik mimari ve ürün kısıtları; 20 kabul senaryosu (AT-01..AT-20) | Herkes |
 | [`02-architecture.md`](02-architecture.md) | Teknoloji yığını, katmanlar, modül haritası, sözlük, her gereksinim grubunun mimari karşılığı, izlenebilirlik matrisi | Geliştirici, reviewer |
 | [`03-data-model.md`](03-data-model.md) | Tam SQLite DDL (`001_initial`), migration kuralları, türetilmiş görünümler, TypeScript tipleri, Zod/`TableRegistry` | Geliştirici |
 | [`04-domain-engines.md`](04-domain-engines.md) | Algoritmalar: takvim/sıra, autosave/rest timer, artış adımları ve effective load, progression, plateau, hacim, PR, substitution, adherence/trend/rapor, beslenme, ölçüm kalitesi, zaman | Geliştirici, test yazarı |
@@ -12,16 +13,26 @@ Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifr
 | [`06-ux-flows.md`](06-ux-flows.md) | Ekran durumları, akışlar ve Türkçe UI metinleri | Tasarımcı, geliştirici |
 | [`adr/`](adr/) | Mimari karar kayıtları (ADR-001 … ADR-012) | Reviewer |
 
-## Bölüm I (§1–§86) hakkında
+## İki bölüm, tek specification
 
-Ürün tanımı, V90 default programı, başlangıç profili ve ekran listesi Bölüm I'de tanımlıdır ve **bu repoda bulunmamaktadır**. Bölüm II bunlara atıf yapar (örn. "V-Taper Upper" şablonu, öncelikli kaslar, MRV tablosu). Bölüm I eklendiğinde `00-specification-part1.md` olarak bu klasöre konmalı ve `02-architecture.md` §9.3'teki `max_recommended_weekly_sets` kaynağı oradaki tabloya bağlanmalıdır.
+**Bölüm I** ürünün *ne* olduğunu tanımlar: kullanıcı, hedef, V90 programı, beslenme ve toparlanma stratejisi, ekranlar, içerik kuralları.
+**Bölüm II** ürünün *nasıl* inşa edileceğine dair kritik kısıtları tanımlar: veri kaybı, gizlilik, sessiz atlama, sahte kesinlik, timezone, migration, yedekleme.
+
+Çelişki hâlinde **Bölüm II önceliklidir** — oradaki maddeler mimari güvenlik kısıtlarıdır ve hiçbir ürün tercihi onları geçersiz kılamaz.
+
+İki bölüm birbirine iki yönden bağlıdır: Bölüm I §85 özellik → mimari köprü tablosunu, `02-architecture.md` §17 ise gereksinim → bileşen → kabul testi matrisini içerir.
+
+### Programın sayısal omurgası
+
+V90, **5 antrenmanlık döngüsel bir rotasyondur** (Gün 1 İtiş, Gün 2 Çekiş, Gün 3 Bacak, Gün 4 Kol ve Omuz, Gün 5 V-Taper Üst); bir tam rotasyon bir haftaya karşılık gelir. Haftalık direkt set dağılımı Bölüm I §27'de tanımlıdır ve Bölüm II §106.1'deki örnekle **birebir aynıdır**: Yan omuz 12 · Biceps 13 · Triceps 13 · Sırt 15 · Göğüs 10 · Quadriceps 7 · Hamstring 8 (toplam 87 set). Bu sayılar `muscle_volume_targets` tablosunun baseline değerleridir (Bölüm I §28) ve hacim korkuluklarının (§105) referansıdır.
 
 ## Okuma sırası
 
-1. `01-specification.md` → hangi davranışların zorunlu olduğunu öğren.
-2. `02-architecture.md` §1–§4 → ilkeler ve sözlük; sonra ilgilendiğin bölüm.
-3. `03-data-model.md` → tabloları ve tipleri; `04-domain-engines.md` → algoritmaları.
-4. Uygulamaya başlamadan `05-acceptance-tests.md` içindeki ilgili AT senaryolarını test olarak yaz.
+1. `00-specification-part1.md` §1–§10 → ürünün ne olduğunu ve kim için olduğunu öğren.
+2. `01-specification.md` → hangi davranışların mimari olarak zorunlu olduğunu öğren.
+3. `02-architecture.md` §1–§4 → ilkeler ve sözlük; sonra ilgilendiğin bölüm.
+4. `03-data-model.md` → tabloları ve tipleri; `04-domain-engines.md` → algoritmaları.
+5. Uygulamaya başlamadan `05-acceptance-tests.md` içindeki ilgili AT senaryolarını test olarak yaz.
 
 ## Tasarımın temel kararları (özet)
 
@@ -33,9 +44,18 @@ Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifr
 - **Öneriler** gerekçeli, kanıtlı, kullanıcı kararlı; asla otomatik uygulanmaz (§104, §105, §121, §122).
 - **Bilinmeyen değer `null`**; biceps baseline yoksa CTA (§96, §119).
 
-## Kapsam notu: Bölüm I özellikleri
+## Seed verisinin kaynağı
 
-Şema (`03-data-model.md`) `supplements`, `supplement_logs` ve `cardio_logs` tablolarını içerir; bunlar §95'in tam yedekleme kapsamı gereğidir (R95.1). Bu tabloların **ekran ve akışları Bölüm I'de** tanımlıdır ve bu belgelerde ayrıca ele alınmaz. Bölüm II'nin bu tablolara getirdiği tek kısıt, yedekleme/import kapsamına dahil olmaları ve zaman alanlarının §112 sözleşmesine uymasıdır.
+Uygulamanın paketlediği seed dosyalarının kanonik kaynağı Bölüm I'dir:
+
+| Seed dosyası | Kaynak |
+|---|---|
+| `data/programs/v90.json` | Bölüm I §21–§26 (şablonlar ve set/tekrar/RIR/dinlenme) |
+| `data/exercises.json` | Bölüm I §35 (32 hareket, alan tanımları §36) |
+| `data/initial-profile.json` | Bölüm I §11 |
+| `muscle_volume_targets` seed | Bölüm I §28 |
+| `data/foods.seed.json` | Bölüm I §46 |
+| `data/exercise-videos.json` | Bölüm I §38 (küratörlük ölçütleri) |
 
 ## Açık noktalar
 

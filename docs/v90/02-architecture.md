@@ -48,7 +48,7 @@ Tasarım ilkeleri (gereksinimlerden türetilmiştir):
 
 | Katman | Seçim | Gerekçe / Not |
 |--------|-------|---------------|
-| Uygulama | **React Native + Expo SDK (≥ 52)**, TypeScript `strict` | Bölüm I'deki ürün kararıyla uyumlu. |
+| Uygulama | **React Native + Expo SDK (≥ 52)**, TypeScript `strict` | Bölüm I §7 ürün kararıyla uyumlu. |
 | Yönlendirme | Expo Router | Dosya tabanlı; deep link'ler (bildirimden aktif antrenmana dönüş). |
 | Veritabanı | **`expo-sqlite`** + **SQLCipher** (`useSQLCipher: true` config plugin) | R93.2. SQLCipher Expo Go'da çalışmaz → **Expo Development Build** zorunludur (R93.4). |
 | Anahtar saklama | `expo-secure-store` (Keychain / Keystore) | R93.6 |
@@ -236,7 +236,7 @@ challengeDay(today) =
 
 - **`missed`** saklanan bir durum değildir; `planned && plannedDateKey < today && program.active` koşuluyla türetilir (R88.4 uyumlu, ek durum eklemeden).
 - `advanceSequence()` yalnızca üç geçişten çağrılır: `completed`, `skipped`, `partiallyCompleted + "bitmiş say"` (R88.6). Fonksiyon aynı transaction içinde `programs.training_sequence_index += 1` yapar ve `sequence_events` tablosuna denetim kaydı yazar.
-- Şablon listesinin sonuna gelindiğinde: `program_templates.is_cyclic = 1` ise indeks `templates.length` modunda başa döner ve `programs.sequence_wraps` bir artar (V90 rotasyonu döngüseldir); `is_cyclic = 0` ise indeks `templates.length` nöbetçi değerinde kalır (`isExhausted`) ve program tamamlama akışı (§6.5) tetiklenir.
+- Şablon listesinin sonuna gelindiğinde: `program_templates.is_cyclic = 1` ise indeks `templates.length` modunda başa döner ve `programs.sequence_wraps` bir artar (V90 rotasyonu döngüseldir: 5 şablon, Bölüm I §20–§21); `is_cyclic = 0` ise indeks `templates.length` nöbetçi değerinde kalır (`isExhausted`) ve program tamamlama akışı (§6.5) tetiklenir.
 - **`cancelSession`** yerinde geri açar: `inProgress → planned` (aynı satır, yeni kayıt yok; `reschedule_reason` yazılmaz). Oturum `cancelled` olur, setleri `discarded=1` ile kalır, bu oturumda üretilmiş `personal_records` satırları `voided=1` olur.
 - **Başlatma ve tarih:** `planned_date_key ≠ today` olan bir plan başlatılırken (kaçırılmış ya da erken) önce `reschedule(today, 'moveToToday')` uygulanır; değişmez: açık/tamamlanmış planın `planned_date_key` = oturumun `calendar_date_key` (override hariç).
 - **Kısmi karar bekliyor:** bitirme ile karar arasında uygulama kapanırsa durum `partiallyCompleted ∧ partial_decision IS NULL` kalır; açılışta "Kısmi antrenman kararı bekliyor" kartı gösterilir ve karar verilmeden yeni plan oluşturulmaz/antrenman başlatılmaz. Kalan hareketler `remaining_exercise_ids_json`'a **bitirme transaction'ında** yazılır (hareket düzeyinde; yarım kalan hareket devamda tam `planned_working_sets` ile planlanır). "Kalanı sonraki güne taşı" varsayılan olarak `preferredWorkoutDays`'e göre ertesi ilk uygun günü seçer; kullanıcı tarih seçiciyle değiştirebilir (`moveToDate`).
@@ -434,7 +434,7 @@ Kural özeti: tüm working set'ler `max` tekrara ulaştı **ve** `rir ≥ target
 
 ### 9.3 Volume guardrails (§105)
 
-`muscle_volume_targets`: `baselineWeeklyDirectSets` (programdan), `maxRecommendedWeeklySets` (Bölüm I'deki program tablosundan; yoksa baseline+6), `currentWeeklySets` (türetilir). Öneri koşulu: `recoveryOk(last7d)` **ve** `performanceTrend ∈ {stable, up}` **ve** `current + delta ≤ max` **ve** haftada tek öneri, `delta ∈ {1,2}` (R105.3, R105.4). Gerekçe zorunlu (R105.5).
+`muscle_volume_targets`: `baselineWeeklyDirectSets` ve `maxRecommendedWeeklySets` seed değerleri **Bölüm I §28 tablosundan** gelir (`00-specification-part1.md`); `currentWeeklySets` türetilir. Öneri koşulu: `recoveryOk(last7d)` **ve** `performanceTrend ∈ {stable, up}` **ve** `current + delta ≤ max` **ve** haftada tek öneri, `delta ∈ {1,2}` (R105.3, R105.4). Gerekçe zorunlu (R105.5).
 
 ### 9.4 Volume analytics (§106)
 
@@ -494,7 +494,7 @@ measurement_samples(id, measurementId, sampleIndex, valueCm)
 
 ### 11.3 İlk çalıştırma verisi (§119)
 
-`data/initial-profile.json` (Bölüm I'deki değerler) `seedInitialProfile()` ile yalnızca **ilk** çalıştırmada ve yalnızca kullanıcı onboarding'de "önceden girilmiş değerleri kullan" seçerse yazılır. Biceps alanı yoktur (null). Zod: `cm: z.number().positive().lt(300).nullable()` (DB `CHECK (< 300)` ile aynı yönde); `0` reddedilir (R119.3, R119.4).
+`data/initial-profile.json` (Bölüm I §11 değerleri) `seedInitialProfile()` ile yalnızca **ilk** çalıştırmada ve yalnızca kullanıcı onboarding'de "önceden girilmiş değerleri kullan" seçerse yazılır. Biceps alanı yoktur (null). Zod: `cm: z.number().positive().lt(300).nullable()` (DB `CHECK (< 300)` ile aynı yönde); `0` reddedilir (R119.3, R119.4).
 
 ### 11.4 Onboarding training profile (§120)
 

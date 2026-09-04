@@ -3,7 +3,7 @@
 
 > **Durum:** Normatif. §87 uyarınca bu bölümdeki maddeler **opsiyonel değildir**; mimari bu maddelere göre tasarlanmıştır (bkz. `02-architecture.md`).
 >
-> **Bölüm I (§1–§86)** bu repoda bulunmamaktadır; ürün tanımı, V90 default programı, başlangıç profili ve ekran listesi orada tanımlıdır. Bu belge Bölüm I'e atıf yapar ancak onu tekrar etmez. Bölüm I repoya eklendiğinde `00-specification-part1.md` olarak bu klasöre konur.
+> **Bölüm I (§1–§86)** — [`00-specification-part1.md`](00-specification-part1.md) — ürün tanımını, V90 default programını, başlangıç profilini, hareket kataloğunu ve ekran listesini içerir. Bu belge Bölüm I'e atıf yapar ancak onu tekrar etmez. Çelişki hâlinde **bu bölüm (II) önceliklidir**: buradaki maddeler mimari güvenlik kısıtlarıdır.
 >
 > **Kimlik şeması:** Her gereksinim `R<bölüm>.<sıra>` kimliği taşır (örn. `R88.3`). Mimari belgeleri ve kabul testleri bu kimliklere atıf yapar. Anahtar sözcükler: **ZORUNLU** (MUST), **YASAK** (MUST NOT), **ÖNERİLİR** (SHOULD), **OLABİLİR** (MAY).
 

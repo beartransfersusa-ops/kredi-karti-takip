@@ -2774,7 +2774,7 @@ Ortak fixture (aksi belirtilmedikçe): `muscle_volume_targets('biceps')` = `{ ba
 - **`Exposure.workingSets` içinde `setLogId` yok** (03 §3): `evidence.setLogIds` doldurulamıyor; `setIndex + sessionId` üzerinden dolaylı eşleme gerekir. `setLogId: string` eklenmesi önerilir.
 - **`check_ins.soreness`/`energy` ölçek yönü** 03'te tanımsız. Bu belge soreness 1 = yok … 5 = çok yüksek, energy 1 = çok düşük … 5 = çok yüksek varsayar; UI etiketleriyle doğrulanmalı.
 - **`sleep_target_hours` NULL sonucu:** hedef girilmemişse hacim önerisi hiç üretilmez. 02 §11.4 bu sonucu belirtmez; onboarding'de alanın "önerilir" olması ve Progress ekranında CTA gerekir.
-- **`muscle_volume_targets` kısıtları:** `CHECK (max_recommended_weekly_sets >= baseline_weekly_direct_sets)` ve `muscle` için `MuscleGroup` CHECK'i yok. `is_priority` kaynağı (Bölüm I program tablosu mu, kullanıcı ayarı mı) ve 02'deki "yoksa baseline+6" varsayılanının kim tarafından yazıldığı (seed / migration) tanımsız.
+- **`muscle_volume_targets` kısıtları:** `CHECK (max_recommended_weekly_sets >= baseline_weekly_direct_sets)` ve `muscle` için `MuscleGroup` CHECK'i yok. `is_priority` kaynağı (ÇÖZÜLDÜ: Bölüm I §28 seed tablosu; kullanıcı Ayarlar'dan düzenleyebilir) ve 02'deki "yoksa baseline+6" varsayılanının kim tarafından yazıldığı (seed / migration) tanımsız.
 - **R106.1 "Lats/Back" görüntü grubu:** `MuscleGroup`'ta `lats` ve `upperBack` ayrı; birleşik görüntü grubu tanımı yok. Analitik burada kas bazlı üretir; gruplama UI katmanına bırakıldı, tanımlanmalı.
 - **R105.4 kapsamı:** "bir haftada +1–2 set" kas başına mı, toplam mı? 02 kas başına okur; bu belge de öyle. Birden çok öncelikli kasta toplam otomatik artış (örn. 4 kas × +2 = +8) için global tavan kararı gerekiyor.
 - **Delta seçim kuralı (+1 / +2)** 02'de yok; buradaki "önceki hafta kabul edildi ve yapıldı ve trend up → +2" kuralı bir tasarım önerisidir, onay bekler.
@@ -4317,7 +4317,7 @@ Onboarding adımları (profile/Onboarding):
 #### 11.2.9 `seedInitialProfile` (R119.1–R119.3)
 
 ```jsonc
-// data/initial-profile.json — Bölüm I değerleri; anahtarlar MeasurementSite değerleriyle birebir
+// data/initial-profile.json — Bölüm I §11 değerleri; anahtarlar MeasurementSite değerleriyle birebir
 { "version": 1, "heightCm": 187, "weightKg": 107,
   "measurements": { "waist": 95, "abdomen": 114, "shoulder": 137, "hip": 119, "chest": 110, "forearm": 37,
                     "bicepsFlexed": null } }   // UNKNOWN → null; 0 YASAK (R119.2, R119.3)
