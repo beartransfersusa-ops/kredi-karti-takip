@@ -494,7 +494,7 @@ measurement_samples(id, measurementId, sampleIndex, valueCm)
 
 ### 11.3 İlk çalıştırma verisi (§119)
 
-`data/initial-profile.json` (Bölüm I'deki değerler) `seedInitialProfile()` ile yalnızca **ilk** çalıştırmada ve yalnızca kullanıcı onboarding'de "önceden girilmiş değerleri kullan" seçerse yazılır. Biceps alanı yoktur (null). Zod: `cm: z.number().positive().max(300).nullable()`; `0` reddedilir (R119.3, R119.4).
+`data/initial-profile.json` (Bölüm I'deki değerler) `seedInitialProfile()` ile yalnızca **ilk** çalıştırmada ve yalnızca kullanıcı onboarding'de "önceden girilmiş değerleri kullan" seçerse yazılır. Biceps alanı yoktur (null). Zod: `cm: z.number().positive().lt(300).nullable()` (DB `CHECK (< 300)` ile aynı yönde); `0` reddedilir (R119.3, R119.4).
 
 ### 11.4 Onboarding training profile (§120)
 

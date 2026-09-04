@@ -397,7 +397,7 @@ CREATE INDEX IF NOT EXISTS ix_reco_open ON recommendations(exercise_id, decision
 CREATE TABLE IF NOT EXISTS plateau_insights (
   id                        TEXT PRIMARY KEY,
   exercise_id               TEXT NOT NULL REFERENCES exercises(id),
-  side                      TEXT NOT NULL DEFAULT 'both',
+  side                      TEXT NOT NULL DEFAULT 'both' CHECK (side IN ('both','left','right')),
   detected_at_utc           TEXT NOT NULL,
   exposure_session_ids_json TEXT NOT NULL,                 -- 3 ardışık exposure
   checklist_json            TEXT NOT NULL,                 -- sıralı: recovery, sleep, adherence, rirAccuracy, technique, rest, suitability

@@ -39,13 +39,13 @@ Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifr
 
 ## Açık noktalar
 
-`04-domain-engines.md` ve `06-ux-flows.md` bölümlerinin sonundaki **"Tutarsızlık / açık nokta"** listeleri bilinçli olarak korunmuştur. Bunlar üç şeyi ayırır:
+`04-domain-engines.md`, `05-acceptance-tests.md` ve `06-ux-flows.md` bölümlerinin sonundaki **"Tutarsızlık / açık nokta"** listeleri bilinçli olarak korunmuştur. Üç grup vardır:
 
-1. **Düzeltilmiş çelişkiler** — tasarım turunda 02/03'e uygulananlar (örn. `personal_records.exercise_id` nullable, `set_index` tek sayaç, `set_logs.local_date_key` oturum gününe bağlı).
-2. **Türetilmiş isimler** — 02/03'te bulunmayan ama mevcut kalıplardan üretilen servis/tip/hata adları.
-3. **Ürün onayı bekleyen kararlar** — eşik sabitleri (plateau checklist eşikleri, `%2.5–5` progression bandı, recovery kuralları) ve UX tercihleri.
+1. **`(ÇÖZÜLDÜ)` işaretli maddeler** — tasarım turunda bulunan gerçek çelişkiler; düzeltmesi `02`/`03`'e uygulandı. Madde, kararın ne olduğunu ve nereye yazıldığını söyler. Örnekler: `personal_records.exercise_id` nullable + `sessionVolumePr` CHECK'i, `set_index` tek artan sayaç, oturuma bağlı kayıtların günü, `cancelSession`'ın yerinde geri açması, `reschedule_reason` enum'undan `cancelSession`'ın kaldırılması, Zod sınırlarının DB CHECK'leriyle hizalanması.
+2. **Türetilmiş isimler** — 02/03'te bulunmayan ama mevcut kalıplardan üretilen servis, tip ve hata adları. Bilgi amaçlıdır; uygulama sırasında bu adlar kullanılır.
+3. **Ürün onayı bekleyen kararlar** — eşik sabitleri (plateau checklist eşikleri, `%2.5–5` progression bandı, recovery kuralları, `%10` deload) ve UX tercihleri. **Uygulamaya başlamadan önce bu grup gözden geçirilmelidir.**
 
-Uygulamaya başlamadan önce 3. grubun gözden geçirilmesi önerilir; 1. ve 2. grup bilgi amaçlıdır.
+Bu listeler belgenin denetim izidir; silinmemeli, karar verildikçe `(ÇÖZÜLDÜ)` olarak işaretlenmelidir.
 
 ## Tamamlanma kriteri
 
