@@ -33,6 +33,20 @@ Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifr
 - **Öneriler** gerekçeli, kanıtlı, kullanıcı kararlı; asla otomatik uygulanmaz (§104, §105, §121, §122).
 - **Bilinmeyen değer `null`**; biceps baseline yoksa CTA (§96, §119).
 
+## Kapsam notu: Bölüm I özellikleri
+
+Şema (`03-data-model.md`) `supplements`, `supplement_logs` ve `cardio_logs` tablolarını içerir; bunlar §95'in tam yedekleme kapsamı gereğidir (R95.1). Bu tabloların **ekran ve akışları Bölüm I'de** tanımlıdır ve bu belgelerde ayrıca ele alınmaz. Bölüm II'nin bu tablolara getirdiği tek kısıt, yedekleme/import kapsamına dahil olmaları ve zaman alanlarının §112 sözleşmesine uymasıdır.
+
+## Açık noktalar
+
+`04-domain-engines.md` ve `06-ux-flows.md` bölümlerinin sonundaki **"Tutarsızlık / açık nokta"** listeleri bilinçli olarak korunmuştur. Bunlar üç şeyi ayırır:
+
+1. **Düzeltilmiş çelişkiler** — tasarım turunda 02/03'e uygulananlar (örn. `personal_records.exercise_id` nullable, `set_index` tek sayaç, `set_logs.local_date_key` oturum gününe bağlı).
+2. **Türetilmiş isimler** — 02/03'te bulunmayan ama mevcut kalıplardan üretilen servis/tip/hata adları.
+3. **Ürün onayı bekleyen kararlar** — eşik sabitleri (plateau checklist eşikleri, `%2.5–5` progression bandı, recovery kuralları) ve UX tercihleri.
+
+Uygulamaya başlamadan önce 3. grubun gözden geçirilmesi önerilir; 1. ve 2. grup bilgi amaçlıdır.
+
 ## Tamamlanma kriteri
 
 Core application, `05-acceptance-tests.md` içindeki 20 senaryonun tamamı geçmeden "complete" olarak raporlanmaz (R124.1).

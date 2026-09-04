@@ -22,6 +22,7 @@
 
 ```sql
 PRAGMA journal_mode = WAL;
+PRAGMA synchronous = FULL;     -- güç kaybı/telefon restart'ında son commit de diskte olsun (R90.2); yazma maliyeti kabul edilir
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS settings (
 
 CREATE TABLE IF NOT EXISTS settings_history (
   id             TEXT PRIMARY KEY,
-  key            TEXT NOT NULL,
+  key            TEXT NOT NULL,             -- settings.key veya program alanı ('program.calendarMode')
   old_value_json TEXT,
   new_value_json TEXT NOT NULL,
   changed_at_utc TEXT NOT NULL
@@ -49,8 +50,10 @@ CREATE TABLE IF NOT EXISTS settings_history (
 CREATE TABLE IF NOT EXISTS command_log (
   command_id     TEXT PRIMARY KEY,
   command_type   TEXT NOT NULL,
+  result_json    TEXT,                       -- duplicate replay'de orijinal sonucu döndürmek için
   executed_at_utc TEXT NOT NULL
 );
+-- Temizleme: 30 günden eski satırlar açılışta silinir (idempotency penceresi 30 gün).
 ```
 
 ### 1.2 Profil ve onboarding
@@ -228,7 +231,7 @@ CREATE TABLE IF NOT EXISTS scheduled_workouts (
   rescheduled_to_id           TEXT REFERENCES scheduled_workouts(id),
   rescheduled_from_id         TEXT REFERENCES scheduled_workouts(id),
   reschedule_reason           TEXT CHECK (reschedule_reason IS NULL OR reschedule_reason IN
-                                ('moveToToday','moveToDate','resume','partialContinuation','cancelSession')),
+                                ('moveToToday','moveToDate','resume','partialContinuation')),  -- YENİ (hedef) kayda yazılır; eski kayıt yalnızca rescheduled_to_id taşır. cancelSession yerinde inProgress→planned yapar, reschedule değildir.
   remaining_exercise_ids_json TEXT,                        -- kısmi devam planı için
   partial_decision            TEXT CHECK (partial_decision IS NULL OR partial_decision IN ('countAsDone','continueLater')),
   resolved_at_utc             TEXT,
@@ -252,7 +255,8 @@ CREATE TABLE IF NOT EXISTS workout_sessions (
   workout_template_id       TEXT REFERENCES workout_templates(id),
   status                    TEXT NOT NULL CHECK (status IN ('active','completed','partial','cancelled')),
   started_at_utc            TEXT NOT NULL,
-  completed_at_utc          TEXT,
+  completed_at_utc          TEXT,                         -- completed/partial için bitiş anı
+  cancelled_at_utc          TEXT,                         -- cancelled için iptal anı
   calendar_date_key         TEXT NOT NULL,                 -- varsayılan: started_at yerel tarihi (R113.3)
   calendar_date_overridden  INTEGER NOT NULL DEFAULT 0,
   time_zone                 TEXT NOT NULL,
@@ -297,7 +301,7 @@ CREATE TABLE IF NOT EXISTS set_logs (
   session_id              TEXT NOT NULL REFERENCES workout_sessions(id),
   session_exercise_id     TEXT NOT NULL REFERENCES session_exercises(id),
   exercise_id             TEXT NOT NULL REFERENCES exercises(id),
-  set_index               INTEGER NOT NULL,                -- 1 tabanlı, warmup ve working ayrı sayılır
+  set_index               INTEGER NOT NULL,                -- 1 tabanlı, oturum-hareket içinde TEK artan sayaç (warmup 1..w, working w+1..); UNIQUE ile uyumlu
   set_type                TEXT NOT NULL CHECK (set_type IN ('warmup','working','dropset','backoff')),
   side                    TEXT NOT NULL DEFAULT 'both' CHECK (side IN ('both','left','right')),
   -- ham yük alanları: load_progression_type'a göre yalnızca ilgili olanlar dolar (R101)
@@ -315,7 +319,7 @@ CREATE TABLE IF NOT EXISTS set_logs (
   form_breakdown_flag     INTEGER NOT NULL DEFAULT 0,
   discarded               INTEGER NOT NULL DEFAULT 0,      -- iptal edilen oturumun setleri (silinmez)
   completed_at_utc        TEXT NOT NULL,
-  local_date_key          TEXT NOT NULL,
+  local_date_key          TEXT NOT NULL,                  -- := workout_sessions.calendar_date_key (R113.1; override ile birlikte taşınır)
   time_zone               TEXT NOT NULL,
   note                    TEXT,
   UNIQUE (session_exercise_id, set_index, side)
@@ -346,7 +350,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_rest_single_running ON rest_timers(state) W
 
 CREATE TABLE IF NOT EXISTS personal_records (
   id               TEXT PRIMARY KEY,
-  exercise_id      TEXT NOT NULL REFERENCES exercises(id),
+  exercise_id      TEXT REFERENCES exercises(id),           -- sessionVolumePr için NULL (oturum kaydı, harekete ait değil)
   side             TEXT NOT NULL DEFAULT 'both' CHECK (side IN ('both','left','right')),
   pr_type          TEXT NOT NULL CHECK (pr_type IN ('loadPr','repPrAtLoad','estimatedPerformancePr','sessionVolumePr')),
   set_log_id       TEXT REFERENCES set_logs(id),
@@ -356,8 +360,10 @@ CREATE TABLE IF NOT EXISTS personal_records (
   estimated_1rm    REAL,                                   -- 'tahmin' etiketiyle gösterilir (R123.4)
   session_volume   REAL,
   achieved_at_utc  TEXT NOT NULL,
-  local_date_key   TEXT NOT NULL,
-  superseded_by_id TEXT REFERENCES personal_records(id)
+  local_date_key   TEXT NOT NULL,                         -- oturumun calendar_date_key'i
+  voided           INTEGER NOT NULL DEFAULT 0,             -- iptal edilen oturum / düzenlenen set sonrası geçersiz; zincir yeniden kurulur
+  superseded_by_id TEXT REFERENCES personal_records(id),
+  CHECK ((pr_type = 'sessionVolumePr') = (exercise_id IS NULL))   -- hareket PR'ında exercise_id zorunlu, oturum PR'ında yasak
 );
 CREATE INDEX IF NOT EXISTS ix_pr_exercise_type ON personal_records(exercise_id, pr_type, side);
 ```
@@ -378,6 +384,8 @@ CREATE TABLE IF NOT EXISTS recommendations (
   evidence_json        TEXT NOT NULL,                      -- { setLogIds, measurementIds, metrics }
   is_estimate          INTEGER NOT NULL DEFAULT 0,
   created_at_utc       TEXT NOT NULL,
+  local_date_key       TEXT NOT NULL,                      -- "haftada tek öneri" penceresi bundan türetilir (02 §5.1)
+  time_zone            TEXT NOT NULL,
   expires_at_utc       TEXT,
   decision_action      TEXT CHECK (decision_action IS NULL OR decision_action IN ('accepted','modified','ignored')),
   decision_value_json  TEXT,
@@ -400,9 +408,9 @@ CREATE TABLE IF NOT EXISTS plateau_insights (
 );
 
 CREATE TABLE IF NOT EXISTS muscle_volume_targets (
-  muscle                        TEXT PRIMARY KEY,
-  baseline_weekly_direct_sets   INTEGER NOT NULL,
-  max_recommended_weekly_sets   INTEGER NOT NULL,
+  muscle                        TEXT PRIMARY KEY,          -- MuscleGroup
+  baseline_weekly_direct_sets   INTEGER NOT NULL CHECK (baseline_weekly_direct_sets >= 0),
+  max_recommended_weekly_sets   INTEGER NOT NULL CHECK (max_recommended_weekly_sets >= baseline_weekly_direct_sets),
   is_priority                   INTEGER NOT NULL DEFAULT 0,
   updated_at_utc                TEXT NOT NULL
 );
@@ -433,9 +441,14 @@ CREATE TABLE IF NOT EXISTS body_measurements (
   final_value_cm  REAL NOT NULL CHECK (final_value_cm > 0 AND final_value_cm < 300),   -- 0 asla (R119.3)
   aggregation     TEXT NOT NULL CHECK (aggregation IN ('single','mean','median')),
   is_baseline     INTEGER NOT NULL DEFAULT 0,
+  source          TEXT NOT NULL DEFAULT 'user' CHECK (source IN ('user','seed','import')),
+  command_id      TEXT UNIQUE,                                    -- idempotent kayıt (set_logs ile aynı desen)
+  is_deleted      INTEGER NOT NULL DEFAULT 0,                      -- soft delete (03 §0)
   note            TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_meas_site_date ON body_measurements(site, local_date_key);
+-- Site başına tek baseline (BaselineResolver önceliği, 02 §11.2)
+CREATE UNIQUE INDEX IF NOT EXISTS ux_meas_one_baseline_per_site ON body_measurements(site) WHERE is_baseline = 1 AND is_deleted = 0;
 
 CREATE TABLE IF NOT EXISTS measurement_samples (
   id             TEXT PRIMARY KEY,
@@ -547,7 +560,7 @@ CREATE TABLE IF NOT EXISTS food_items (
   carb_g_per_100g    REAL NOT NULL CHECK (carb_g_per_100g >= 0),
   fat_g_per_100g     REAL NOT NULL CHECK (fat_g_per_100g >= 0),
   fiber_g_per_100g   REAL,
-  last_updated       TEXT NOT NULL,
+  last_updated       TEXT NOT NULL,                       -- R111.2 adı korundu; içerik ISO-8601 UTC
   custom_edited      INTEGER NOT NULL DEFAULT 0,           -- seed güncellemeleri bunu ezmez (R111.3)
   seed_version       INTEGER,
   is_deleted         INTEGER NOT NULL DEFAULT 0
@@ -600,6 +613,8 @@ CREATE TABLE IF NOT EXISTS meal_logs (
   logged_at_utc  TEXT NOT NULL,
   meal_slot      TEXT NOT NULL CHECK (meal_slot IN ('breakfast','lunch','dinner','snack','preWorkout','postWorkout')),
   copied_from_id TEXT REFERENCES meal_logs(id),
+  saved_meal_id  TEXT REFERENCES saved_meals(id),          -- kayıtlı öğünden üretildiyse kaynak
+  command_id     TEXT UNIQUE,
   note           TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_meals_date ON meal_logs(local_date_key, meal_slot);
@@ -615,15 +630,19 @@ CREATE TABLE IF NOT EXISTS meal_entries (
   protein_g_snapshot REAL NOT NULL,
   carb_g_snapshot    REAL NOT NULL,
   fat_g_snapshot     REAL NOT NULL,
+  fiber_g_snapshot   REAL,
   order_index        INTEGER NOT NULL,
   CHECK ((food_id IS NULL) <> (recipe_id IS NULL))
 );
+
+CREATE INDEX IF NOT EXISTS ix_meal_entries_food ON meal_entries(food_id);
+CREATE INDEX IF NOT EXISTS ix_meal_entries_recipe ON meal_entries(recipe_id);
 
 CREATE TABLE IF NOT EXISTS nutrition_targets (
   id                      TEXT PRIMARY KEY,
   effective_from_date_key TEXT NOT NULL,
   kcal                    INTEGER NOT NULL CHECK (kcal > 0),
-  protein_g               INTEGER NOT NULL,
+  protein_g               INTEGER NOT NULL CHECK (protein_g > 0),
   carb_g                  INTEGER,
   fat_g                   INTEGER,
   rationale_tr            TEXT,
@@ -728,7 +747,7 @@ export type Side = 'both' | 'left' | 'right';
 export type SetType = 'warmup' | 'working' | 'dropset' | 'backoff';
 export type PrType = 'loadPr' | 'repPrAtLoad' | 'estimatedPerformancePr' | 'sessionVolumePr';
 
-export interface Timestamped { occurredAtUtc: string; localDateKey: string; timeZone: string; utcOffsetMinutes: number; }
+export interface Timestamped { occurredAtUtc: string; localDateKey: string; timeZone: string; utcOffsetMinutes?: number; }  // offset yalnızca workout_sessions'ta saklanır
 
 export interface RawLoad {              // load_progression_type'a göre tek biri anlamlıdır
   loadKg?: number | null; assistanceKg?: number | null; machineLevel?: number | null;
@@ -744,7 +763,7 @@ export interface SetLog {
 
 export interface Exposure {             // motorların ortak girdisi (04-domain-engines.md)
   sessionId: string; calendarDateKey: string; exerciseId: string; side: Side;
-  workingSets: Array<{ setIndex: number; effectiveLoad: number | null; reps: number; rir: number | null;
+  workingSets: Array<{ setLogId: string; setIndex: number; effectiveLoad: number | null; reps: number; rir: number | null;
                        painFlag: boolean; formBreakdownFlag: boolean; excludeFromPr: boolean }>;
   target: { repMin: number; repMax: number; targetRir: number; plannedWorkingSets: number };
 }
@@ -752,7 +771,7 @@ export interface Exposure {             // motorların ortak girdisi (04-domain-
 export interface Recommendation {
   id: string; kind: RecommendationKind; exerciseId?: string; muscle?: MuscleGroup; sessionExerciseId?: string;
   proposed: { effectiveLoad?: number; loadKg?: number; assistanceKg?: number; reps?: number; sets?: number; kcal?: number };
-  rationaleTr: string; evidence: { setLogIds?: string[]; measurementIds?: string[]; metrics: Record<string, number> };
+  rationaleTr: string; evidence: { setLogIds?: string[]; measurementIds?: string[]; checkInIds?: string[]; sleepLogIds?: string[]; metrics: Record<string, number> };
   isEstimate: boolean; createdAtUtc: string; expiresAtUtc?: string;
   decision?: { action: 'accepted' | 'modified' | 'ignored'; userValue?: unknown; decidedAtUtc: string };
 }
@@ -772,7 +791,7 @@ export const TableRegistry = {
   food_items: …, food_favorites: …, recipes: …, recipe_ingredients: …, saved_meals: …, saved_meal_entries: …,
   meal_logs: …, meal_entries: …, nutrition_targets: …, settings: …, settings_history: …,
 } as const satisfies Record<string, z.ZodTypeAny>;
-// Test: TableRegistry anahtarları == sqlite_master'daki kullanıcı tabloları (schema_migrations, command_log hariç). Eksik tablo = test hatası → R95.1 garanti.
+// Test: TableRegistry anahtarları == sqlite_master'daki kullanıcı tabloları (schema_migrations, command_log hariç — bkz. 02 §12.3). Eksik tablo = test hatası → R95.1 garanti.
 ```
 
-Zod kuralları (R119.4): `cm: z.number().positive().max(300).nullable()`, `kg: z.number().positive().max(400)`, tarih anahtarı `z.string().regex(/^\d{4}-\d{2}-\d{2}$/)`, UTC `z.string().datetime({ offset: false })`.
+Zod kuralları (R119.4; DB CHECK'leri ile aynı yönde, üst sınır **hariç**): `cm: z.number().positive().lt(300).nullable()`, `kg: z.number().positive().lt(400)`, tarih anahtarı `z.string().regex(/^\d{4}-\d{2}-\d{2}$/)`, UTC `z.string().datetime({ offset: false })`.

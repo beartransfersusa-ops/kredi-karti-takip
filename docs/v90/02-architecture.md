@@ -60,6 +60,7 @@ Tasarım ilkeleri (gereksinimlerden türetilmiştir):
 | UI state | Zustand (ince, DB-türevi store'lar) | R90.7 |
 | Tarih/saat | `date-fns` + `date-fns-tz`; IANA tz `Intl` üzerinden | §112 |
 | ZIP | `react-native-zip-archive` (native) — soyutlama arkasında; alternatif `fflate` | R95.4 |
+| Dosya seçici / paylaşım | `expo-document-picker` (import), `expo-sharing` (export) | R95 |
 | Video | `react-native-youtube-iframe` (resmi IFrame Player API, WebView) | R114.5 |
 | Test | Jest + `@testing-library/react-native`; DB testleri Node'da `better-sqlite3`/`@journeyapps/sqlcipher` ile aynı SQL üzerinden; E2E: Maestro | §124 |
 | Analytics | **Yok** (v1). Eklenirse `analytics/` allowlist şeması zorunlu | R118 |
@@ -97,13 +98,13 @@ src/
     security/       AppLockService, PrivacyShield
     media/          PhotoStore (app-private), OrphanSweeper, VideoManifest
   domain/           Saf TypeScript, React'e bağımsız, %100 unit test edilebilir
-    program/        ChallengeCalendar, TrainingSequence, PauseService, MissedWorkoutResolver
+    program/        ChallengeCalendar, TrainingSequence, Scheduler, PauseService, MissedWorkoutResolver
     workout/        ActiveSessionService, SetLogService, RestTimerService, PrDetector
     exercise/       ExerciseCatalog, SubstitutionEngine, IncrementResolver, LoadBehavior
     progression/    ProgressionEngine, PlateauEngine, VolumeGuardrails, RecommendationService
-    analytics/      VolumeAnalytics, AdherenceCalculator, TrendCalculator (7d/28d)
+    analytics/      VolumeAnalytics, AdherenceCalculator, TrendCalculator (7d/28d), ChallengeReportService (Day 90)
     nutrition/      FoodCatalog, RecipeBuilder, MealLogService, CopyService
-    measurements/   MeasurementService, MeasurementQuality, BaselineResolver
+    measurements/   MeasurementService, MeasurementQuality, BaselineResolver, MeasurementGuide
     profile/        Onboarding, TrainingProfile, EquipmentProfile
   features/         Ekran/bileşen düzeyinde React kodu (feature-sliced)
     active-workout/ program/ progress/ nutrition/ measurements/ settings/ …
@@ -158,6 +159,8 @@ interface Timestamped {
 
 `localDateKey` **yazıldığı anda** hesaplanır ve daha sonra timezone değişse bile **yeniden hesaplanmaz** (R112.2, R112.4). Sorgular "bugünün logları" için `localDateKey = todayKey(clock)` kullanır; UTC aralığı kullanmaz.
 
+**İstisna (oturuma bağlı kayıtlar):** `set_logs.local_date_key`, `rest_timers` ve `personal_records.local_date_key` yazıldıkları anın tarihini değil, ait oldukları oturumun `workout_sessions.calendar_date_key` değerini alır (R113.1: 00:10'da loglanan set, 23:50'de başlayan antrenmanın gününe aittir). `calendar_date_key` override edildiğinde bu kayıtlar aynı transaction'da birlikte taşınır.
+
 ### 5.2 `Clock` portu
 
 ```ts
@@ -182,7 +185,7 @@ Tüm domain kodu `Clock` alır; testler `FakeClock` ile saat, gün ve timezone d
 
 ### 5.5 Timezone değişimi
 
-`clock.timeZone()` değiştiğinde (`TZ_CHANGED`): mevcut kayıtlar dokunulmaz; challengeDay yeni tz'deki `todayKey` ile hesaplanır. `Day X/90` en fazla bir gün ileri/geri görünebilir ve bu **beklenen** davranıştır; hiçbir kaydın günü kaymaz (AT-13). Aktif oturum başlangıç tz'sini saklar; kalan rest süresi UTC'den hesaplandığı için etkilenmez.
+`clock.timeZone()` değiştiğinde (`TZ_CHANGED`): mevcut kayıtlar dokunulmaz; challengeDay yeni tz'deki `todayKey` ile hesaplanır. `Day X/90` en fazla bir gün ileri/geri görünebilir ve bu **beklenen** davranıştır; hiçbir kaydın günü kaymaz (AT-13). Aktif oturum başlangıç tz'sini saklar; kalan rest süresi UTC'den hesaplandığı için etkilenmez. Doğuya seyahatte yerel gün atladığı için bugünün planı anında `missed` görünebilir; kaçırılan antrenman kartı bu durumda "Saat dilimi değişti" alt metniyle gösterilir ve aynı üç seçeneği sunar (sessiz atlama yok).
 
 ---
 
@@ -202,13 +205,13 @@ challengeDay(today) =
   activeDays    : clamp(daysBetween(startDateKey, today) + 1 - pausedDays(startDateKey..today), 1, 90)
 ```
 
-`pausedDays` dondurma aralıklarındaki tam yerel gün sayısıdır (başlangıç günü dahil, devam günü hariç). `challengeDay` hiçbir tabloda saklanmaz; `ChallengeCalendar.challengeDay(clock)` ile türetilir (R88.1, R88.2).
+`pausedDays` dondurma aralıklarındaki tam yerel gün sayısıdır: aralık `[start_date_key, end_date_key)` (başlangıç günü dahil, devam günü hariç); hâlâ açık dondurma için geçici bitiş `end_date_key ?? today` alınır, böylece `challengeDay` dondurma boyunca monoton kalır. `challengeDay` hiçbir tabloda saklanmaz; `ChallengeCalendar.challengeDay(clock)` ile `{ day, phase }` olarak türetilir (R88.1, R88.2). `phase ∈ {'notStarted','active','finished'}`: `today < start_date_key` ise `notStarted` (Day 1 gibi gösterilmez, "Başlangıç: <tarih>" gösterilir); 90. gün geçildiyse `finished`.
 
 ### 6.2 Planlama (scheduling)
 
 `Scheduler.ensurePlanned(today)`:
 1. Program `active` değilse (paused/completed) hiçbir şey yapma (R89.3).
-2. `trainingSequenceIndex` için açık (`planned`/`inProgress`) bir `ScheduledWorkout` yoksa, kullanıcının tercih ettiği antrenman günlerine (`preferredWorkoutDays`) göre bugünden itibaren ilk uygun güne bir tane oluştur.
+2. `trainingSequenceIndex` için açık (`planned`/`inProgress`) bir `ScheduledWorkout` yoksa ve karar bekleyen kısmi antrenman yoksa (`partiallyCompleted ∧ partial_decision IS NULL` → önce karar), kullanıcının tercih ettiği antrenman günlerine (`preferredWorkoutDays`) göre `earliest`'ten itibaren ilk uygun güne bir tane oluştur. `earliest = max(today, start_date_key)`; bir tamamlanma/`countAsDone` sonrasında `earliest = max(today, session.calendar_date_key + 1)` (aynı güne ikinci plan konmaz, ertesi gün sahte "kaçırıldı" üretilmez).
 3. **Yalnızca sıradaki bir antrenman planlanır.** Gelecek antrenmanlar takvimde "öngörü" olarak (sanal, saklanmadan) gösterilir; böylece bir kaçırma tüm takvimi kaydırmaz ve sıra hiçbir zaman ileri atlamaz.
 
 ### 6.3 `ScheduledWorkout` durum makinesi
@@ -233,7 +236,10 @@ challengeDay(today) =
 
 - **`missed`** saklanan bir durum değildir; `planned && plannedDateKey < today && program.active` koşuluyla türetilir (R88.4 uyumlu, ek durum eklemeden).
 - `advanceSequence()` yalnızca üç geçişten çağrılır: `completed`, `skipped`, `partiallyCompleted + "bitmiş say"` (R88.6). Fonksiyon aynı transaction içinde `programs.training_sequence_index += 1` yapar ve `sequence_events` tablosuna denetim kaydı yazar.
-- Şablon listesinin sonuna gelindiğinde indeks `templates.length` modunda döner (V90 rotasyonu döngüseldir; Bölüm I'e göre lineer ise `programs.sequence_wraps = 0`).
+- Şablon listesinin sonuna gelindiğinde: `program_templates.is_cyclic = 1` ise indeks `templates.length` modunda başa döner ve `programs.sequence_wraps` bir artar (V90 rotasyonu döngüseldir); `is_cyclic = 0` ise indeks `templates.length` nöbetçi değerinde kalır (`isExhausted`) ve program tamamlama akışı (§6.5) tetiklenir.
+- **`cancelSession`** yerinde geri açar: `inProgress → planned` (aynı satır, yeni kayıt yok; `reschedule_reason` yazılmaz). Oturum `cancelled` olur, setleri `discarded=1` ile kalır, bu oturumda üretilmiş `personal_records` satırları `voided=1` olur.
+- **Başlatma ve tarih:** `planned_date_key ≠ today` olan bir plan başlatılırken (kaçırılmış ya da erken) önce `reschedule(today, 'moveToToday')` uygulanır; değişmez: açık/tamamlanmış planın `planned_date_key` = oturumun `calendar_date_key` (override hariç).
+- **Kısmi karar bekliyor:** bitirme ile karar arasında uygulama kapanırsa durum `partiallyCompleted ∧ partial_decision IS NULL` kalır; açılışta "Kısmi antrenman kararı bekliyor" kartı gösterilir ve karar verilmeden yeni plan oluşturulmaz/antrenman başlatılmaz. Kalan hareketler `remaining_exercise_ids_json`'a **bitirme transaction'ında** yazılır (hareket düzeyinde; yarım kalan hareket devamda tam `planned_working_sets` ile planlanır). "Kalanı sonraki güne taşı" varsayılan olarak `preferredWorkoutDays`'e göre ertesi ilk uygun günü seçer; kullanıcı tarih seçiciyle değiştirebilir (`moveToDate`).
 
 ### 6.4 Kaçırılan antrenman akışı (R88.3, R88.5)
 
@@ -242,10 +248,10 @@ Uygulama açıldığında / gün değiştiğinde `MissedWorkoutResolver.detect()
 | Buton | Etki |
 |-------|------|
 | **Bugüne taşı** | `reschedule(today)` → eski kayıt `rescheduled`, yeni `planned(today)`. Sıra değişmez. |
-| **Başka güne taşı** | Tarih seçici → `reschedule(date)`. Sıra değişmez. |
+| **Başka güne taşı** | Tarih seçici → `reschedule(date)`; `date < today` reddedilir (`InvalidRescheduleDateError`, plan anında yeniden `missed` olurdu). Sıra değişmez. |
 | **Gerçekten atla** | Onay diyaloğu ("Bu antrenman tamamen atlanacak, sıradaki antrenmana geçilecek.") → `skipped`, `advanceSequence()`. |
 
-Karar verilmeden yeni antrenman başlatılamaz; ancak kullanıcı "Bugüne taşı" ile aynı ekrandan doğrudan başlayabilir. Kart kapatılabilir ama ertesi gün yeniden görünür (sessiz atlama yok).
+Karar verilmeden yeni antrenman başlatılamaz; ancak kullanıcı "Bugüne taşı" ile aynı ekrandan doğrudan başlayabilir. Kart kapatılabilir ama ertesi gün yeniden görünür (sessiz atlama yok); kapatma bilgisi `settings['missedCard.dismissedDateKey']` içinde tutulur ve `DAY_CHANGED`'de geçersizleşir.
 
 ### 6.5 Dondurma (§89)
 
@@ -259,10 +265,17 @@ resume()       : status=active; program_pauses UPDATE endedAtUtc, endDateKey; Sc
 - Resume'da açık plan bugüne veya ilk uygun güne otomatik taşınır (`rescheduled` + yeni `planned`, `reason='resume'`), sıra aynı kalır (R89.4).
 - `calendarMode` her an değiştirilebilir; challengeDay türetildiği için geçmiş bozulmaz (R89.5). Mod değişimi `settings_history`'ye yazılır.
 - Dondurma sırasında beslenme/ölçüm/uyku logu serbesttir.
+- **Guard'lar:** aktif oturum varken (`ActiveSessionExistsError`) veya karar bekleyen kısmi antrenman varken (`PendingPartialDecisionError`) dondurma reddedilir; dondurulmuş programda `advanceSequence()` `ProgramNotActiveError` fırlatır.
+- **Sırayı düzelt (manuel):** Program Settings'te açık ve onaylı bir "Antrenman sırasını düzelt" eylemi vardır (yalnızca açık plan ve aktif oturum yokken). `advanceSequence()`'ten geçmez; doğrudan `programs.training_sequence_index` yazar ve `sequence_events.cause='manualAdjust'` kaydı bırakır. Bu, R88.6'nın "başka hiçbir yol" kuralının tek, kullanıcı-açık istisnasıdır ve hiçbir zaman otomatik tetiklenmez.
+- **Program tamamlama:** `challengeDay.phase='finished'` (90. gün geçti) veya lineer şablonda `isExhausted` olduğunda ana ekranda "Day 90 tamamlandı — raporunu gör" kartı çıkar; kullanıcı **"Programı tamamla"** derse `programs.status='completed'`, `completed_at_utc` yazılır ve Day 90 raporu üretilir (§9.7). Otomatik kapatma yoktur; kullanıcı isterse dondurabilir veya devam edebilir (takvim `finished` gösterir, sıra çalışmaya devam eder).
 
 ### 6.6 Adherence (§103.4)
 
 `AdherenceCalculator.week(weekStartKey)` → `{ completed, partial, skipped, missed, rescheduledOut, planned }`; UI dört ayrı renk/etiketle gösterir. Kısmi antrenmanlar `completed`'a **dahil edilmez**; ayrı sütunda tutulur ve isteğe bağlı olarak `tamamlanma oranı = yapılan working set / planlanan working set` ile gösterilir (R103.4).
+
+**Sayım birimi `scheduled_workouts` satırıdır, oturum değil.** Bir kısmi antrenman ve onun devam planı (`partialContinuation`) aynı `sequence_index`'i paylaşan iki ayrı satırdır: ilki `partiallyCompleted`, ikincisi kendi sonucuyla sayılır. Böylece aynı antrenman iki kez "tamamlandı" sayılmaz. Devam planı yine kısmi bitebilir (zincir); zincir uzunluğu UI'da "2. devam" gibi gösterilir.
+
+**Durum sözlüğü (bilinçli fark):** plan tarafında `scheduled_workouts.status='partiallyCompleted'`, oturum tarafında `workout_sessions.status='partial'` kullanılır; ikisi aynı olguyu farklı tablolarda adlandırır. Resume kartından bitirmede `ended_reason='resumeCardFinish'` yazılır; tam/kısmi ayrımı `workout_sessions.status` ile yapılır.
 
 ---
 
@@ -271,14 +284,16 @@ resume()       : status=active; program_pauses UPDATE endedAtUtc, endDateKey; Sc
 ### 7.1 Autosave modeli (§90)
 
 - **Tek aktif oturum** kısıtı: `workout_sessions` üzerinde `UNIQUE INDEX WHERE status='active'`.
-- `ActiveSessionService.start(scheduledWorkoutId | templateId)` tek transaction: `workout_sessions` INSERT (`status='active'`, `startedAtUtc`, `calendarDateKey`, `timeZone`), `session_exercises` INSERT (şablondan, prefill değerleriyle), `scheduled_workouts.status='inProgress'`.
+- `ActiveSessionService.start(scheduledWorkoutId | templateId)` tek transaction: `workout_sessions` INSERT (`status='active'`, `startedAtUtc`, `calendarDateKey`, `timeZone`, `bodyweight_kg_snapshot` = son 14 gün içindeki son `weight_logs` kaydı, yoksa `NULL`), `session_exercises` INSERT (şablondaki hedeflerle; prefill değerleri saklanmaz, `hydrate()` sırasında §7.3 sırasıyla hesaplanır), `scheduled_workouts.status='inProgress'` (gerekirse önce `reschedule(today)`, §6.3).
 - Her kullanıcı eylemi bir **komut** olarak modellenir ve hemen DB'ye yazılır:
 
 | Komut | Yazılan |
 |-------|---------|
 | `completeSet` | `set_logs` INSERT (tek transaction, R90.6) + PR tespiti (aynı tx) + rest timer başlat |
 | `editSet` | `set_logs` UPDATE + `set_log_revisions` INSERT (denetim) |
-| `substituteExercise` | `session_exercises.exercise_id` UPDATE, `original_exercise_id` korunur |
+| `substituteExercise` | `session_exercises.exercise_id` UPDATE, `original_exercise_id` korunur; harekete set loglanmışsa reddedilir (`SetAlreadyLoggedError`) — bunun yerine `addExercise` |
+| `addExercise` / `setTrackingMode` | `session_exercises` INSERT (oturuma yeni hareket) / `tracking_mode` UPDATE (yalnızca set loglanmadan önce) |
+| `finishSession` / `cancelSession` / `decidePartial` / `overrideCalendarDate` | §6.3 ve §7.5'teki geçişler; hepsi tek transaction |
 | `skipExercise` / `reorderExercises` | `session_exercises` UPDATE |
 | `startRest` / `skipRest` | `rest_timers` INSERT/UPDATE |
 | `setNote` | `session_exercises.note` / `workout_sessions.note` |
@@ -287,6 +302,7 @@ resume()       : status=active; program_pauses UPDATE endedAtUtc, endDateKey; Sc
 - UI store (`useActiveWorkoutStore`) yalnızca DB'den `hydrate()` ile dolar; optimistic update yoktur, yazma bittikten sonra store güncellenir (< 10 ms; SQLite yerel).
 - Uygulama açılışında (`AppBootstrap`) `ActiveSessionService.findActive()` → varsa **"Devam eden antrenmanın var."** kartı: **Devam Et** (ekrana git), **Antrenmanı Bitir** (özet → completed/partial kararı), **Antrenmanı İptal Et** (onay → `status='cancelled'`, set kayıtları **silinmez**, `discarded=1` ile işaretlenir; plan `planned`'a döner) (R90.4, R90.5).
 - `AppState` `background`/`inactive` geçişlerinde ek bir şey yapılmaz; çünkü yazılacak hiçbir şey bellekte bekletilmez (R90.2). Sadece `flushDraftInputs()` çağrılır (stepper'da bekleyen ama commit edilmemiş değer).
+- **Dayanıklılık:** DB `journal_mode=WAL` + `synchronous=FULL` ile açılır; her `COMMIT` fsync'lenir. Uygulama çökmesi (process ölümü) WAL sayesinde, ani güç kaybı/telefon restart'ı `synchronous=FULL` sayesinde son tamamlanan seti korur. Yarım kalan transaction (örn. `completeSet` sırasında crash) atomik olarak geri alınır; set ya tamamen vardır ya hiç yoktur ve `command_id` ile güvenle tekrarlanır.
 
 ### 7.2 Rest timer (§91)
 
@@ -297,18 +313,18 @@ interface RestTimer {
   state: 'running' | 'completed' | 'skipped';
   notificationId: string | null;
 }
-remaining = max(0, restDurationSeconds - floor((clock.nowUtc() - restStartedAtUtc)/1000))
+remaining = clamp(restDurationSeconds - floor((clock.nowUtc() - restStartedAtUtc)/1000), 0, restDurationSeconds)  // cihaz saati geri alınırsa süreden büyük çıkmaz
 ```
 
 - `start(duration)`: INSERT `running`, sonra `LocalNotificationScheduler.schedule(at = restStartedAt + duration, body: 'Dinlenme bitti – sıradaki set')` → `notificationId` UPDATE (R91.5). Bildirim izni yoksa sessizce atlanır; timer yine çalışır.
-- `skip()` / oturum bitişi: `state='skipped'`, `cancelNotification(notificationId)` (R91.6).
+- `skip()`: `state='skipped'`, `cancelNotification(notificationId)` (R91.6). Oturum bitişi/iptali: çalışan timer süresi dolmamışsa `skipped` + bildirim iptali, dolmuşsa `completed`.
 - `setInterval` (1 s) yalnızca ekranı yeniler; kalan süre her tick'te formülden hesaplanır (R91.3). Ön plana dönüşte (`AppState → active`) bileşen yeniden hesaplar (R91.7); uygulama yeniden başlatılırsa `rest_timers WHERE state='running'` tek satırı okunur (R91.8).
 - Süre dolmuşsa `state` tembel olarak `completed` yapılır (yazma, ilk okunuşta).
 - Ekran uyku engelleme yok; timer ekran kapalıyken de doğru çalışır çünkü durum zamana bağlıdır (AT-03).
 
 ### 7.3 Hızlı UX (§108)
 
-`NumericStepper` bileşeni: büyük değer, `−step` / `+step` butonları (`step = IncrementResolver.forExercise(exerciseId)`), basılı tutunca hızlanan artış, dokununca klavye. Reps `[-] 11 [+]`, RIR segment `0 1 2 3 4+`. Prefill sırası: (1) aynı oturumda önceki set, (2) son oturumda aynı set indeksi, (3) `Recommendation` değeri (varsa, "önerilen" rozetiyle), (4) şablon hedefi. **"Seti Tamamla"** tek büyük buton; tamamlama sonrası sonraki setin prefill'i hazır. Hedef: ≤ 3 dokunuş / set (R108.4), Maestro testi ile ölçülür.
+`NumericStepper` bileşeni: büyük değer, `−step` / `+step` butonları (`step = IncrementResolver.forExercise(exerciseId)`), basılı tutunca hızlanan artış, dokununca klavye. Reps `[-] 11 [+]`, RIR segment `0 1 2 3 4+`. Prefill sırası: (1) aynı oturumda önceki set, (2) **kabul edilmiş** `Recommendation` değeri ("önerilen" rozetiyle; ilk working set'te son oturumun değerini gölgelemez — R121.2), (3) son oturumda aynı set indeksi, (4) şablon hedefi. Karar verilmemiş öneri kullanıcı set'i tamamlarsa `ignored` olarak kapatılır ve loglanan değer `decision_value_json`'a yazılır. **"Seti Tamamla"** tek büyük buton; tamamlama sonrası sonraki setin prefill'i hazır. Hedef: ≤ 3 dokunuş / set (R108.4), Maestro testi ile ölçülür.
 
 ### 7.4 Unilateral (§102)
 
@@ -424,6 +440,8 @@ Kural özeti: tüm working set'ler `max` tekrara ulaştı **ve** `rir ≥ target
 
 `VolumeAnalytics.weekly(weekKey)` → `{ muscle, directSets, secondarySetsEstimate }`. `directSets` = `COUNT(DISTINCT set_index)` of working sets where `exercise.primaryMuscle = muscle`. `secondarySetsEstimate` = `0.5 × secondary working set sayısı`, UI'da "tahmini, ayrı" olarak (R106.3, R106.4).
 
+**Görüntü grupları:** R106.1'deki "Lats/Back" gibi birleşik satırlar için `MuscleDisplayGroup` haritası UI katmanındadır (`lats + upperBack → 'Sırt'`); analitik her zaman kas bazlı üretir, gruplama sunumda yapılır. `volumeHold` önerisi yalnızca `currentWeeklySets > maxRecommendedWeeklySets` olduğunda üretilir ("bu hafta set eklemeyi bırak" gerekçesiyle); azaltma otomatik önerilmez.
+
 ### 9.5 PR detector (§107)
 
 Set commit transaction'ında çalışır. Adaylar: `set_type='working'`, `exclude_from_pr=0`, `discarded=0`. Türler: `loadPr` (effectiveLoad > önceki max), `repPrAtLoad` (aynı effectiveLoad'da reps > önceki), `estimatedPerformancePr` (e1RM tahmini; etiket: "tahmin"), `sessionVolumePr` (oturum sonunda). `personal_records` tablosuna yazılır; UI kutlaması set sonrası (R107.1–R107.4).
@@ -446,7 +464,7 @@ UI: öneri kartı + `Kabul` / `Değiştir` / `Yok say`; değiştirme stepper ile
 
 ### 9.7 No fake precision (§123)
 
-`TrendCalculator`: kilo için 7 günlük hareketli ortalama + 28 günlük eğim; ölçümler için son 3 ölçümün medyanı. UI kopya kuralları: mutlak "kas kazandın" ifadesi yok; "7 günlük ortalama −0.4 kg/hafta" gibi. Tüm tahmini metrikler `isEstimate: true` ile gelir ve bileşen otomatik olarak "tahmin" rozeti basar (R123.4). Kalori önerisi ±100 kcal bandı ile verilir.
+`TrendCalculator`: kilo için 7 günlük hareketli ortalama (pencerede en az 3 gün; aynı güne birden çok tartı varsa o günün ortalaması) + 28 günlük eğim; ölçümler için son 3 ölçümün medyanı. Trend etiketi eşikleri: kilo için |haftalık değişim| < 0.2 kg → `stable`; ölçüm için |değişim| < 0.5 cm → `stable`. **Omuz/bel oranı** = `shoulder ÷ waist` (2 ondalık), her iki sitenin birbirine en yakın (± 3 gün) ölçüm çifti kullanılır; eşleşme yoksa oran gösterilmez. UI kopya kuralları: mutlak "kas kazandın" ifadesi yok; "7 günlük ortalama −0.4 kg/hafta" gibi. Tüm tahmini metrikler `isEstimate: true` ile gelir ve bileşen otomatik olarak "tahmin" rozeti basar (R123.4). Kalori önerisi ±100 kcal bandı ile verilir.
 
 ---
 
@@ -468,11 +486,11 @@ body_measurements(id, localDateKey, site, finalValueCm, aggregation 'single'|'me
 measurement_samples(id, measurementId, sampleIndex, valueCm)
 ```
 
-`MeasurementQuality.evaluate(samples, site)`: 2 örnek arasındaki fark `> max(0.8 cm, %1.5)` ise "üçüncü ölçüm önerilir" durumu; final = median (3 örnek) veya mean (2 örnek); tek örnek serbest (R97.3, R97.4). Her site için `MeasurementGuide` (kısa metin + çizim asset'i): bel, karın (göbek deliği hizası), omuz (en geniş çevre), biceps (flexed, aynı pozisyon), vb. (R97.1, R97.2).
+`MeasurementQuality.evaluate(samples, site)`: 2 örnek arasındaki fark `> max(0.8 cm, iki örneğin ortalamasının %1.5'i)` ise "üçüncü ölçüm önerilir" durumu; final = median (3 örnek) veya mean (2 örnek); tek örnek serbest ve kullanıcı öneriye rağmen iki örnekle kaydedebilir (R97.3, R97.4). Her site için `MeasurementGuide` (kısa metin + çizim asset'i): bel, karın (göbek deliği hizası), omuz (en geniş çevre), biceps (flexed, aynı pozisyon), vb. (R97.1, R97.2).
 
 ### 11.2 Biceps baseline (§96)
 
-`site ∈ {'bicepsLeftFlexed','bicepsRightFlexed','bicepsFlexed'}`. `BaselineResolver.biceps()` = program başlangıcına en yakın (±7 gün) ilk kayıt; yoksa `null`. Dashboard `null` → **"Başlangıç kol ölçümünü ekle."** CTA; KPI kartı `disabled` (R96.3–R96.5, AT-12). Sol/sağ ayrı girildiğinde `bicepsFlexed` gösterimi ortalama, KPI ayrı ayrı da izlenebilir.
+`site ∈ {'bicepsLeftFlexed','bicepsRightFlexed','bicepsFlexed'}`. `BaselineResolver.biceps()` sırası: (1) `is_baseline=1` işaretli kayıt (onboarding veya "başlangıç ölçümü" akışı bunu yazar; site başına tek satır), (2) yoksa `start_date_key` ± 7 gün penceresindeki **ilk** kayıt, (3) yoksa `null`. Pencere dışında ilk kez ölçen kullanıcı için CTA "Başlangıç ölçümü olarak kaydet" seçeneği sunar; bu kayıt `is_baseline=1` alır ve KPI'da "Başlangıç: Gün N" etiketiyle gösterilir (geç baseline, R123). Dashboard `null` → **"Başlangıç kol ölçümünü ekle."** CTA; KPI kartı `disabled` (R96.3–R96.5, AT-12). Sol/sağ ayrı girildiğinde `bicepsFlexed` gösterimi ortalama, KPI ayrı ayrı da izlenebilir.
 
 ### 11.3 İlk çalıştırma verisi (§119)
 
@@ -495,17 +513,18 @@ core/db/migrations/
   002_add_workout_state.ts
   003_add_lab_results.ts
   …
-interface Migration { version: number; name: string; up(tx): Promise<void>; checksum: string }
+interface Migration { version: number; name: string; up(tx): Promise<void> }   // checksum dosya içeriğinden hesaplanır, schema_migrations'a yazılır
 ```
 
 `MigrationRunner.run()`:
-1. `PRAGMA user_version` ve `schema_migrations` oku; uyuşmazlıkta (manuel müdahale) `DbIntegrityError`.
-2. Bekleyen migration varsa **önce** `db.bak.v<from>.sqlite` dosya kopyası al (`expo-file-system copyAsync`); disk yetersizse kullanıcıya sor (R92.5).
+1. `PRAGMA user_version` ve `schema_migrations` oku; uyuşmazlıkta (manuel müdahale, checksum farkı) `DbIntegrityError` → `DbOpenError` ekranı (§15).
+2. Bekleyen migration varsa **önce** `v90.bak.v<from>.sqlite` dosya kopyası al (`expo-file-system copyAsync`); disk yetersizse migration **başlamaz** ve "Alan yetersiz" ekranı gösterilir (R92.5).
 3. Her migration `BEGIN IMMEDIATE … COMMIT` içinde; `up()` idempotent SQL (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ADD COLUMN` öncesi `PRAGMA table_info` kontrolü) (R92.3).
+   Not: Migration başarısız olduğunda "Yedeği dışa aktar", `TableRegistry` gerektirmeyen **ham dosya paylaşımı**dır (şifreli `.sqlite` kopyası + `manifest.json`); normal ZIP export'u yalnızca şema güncelken çalışır.
 4. Başarı: `schema_migrations INSERT`, `PRAGMA user_version = v`. Hata: `ROLLBACK`; DB kapatılır, yedek dosyası geri kopyalanır, `MigrationFailedScreen` (Türkçe: "Veritabanı güncellenemedi. Verilerin güvende; uygulamayı güncelleyip tekrar dene." + "Yedeği dışa aktar") (R92.6).
 5. Başarılı çalıştırmadan 7 gün sonra `.bak` temizlenir.
 
-Testler (R92.7): `fixtures/db-v001.sql … v00N.sql` her sürüm için; `migrate(fixture) → latest` sonra `assertRowsPreserved()`; iki kez çalıştırma; rastgele migration'da hata enjekte edip veri bütünlüğü (AT-16).
+Testler (R92.7): `test/fixtures/db/v001.sql … v00N.sql` her sürüm için; `migrate(fixture) → latest` sonra `assertRowsPreserved()`; iki kez çalıştırma; rastgele migration'da hata enjekte edip veri bütünlüğü (AT-16).
 
 ### 12.2 Şifreleme (§93)
 
@@ -532,7 +551,7 @@ data.json      { schemaVersion, tables: { profiles: [...], programs: [...], …,
 photos/<photoId>.<ext>
 ```
 
-**Export:** tek okuma transaction'ı (`BEGIN`; tüm tablolar; `COMMIT`) → JSON → ZIP'e yaz → fotoğrafları kopyala → manifest. Paylaşım `expo-sharing` ile (dosya kullanıcı seçimine kaydedilir).
+**Export:** tek okuma transaction'ı (`BEGIN`; tüm tablolar; `COMMIT`) → JSON → ZIP'e yaz → fotoğrafları kopyala → manifest. Paylaşım `expo-sharing` ile (dosya kullanıcı seçimine kaydedilir). `schema_migrations` ve `command_log` **kapsam dışıdır**: ilki hedef DB'nin migration çalıştırmasıyla yeniden kurulur, ikincisi yalnızca yerel idempotency penceresidir (import sonrası sıfırlanması zararsızdır). Otoriter sürüm bilgisi `manifest.json.schemaVersion`'dır; `data.json` içindekiyle uyuşmazsa import reddedilir. Ayarlar: `backup.lastExportAtUtc`, `backup.reminderEnabled`.
 
 **Import (`BackupImporter.import(zipUri)`):**
 1. ZIP'i temp dizine aç; `manifest.json` Zod; `dataSha256` doğrula.
@@ -540,8 +559,9 @@ photos/<photoId>.<ext>
 3. `data.json` tüm tablolar için Zod şemalarıyla doğrula (R95.6).
 4. **Staging DB:** yeni bir şifreli DB dosyası (`v90.import.sqlite`) oluştur, migration'ları çalıştır, tüm satırları tek transaction'da yaz, `PRAGMA integrity_check` ve `foreign_key_check`.
 5. Fotoğrafları `photos.import/` altına kopyala, sha doğrula.
-6. **Atomik değişim:** mevcut DB kapat → `v90.sqlite → v90.pre-import.sqlite` yeniden adlandır → `v90.import.sqlite → v90.sqlite` → `photos/ ↔ photos.import/` swap. Herhangi bir adımda hata: ters işlemler, mevcut veri dokunulmamış kalır (R95.7, AT-15).
-7. Başarıda `pre-import` kopyaları 7 gün saklanır ("Geri al" seçeneği).
+6. **Atomik değişim:** mevcut DB kapat → `v90.sqlite → v90.pre-import.sqlite` yeniden adlandır → `v90.import.sqlite → v90.sqlite` → `photos/ → photos.pre-import/`, `photos.import/ → photos/`. Herhangi bir adımda hata: ters işlemler, mevcut veri dokunulmamış kalır (R95.7, AT-15).
+7. Başarıda `pre-import` kopyaları 7 gün saklanır ("Geri al"). Geri alma penceresi DB dışında, `photos.pre-import/../restore-point.json` sidecar dosyasında tutulur (`{ importedAtUtc, fromSchemaVersion }`) — DB'nin kendisi değiştiği için içeride tutulamaz.
+8. **Guard:** aktif antrenman oturumu (`workout_sessions.status='active'`) varken import başlatılmaz; kullanıcıdan önce oturumu bitirmesi/iptal etmesi istenir.
 
 İçe aktarma modu: **"Değiştir"** (varsayılan; mevcut veri yedekle değiştirilir) ve **"Birleştir"** (v1'de yok; UI'da gösterilmez).
 
@@ -553,7 +573,7 @@ photos/<photoId>.<ext>
 
 `AppLockService`: `enabled` (settings), `graceSeconds` (0/30/300), `lastUnlockedAtUtc` (bellek). Akış: `AppState → active` ve `now - lastUnlocked > grace` → `LockScreen` (tam ekran, altta hiçbir içerik render edilmez) → `LocalAuthentication.authenticateAsync({ disableDeviceFallback: false, promptMessage: 'V90 kilidini aç' })` → başarı: `lastUnlocked = now`. Biyometri kayıtlı değilse cihaz parolası (platform fallback) (R94.3). Etkinleştirme sırasında `hasHardwareAsync && isEnrolledAsync` kontrolü; yoksa seçenek gri ve açıklama.
 
-`PrivacyShield`: `AppState → inactive|background` olduğunda tüm ekranların üstüne opak logo perdesi (`PrivacyOverlay`) render edilir; iOS app switcher snapshot'ı perdeyi yakalar (R94.5). `PhotosScreen` ve `LabsScreen` ek olarak Android'de `preventScreenCaptureAsync()` çağırır; iOS'ta bu özellik **sunulmaz** ve ayar metni bunu söyler (R94.6, R116.5).
+`PrivacyShield`: `AppState → inactive|background` olduğunda tüm ekranların üstüne opak logo perdesi (`PrivacyOverlay`) render edilir; iOS app switcher snapshot'ı perdeyi yakalar (R94.5). `PhotosScreen` ve `LabsScreen`, Android'de yalnızca `settings['privacy.androidFlagSecure'] === true` iken `preventScreenCaptureAsync()` çağırır (varsayılan açık, kullanıcı kapatabilir); iOS'ta bu özellik **sunulmaz**, ayar satırı gri ve metni bunu açıklar (R94.6, R116.5).
 
 ### 13.2 Progress fotoğrafları (§116)
 
@@ -575,7 +595,7 @@ v1'de analytics/crash SDK **yok**. Eklenirse: `analytics/events.ts` içinde kapa
 { "lat-pulldown": { "videoProvider": "youtube", "videoId": "…", "channelName": "…", "sourceUrl": "https://www.youtube.com/watch?v=…", "lastVerifiedAt": "2026-09-01", "fallbackUrl": null } }
 ```
 
-`ExerciseVideo` bileşeni: `react-native-youtube-iframe` (resmi IFrame API) → `onError`/`onReady` zaman aşımı (8 s) → `VideoFallback` (thumbnail `i.ytimg.com/vi/<id>/hqdefault.jpg` varsa, `cues[]` metni, "Kaynağa git" linki). Çevrimdışıysa doğrudan fallback (R114.3, R114.4). Video indirilmez (R114.5).
+`ExerciseVideo` bileşeni: `react-native-youtube-iframe` (resmi IFrame API) → `onError`/`onReady` zaman aşımı (8 s) → `VideoFallback`. Fallback içeriği: (1) `cues[]` teknik metin ipuçları — **her zaman çevrimdışı çalışır**, (2) thumbnail: uygulama ilk başarılı yüklemede `i.ytimg.com/vi/<id>/hqdefault.jpg` dosyasını `documentDirectory/thumbs/` altına önbelleğe alır; önbellek yoksa ve ağ yoksa yerel bir hareket-kalıbı ikonu gösterilir (uzaktan görsel beklenmez), (3) "Kaynağa git" linki. Çevrimdışıysa doğrudan fallback (R114.3, R114.4). Video indirilmez ve yeniden host edilmez (R114.5).
 
 `scripts/verify-exercise-videos.ts` (`npm run verify:exercise-videos`): her `videoId` için `https://www.youtube.com/oembed?url=<sourceUrl>&format=json` isteği; 200 → OK ve `channelName` karşılaştırması; 401/403/404 → BROKEN. Rapor: tablo + `--json`; `--strict` ile non-zero exit (CI'da haftalık cron, PR'da uyarı) (R115).
 
@@ -593,7 +613,9 @@ v1'de analytics/crash SDK **yok**. Eklenirse: `analytics/events.ts` içinde kapa
 | `NotificationPermissionDenied` | `RestTimerService` | Sessiz; ayarlarda bilgi | — |
 | Beklenmeyen render hatası | Kök `ErrorBoundary` + ekran düzeyi boundary'ler | "Bir şeyler ters gitti." | Yeniden yükle · Ana ekrana dön |
 
-Kök `ErrorBoundary` her zaman render edilebilir minimal bir ekran gösterir (hiçbir DB/ağ bağımlılığı yok) → beyaz ekran imkânsız (R117.1). Her komutun `commandId` (uuid) ile idempotent tekrarı desteklenir; retry aynı seti iki kez yazmaz.
+Kök `ErrorBoundary` her zaman render edilebilir minimal bir ekran gösterir (hiçbir DB/ağ bağımlılığı yok) → beyaz ekran imkânsız (R117.1). Her komutun `commandId` (uuid) ile idempotent tekrarı desteklenir; retry aynı seti iki kez yazmaz (`command_log.result_json` orijinal sonucu döndürür; 30 günden eski satırlar temizlenir).
+
+**Domain hata sınıfları** (kullanıcıya Türkçe, aksiyon odaklı metinle eşlenir; ayrıntı ve fırlatan servisler `04-domain-engines.md`): `InvalidTransitionError`, `ProgramNotActiveError`, `ProgramNotPausedError`, `ActiveSessionExistsError`, `SessionNotActiveError`, `PendingPartialDecisionError`, `MissedWorkoutPendingError`, `InvalidRescheduleDateError`, `SequencePlanMismatchError`, `SetAlreadyLoggedError`, `InvalidStateError`, `ValidationError`. Servis metot imzaları için `04-domain-engines.md` kanoniktir; bu belge sorumlulukları tanımlar.
 
 ---
 
@@ -615,6 +637,7 @@ AT-01..AT-20 → test eşlemesi `05-acceptance-tests.md` içindedir. "Complete" 
 
 | § | Gereksinimler | Mimari bileşen(ler) | Belge | Kabul testi |
 |---|---------------|---------------------|-------|-------------|
+| 87 | R87.1–R87.3 | Bu matris + `01`/`03`/`04`/`05` belgeleri; her madde için bileşen ve doğrulama | §1, §17 | — (meta) |
 | 88 | R88.1–R88.8 | `ChallengeCalendar`, `TrainingSequence`, `Scheduler`, `MissedWorkoutResolver`, `scheduled_workouts` FSM | §6 | AT-04, AT-05 |
 | 89 | R89.1–R89.8 | `PauseService`, `program_pauses`, `calendarMode` | §6.5 | AT-04, AT-05 |
 | 90 | R90.1–R90.7 | `ActiveSessionService`, komut/transaction modeli, resume kartı | §7.1 | AT-01, AT-02 |
@@ -651,4 +674,6 @@ AT-01..AT-20 → test eşlemesi `05-acceptance-tests.md` içindedir. "Complete" 
 | 121 | R121.1–R121.3 | `Recommendation.decision` | §9.6 | AT-07 |
 | 122 | R122.1–R122.3 | `rationaleTr`, `evidence` | §9.6 | AT-07 |
 | 123 | R123.1–R123.4 | `TrendCalculator`, `isEstimate` | §9.7 | AT-10 |
-| 124 | R124.1–R124.3 | Test stratejisi | §16, `05-acceptance-tests.md` | AT-01..20 |
+| 124 | R124.1–R124.3 | Test stratejisi; her senaryo için test seviyesi, adımlar ve otomatik test kimlikleri (R124.2); sürüm notu raporlaması (R124.3) | §16, `05-acceptance-tests.md` | AT-01..20 |
+
+**Not:** Servis metot imzaları, eşik sabitleri ve algoritma ayrıntıları için `04-domain-engines.md` kanoniktir; bu belge sorumluluk sınırlarını ve kararları tanımlar. İkisi çeliştiğinde önce bu belge güncellenir, sonra `04` hizalanır.
