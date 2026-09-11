@@ -32,3 +32,16 @@ jobs:
       - name: Seed doğrulaması
         working-directory: v90
         run: npm run verify:seed
+
+      - name: Bağımlılıklar (yalnızca tip denetimi için)
+        working-directory: v90
+        run: npm ci || npm install
+
+      - name: Tip denetimi
+        working-directory: v90
+        run: npm run typecheck
+
+      # Domain motorları ve MigrationRunner: belgedeki test vektörleri.
+      - name: Testler
+        working-directory: v90
+        run: npm test

@@ -63,13 +63,41 @@ dört kontrol birden kırılır.
 Node ≥ 22.5 (`node:sqlite` için) ve Python 3.11+. **Harici bağımlılık yok** —
 `npm install` gerekmez.
 
+## Kod
+
+| Yol | Ne | Belge |
+|-----|-----|-------|
+| `src/core/clock/` | `Clock`/`FakeClock`, `localDateKey`, `stamp` | 04 §12 |
+| `src/core/db/` | `Tx`/`Db`/`DatabaseProvider` portları, node:sqlite adaptörü, hata taksonomisi | 02 §3, §15 |
+| `src/core/db/MigrationRunner.ts` | Bütünlük + checksum, yedek, transaction, geri yükleme, temizlik | 02 §12.1 |
+| `src/domain/exercise/` | `LoadBehavior`, `IncrementResolver`, `SubstitutionEngine` | 04 §3, §8 |
+| `src/domain/progression/` | `ProgressionEngine`, `PlateauEngine`, `VolumeGuardrails` | 04 §4, §5, §6 |
+| `src/domain/workout/PrDetector.ts` | 4 PR türü, Epley e1RM, oturum hacmi | 04 §7 |
+| `src/domain/analytics/` | `TrendCalculator`, `AdherenceCalculator`, `VolumeAnalytics` | 04 §9, §6 |
+| `src/domain/nutrition/RecipeBuilder.ts` | Tarif ve porsiyon hesabı | 04 §10 |
+| `src/domain/measurements/` | `MeasurementQuality`, `BaselineResolver` | 04 §11 |
+| `src/domain/program/` | `ChallengeCalendar`, `TrainingSequence` | 04 §1 |
+
+Domain katmanı **saf TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir,
+bu yüzden Node'da doğrudan ve deterministik test edilir.
+
+### Testler belgeden türetilir
+
+`test/` altındaki 114 test, `04-domain-engines.md` içindeki **test vektörü
+tablolarının** doğrudan karşılığıdır; her test adı kaynağını taşır (`TV-4.01`,
+`A1`, `G11`, `AT-09` …). Bu sayede bir kural değiştiğinde hangi vektörün
+kırıldığı anında görülür.
+
+```bash
+npm run verify     # kayma + seed + tip denetimi + testler
+npm test           # yalnızca testler
+```
+
 ## Sırada ne var
 
-Şema ve seed hazır; uygulama kodu henüz yok. Doğal sıra:
-
-1. `MigrationRunner` + `DatabaseProvider` (02 §12.1, §12.2) — şema zaten hazır ve doğrulanmış
-2. Domain motorları (`04-domain-engines.md`) — saf TypeScript, Node'da test edilebilir
-3. Expo uygulaması ve ekranlar (`06-ux-flows.md`)
-4. `05-acceptance-tests.md` içindeki AT-01..AT-20 senaryoları
+1. Repository katmanı ve servisler (`ActiveSessionService`, `Scheduler`) — 02 §6, §7
+2. Expo uygulaması ve ekranlar — `06-ux-flows.md`
+3. `05-acceptance-tests.md` içindeki AT-01..AT-20 senaryolarının E2E karşılıkları
 
 R124.1 gereği: bu 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
+Şu an domain seviyesinde karşılananlar: AT-08, AT-09, AT-10, AT-11, AT-12, AT-16.

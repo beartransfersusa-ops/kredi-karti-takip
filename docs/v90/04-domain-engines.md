@@ -1817,7 +1817,7 @@ function toRaw(nextEffective: number, ex: Exercise, ctx: LoadContext, cur: RawLo
 |---|---------------|--------|-------|------|----------|
 | TV-3.01 (AT-08) | Leg Press, `selectorizedMachine` | 80 | +%3 = 82.4 | inc 5 | `{ value: 80, fallback: 'repProgression' }` — imkânsız 82.4 önerilmez (R100.3, R100.5) |
 | TV-3.02 (AT-08) | Cable Row, `cableStation` | 80 | +%3 = 82.4 | inc 2.5 | `{ value: 82.5 }` |
-| TV-3.03 | Dumbbell Curl | 12 | +%5 = 12.6 | inc 2 | `{ value: 14 }` (eşitlik yok, en yakın adım) |
+| TV-3.03 | Dumbbell Curl | 12 | +%5 = 12.6 | inc 2 | `{ value: 12, fallback: 'repProgression' }` — 12,6 hedefi 12'ye daha yakın; 14 kg %16,7 sıçrama olurdu (R100.5) |
 | TV-3.04 | Dumbbell Curl, ayrık rack | 12 | 13 | loads [10,12,14,16] | `{ value: 14 }` — eşit uzaklıkta yukarı (R100.4) |
 | TV-3.05 | Barbell Row | 60 | +%4 = 62.4 | inc 2.5 | `{ value: 62.5 }` |
 | TV-3.06 (AT-09) | Assisted Pull-up, bw 107 | assist 40 → eff 67 | eff 72 | inc 5 | `toRaw` → `assistanceKg 35` — **ilerleme** (R101.3) |
@@ -1827,7 +1827,7 @@ function toRaw(nextEffective: number, ex: Exercise, ctx: LoadContext, cur: RawLo
 | TV-3.10 | Push-up, `bodyweight`, bw 107 | eff 107 | — | — | Yük önerisi yok; §4 `repIncrease` üretir |
 | TV-3.11 | Machine Lateral Raise, `machineLevel` | seviye 6 | 7 | — | `machineLevel 7`; e1RM yok |
 | TV-3.12 | Band Pull-apart | band 2 | 3 | — | `bandRank 3`; PR yalnızca rep/ordinal |
-| TV-3.13 | Kullanıcı override | 80, user inc 1.25 | +%3 | user | `{ value: 81.25 }`, `source: 'user'` |
+| TV-3.13 | Kullanıcı override | 80, user inc 1.25 | +%3 = 82.4 | user | `{ value: 82.5 }` (1,25 kademelerinde en yakın), `source: 'user'` |
 | TV-3.14 | Rack tavanı | 32 (max) | 34 | loads […,30,32] | `{ value: 32, fallback: 'repProgression', clamped: 'max' }` |
 | TV-3.15 | Deload | 100 | −%10 = 90 | inc 2.5 | `{ value: 90 }`, `fallback` yok |
 
@@ -1894,14 +1894,14 @@ function recommend(input: ProgressionInput): Recommendation | null {
 
   // (2) Double progression kuralı — TÜM working set'ler üzerinden
   const allAtTop   = sets.every(s => s.reps >= repMax);
-  const anyBelowMin= sets.some(s  => s.reps <  repMin);
+  const allBelowMin= sets.every(s => s.reps <  repMin);   // "bazı setler" değil: 12/11/9 normal yorgunluktur
   const rirOk      = minRir == null ? true : minRir >= targetRir;          // hedef RIR içinde kaldı
   const rirTooLow  = minRir != null && minRir <  targetRir - 1;            // hedefin belirgin altında (çok zorlandı)
 
-  if (partial && !allAtTop) return hold(input, 'partialSession');          // kısmi veriden yük artırılmaz
+  if (partial) return hold(input, 'partialSession');                      // R103.5: eksik veriden öneri çıkmaz
 
   if (allAtTop && rirOk)    return loadIncrease(input);
-  if (anyBelowMin || rirTooLow) {
+  if (allBelowMin || rirTooLow) {
     const twoBadInARow = isSecondConsecutiveMiss(input.exposures, repMin);
     return twoBadInARow ? loadDecrease(input) : hold(input, 'belowTarget'); // tek kötü antrenman yük düşürtmez (R104.1)
   }
@@ -1909,17 +1909,26 @@ function recommend(input: ProgressionInput): Recommendation | null {
 }
 ```
 
-**`loadIncrease` gövdesi** (yüzde → increment → yuvarlama, §3):
+**`loadIncrease` gövdesi.** Artışın birimi **bir minimum kademedir**, yüzde değil: double progression'da aralığın tepesine ulaşınca en küçük gerçek adım eklenir. Kademe mevcut yüke göre orantısız büyük kalıyorsa yük yerine tekrar hedefi artırılır. R100.3'teki "+%2,5–5" bandı **tipik sonucu tarif eder**, hesabın birimi değildir.
+
+> **Not (uygulama turunda düzeltildi).** Önceki sürüm yüzde hedefi (%5 normal / %2,5 muhafazakâr) kullanıyordu. Bu kural TV-4.01 (cable 80 → 82,5), TV-4.02 (makine fallback) ve TV-4.06 (assisted 40 → 35) vektörlerini **aynı anda sağlayamıyordu**: yüzde hedefi cable'da iki kademe atlıyor, assisted'da hiç kademe üretmiyordu. Kademe tabanlı kural üçünü de sağlar.
+
+```ts
+export const MAX_JUMP_PCT = 0.08;                 // bir kademe bundan büyük sıçrama yapıyorsa tekrar progression
+export const MAX_JUMP_PCT_CONSERVATIVE = 0.05;    // R121.3: kullanıcı kararları tavanı daraltır
+```
 
 ```ts
 function loadIncrease(i: ProgressionInput): Recommendation {
   const cur = bestEffectiveLoad(i.exposures.at(-1)!);                       // working set'lerin ortak/en yüksek yükü
   if (cur == null) return repIncreaseBodyweight(i);                         // bodyweight, bw bilinmiyor → reps
-  const pct  = conservative(i) ? 0.025 : 0.05;                              // R100.3 aralığı: %2.5–5
-  const r    = targetFromPercent(cur, pct, i.incrementSpec, i.exercise);
-  if (r.fallback === 'repProgression')
-    return build(i, 'repIncrease', { reps: nextRepTarget(i) },
-      `Bu makinenin en küçük artışı ${i.incrementSpec.incrementKg} kg. Ağırlığı sabit tutup tekrar hedefini ${nextRepTarget(i)}'e çıkar.`);
+  const r = roundToAvailable(cur + i.incrementSpec.incrementKg, cur, i.incrementSpec);
+  const maxJump = conservative(i) ? MAX_JUMP_PCT_CONSERVATIVE : MAX_JUMP_PCT;
+  // jumpTooBig: yüzde eşiği yalnızca gerçek kg ölçeğinde anlamlıdır; ordinal
+  // türlerde (machineLevel, distanceOrBand) ve cur <= 0 iken uygulanmaz.
+  if (r.fallback === 'repProgression' || jumpTooBig(cur, r.value, maxJump, i.exercise))
+    return build(i, 'repIncrease', { reps: i.target.repMax + 1 },     // yük artamıyorsa tek yol tekrardır
+      `Bir kademe artış şu anki yüke göre fazla büyük. Ağırlığı sabit tutup tekrar hedefini ${i.target.repMax + 1}'e çıkar.`);
   const raw = toRaw(r.value, i.exercise, i.ctx, currentRaw(i));
   return build(i, 'loadIncrease', { effectiveLoad: r.value, ...raw }, rationaleLoadIncrease(i, r.value));
 }
@@ -1955,15 +1964,15 @@ function conservative(i: ProgressionInput): boolean {                       // R
 |---|---|---|
 | 12/12/12, minRir 2 | `loadIncrease` | Tüm setler tavanda, RIR hedefte (AT-07) |
 | 12/12/12, minRir 0 | `repIncrease` | Tavanda ama RIR hedefin belirgin altında değil (2−1=1 > 0 → `rirTooLow`) → bkz. satır altı |
-| 12/11/9, minRir 2 | `repIncrease` | Aralık içinde, tavan tamam değil |
+| 12/11/9, minRir 2 | `repIncrease` | Tek set alt sınırın altında = normal yorgunluk; yük korunur |
 | 8/7/6, minRir 0 | `holdLoad` (belowTarget) | Hedefin altı, ilk kez |
 | 8/7/6 (art arda ikinci) | `loadDecrease` | İki ardışık ıskalama |
 | 12/12/12, RIR null | `loadIncrease` | RIR bilinmiyorsa reps kuralı geçerli (`rirOk = true`) |
-| 2 set loglandı (plan 3), 12/12 | `holdLoad` (partialSession) | Kısmi (R103.5) |
+| 2 set loglandı (plan 3), 12/12 | `holdLoad` (partialSession) | Setler tepede olsa bile eksik veriden yük artırılmaz (R103.5) |
 | 3 set, biri `painFlag` | `holdLoad` (pain) | Ağrı kapısı |
 | bodyweight, bw null, 15/14/13 | `repIncrease` | Yük ölçeği yok |
 
-> Not: `12/12/12 @ minRir 0` satırı `rirTooLow` (0 < 2−1) kapısına düşer ve `anyBelowMin=false` olduğu için `holdLoad(belowTarget)` üretir. Bu bilinçli: tavana ulaşmak ama RIR 0'a düşmek "yük zaten sınırda" demektir.
+> Not: `12/12/12 @ minRir 0` satırı `rirTooLow` (0 < 2−1) kapısına düşer ve `allBelowMin=false` olduğu için `holdLoad(belowTarget)` üretir. Bu bilinçli: tavana ulaşmak ama RIR 0'a düşmek "yük zaten sınırda" demektir.
 
 ### 4.4 Sınır durumları ve hata durumları
 
@@ -1983,13 +1992,13 @@ function conservative(i: ProgressionInput): boolean {                       // R
 | # | Senaryo | Girdi | Beklenen |
 |---|---------|-------|----------|
 | TV-4.01 (AT-07) | 12/12/12 @ RIR 2, hedef 10–12 @ 2, cable 80 kg, inc 2.5 | — | `loadIncrease`, `proposed.effectiveLoad = 82.5`, `rationaleTr` "Son antrenmanda 3/3 sette 12 tekrar yaptın ve RIR hedefinin içinde kaldın." |
-| TV-4.02 (AT-08) | Aynı ama makine inc 5, 80 kg | — | `repIncrease`, `proposed.reps = 13`, gerekçe artış adımını açıklar |
+| TV-4.02 (AT-08) | Leg press (inc 5), **40 kg** | — | `repIncrease`, `proposed.reps = 13` — bir kademe %12,5 sıçrama olurdu. 80 kg'da aynı kademe %6,25 → `loadIncrease` 85 |
 | TV-4.03 | 12/11/9 @ RIR 2 | — | `repIncrease` |
 | TV-4.04 | 8/7/6 @ RIR 0, ilk kez | — | `holdLoad`, reason `belowTarget` |
 | TV-4.05 | 8/7/6 @ RIR 0, ikinci kez | — | `loadDecrease`, `proposed.effectiveLoad = 72.5` (80 − %10 → yuvarlama) |
 | TV-4.06 (AT-09) | Assisted pull-up, assist 40, 12/12/12 @ RIR 2, bw 107 | inc 5 | `loadIncrease`, `proposed.assistanceKg = 35` (yük artmadı, **yardım azaldı**) |
-| TV-4.07 (R121.3) | TV-4.01 koşulu ama son 3 öneri `ignored` | — | `loadIncrease` ama `pct = 0.025` → 82.5 yerine 82.5 (aynı, inc tavanı); metrics `conservative: 1` |
-| TV-4.08 (R121.3) | Kullanıcı önceki öneriyi 82.5 → 80 olarak `modified` | — | Sonraki öneri muhafazakâr moddan üretilir |
+| TV-4.07 (R121.3) | Leg press 80 kg (kademe %6,25), son 3 öneri `ignored` | — | `repIncrease` — muhafazakâr tavan %5, sıçrama reddedilir. Kademe zaten küçükse (cable 100 → 102,5) muhafazakâr mod engellemez |
+| TV-4.08 (R121.3) | Kullanıcı önceki öneriyi 85 → 80 olarak `modified` | — | Sonraki öneri muhafazakâr tavanla üretilir |
 | TV-4.09 (R103.5) | Plan 3 set, 2 set loglandı | — | `holdLoad(partialSession)`; yük önerisi yok |
 | TV-4.10 (R102.3) | `separate`: sol 12/12/12, sağ 10/10/9 | — | Tek öneri, sol taraf değerine göre değil **sağ (zayıf)** taraf değerine göre; kartta iki taraf ayrı gösterilir |
 | TV-4.11 | RIR tümü null, 12/12/12 | — | `loadIncrease` (RIR bilinmiyorsa engel değil) |
@@ -2088,7 +2097,10 @@ function evaluate(input: PlateauInput): PlateauInsight | null {
 | `rirAccuracy` attention | `repTargetAdjust` | "RIR hedefini 1 azaltarak (daha yakın başarısızlığa) dene." |
 | `rest` attention | `sameLoad` | "Dinlenmeyi {hedef} sn'ye çıkar; aynı ağırlıkta tekrar dene." |
 | `suitability` attention | `substitution` | "Aynı kası çalıştıran {alternatif} hareketi 4 hafta dene." (§8 ile üretilir) |
-| Hepsi `ok` ve 3 exposure aynı yük | `deload` | "Bir hafta %10 daha hafif çalışıp sonra aynı ağırlığa dön." |
+| Toparlanma maddelerinin hepsi **biliniyor ve** `ok` | `deload` | "Bir hafta %10 daha hafif çalışıp sonra aynı ağırlığa dön." |
+| Toparlanma maddelerinden biri `unknown` | `sameLoad` | "Yeterli veri yok; ağırlığı koruyup check-in ve uyku kaydı tutalım." |
+
+> **Kritik ayrım (uygulama turunda düzeltildi):** "bilinmiyor" ile "iyi" aynı şey **değildir**. Toparlanma verisi eksikken deload önermek, olmayan bir teşhise dayanmak olurdu (R123.1); bu durumda muhafazakâr seçenek yükü korumaktır.
 
 Her öneri kartında **"Neden önerildi?"** açılır (R105.5 metni) ve `Accept / Modify / Ignore` bulunur (R121.1). Kabul edilen `substitution` bile hareketi otomatik değiştirmez: kullanıcı bir sonraki antrenmanda "Hareketi Değiştir" akışına yönlendirilir.
 
@@ -2120,7 +2132,7 @@ Hedef: 3×10–12 @ RIR 2, hareket `cable-row` (`externalLoadHigherIsHarder`).
 | TV-5.05 | 3 durağan ama son sette `pain_flag` | `null`; bunun yerine §4 `holdLoad(pain)` |
 | TV-5.06 | 3 durağan, RIR 0/0/0 | `null` (RIR hedef bandı dışı → "çok zorlanma", plateau değil) |
 | TV-5.07 | TV-5.01 + uyku ort. 5.9 sa (hedef 7.5) | `sleep: attention`, öneri `sameLoad` |
-| TV-5.08 | TV-5.01 + tüm veri eksik | 7 madde `unknown`, tek öneri `sameLoad` |
+| TV-5.08 | TV-5.01 + toparlanma verisi yok | 4 veri maddesi `unknown`; `sameLoad` **var**, `deload` **yok** |
 | TV-5.09 | TV-5.01 sonrası 1 exposure daha durağan | Yeni satır **yok**; mevcut insight güncellendi |
 | TV-5.10 | Insight `resolved`, 3 exposure sonra yine durağan | Yeni insight üretilir |
 | TV-5.11 | Assisted pull-up, assist 40/40/40, bw kayıtlı | Plateau (effectiveLoad sabit) |

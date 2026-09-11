@@ -13,7 +13,9 @@
     "gen": "npm run gen:migration && npm run gen:seed",
     "verify:seed": "node --no-warnings scripts/verify-seed.mjs",
     "verify:drift": "python3 scripts/check-drift.py",
-    "verify": "npm run verify:drift && npm run verify:seed"
+    "verify": "npm run verify:drift && npm run verify:seed && npm run typecheck && npm test",
+    "typecheck": "tsc --noEmit",
+    "test": "node --no-warnings --test \"test/**/*.test.ts\""
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
