@@ -60,8 +60,17 @@ dört kontrol birden kırılır.
 
 ## Gereksinimler
 
-Node ≥ 22.5 (`node:sqlite` için) ve Python 3.11+. **Harici bağımlılık yok** —
-`npm install` gerekmez.
+Node ≥ 22.5 (`node:sqlite` ve yerel TypeScript type-stripping için) ve Python 3.11+.
+Üreticiler ve kayma denetimi bağımlılıksız çalışır; testler ve tip denetimi için
+`npm install` gerekir.
+
+| Paket | Nerede | Niçin |
+|-------|--------|-------|
+| `zod` | runtime | Yedek manifest/veri şeması doğrulaması (02 §12.3) |
+| `typescript`, `@types/node` | dev | `tsc --noEmit` |
+| `@journeyapps/sqlcipher` | dev | Şifreli yolu **CI'da gerçekten** koşturmak (aşağı bkz.) |
+
+`@journeyapps/sqlcipher` yalnızca testlerde kullanılır; uygulamaya girmez.
 
 ## Kod
 
@@ -82,6 +91,11 @@ Node ≥ 22.5 (`node:sqlite` için) ve Python 3.11+. **Harici bağımlılık yok
 | `src/core/db/repositories.ts` | Tipli SQL erişimi; transaction sınırını servis belirler | 02 §3 |
 | `src/core/db/commandLog.ts` | `command_id` ile idempotent komut tekrarı | 04 §2.2.2 |
 | `src/core/backup/` | ZIP arşivleyici, `TableRegistry`, `BackupExporter`, `BackupImporter` | 02 §12.3, ADR-005 |
+| `src/core/db/SqliteDriver.ts` | Sürücü portu: expo-sqlite / sqlcipher-node / node:sqlite | 02 §2.1 |
+| `src/core/db/SqliteDatabaseProvider.ts` | Tek sağlayıcı; `PRAGMA key` dahil açılış akışı | 02 §12.2 |
+| `src/core/db/EncryptedSqliteProvider.ts` | Production yolu: SQLCipher + Keychain/Keystore | ADR-002, §93 |
+| `src/core/db/keys/` | `SecureStore` portu, `DbKeyManager` (256-bit, hex) | 02 §12.2 |
+| `src/core/db/buildGuard.ts` | Production'da şifresiz DB ve Expo Go yasağı | §93.4, §93.7 |
 
 Motorlar (progression, plateau, PR, hacim, analitik, tarif, ölçüm) **saf
 TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir. Servisler
@@ -99,7 +113,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 153 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 171 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -128,11 +142,65 @@ ZIP yazıcısı elle yazıldı (sıfır bağımlılık); doğruluğu Python'ın 
 modülüyle çift yönlü olarak test ediliyor — bizim ürettiğimizi o okuyor,
 onun ürettiğini biz.
 
+### Şifreleme cihazda değil, CI'da doğrulanıyor
+
+§93 "veritabanı şifreli olacak" der; sorun şu ki SQLCipher production'da
+`expo-sqlite` içinden gelir ve Node testlerinde yoktur. "Kod doğru görünüyor"
+demekle yetinmemek için araya bir **sürücü portu** kondu (`SqliteDriver`):
+aynı `SqliteDatabaseProvider` üç sürücüyle koşar.
+
+| Sürücü | Nerede | Şifreli |
+|--------|--------|---------|
+| `expoSqlite` | production (Development Build) | evet |
+| `sqlcipherNode` | test | evet |
+| `nodeSqlite` | test/geliştirme | hayır |
+
+Böylece `test/encryption.test.ts` **gerçek SQLCipher** üzerinde koşar ve
+davranışı iddia etmek yerine kanıtlar:
+
+- dosya `SQLite format 3` başlığıyla başlamıyor; hassas değer ve tablo adı
+  WAL/SHM dahil hiçbir dosyada düz metin geçmiyor (R93.2),
+- yanlış anahtar açılışta reddediliyor, doğru anahtar veriyi geri getiriyor,
+- anahtar hiçbir hata mesajına, `cause` zincirine, stack trace'e veya
+  **dışa aktarılan yedeğin içine** (sıkıştırma açıldıktan sonra da) girmiyor
+  (R93.5, R118.2),
+- şifresiz sürücü anahtarla eşleştirilirse sessizce düz açmak yerine
+  `EncryptionUnsupportedError` fırlatıyor (R93.3),
+- production build şifresiz sağlayıcıyla **veya Expo Go üzerinde** başlamıyor
+  (R93.4, R93.7),
+- migration'ın aldığı `.bak` kopyası da şifreli (02 §12.1 + §12.2),
+- `foreign_keys`, `busy_timeout` ve WAL şifreli bağlantıda da uygulanıyor,
+- sürücünün gerçekten SQLCipher olduğu `PRAGMA cipher_version` ile doğrulanıyor.
+
+Bir tuzak ayrıca kilitlendi: **anahtar yok ≠ anahtar okunamıyor**. iOS'ta ilk
+kilit açılmadan Keychain erişilemez; orada "anahtar bulunamadı, yenisini
+üreteyim" demek mevcut şifreli veritabanını *kalıcı olarak* açılamaz hale
+getirirdi. `DbKeyManager` bu iki durumu ayırır (`KeyUnavailableError`) ve
+korunacak bir veritabanı varken **asla** yeni anahtar üretmez; test bunu
+gerçek bir DB üzerinde, anahtarı geçici olarak kaldırıp geri koyarak doğrular.
+
+Yanında bir **kontrol testi** var: aynı veriyi `nodeSqlite` ile yazıp diskte
+düz metin olarak *bulunduğunu* doğrular. Şifreleme testinin boş koşmadığı
+böyle garanti edilir. Ayrıca `PRAGMA key` satırı sağlayıcıdan kaldırıldığında
+testlerin gerçekten kırıldığı elle doğrulandı.
+
+Anahtar 32 rastgele bayttır, 64 haneli küçük harf hex olarak platform güvenli
+deposunda tutulur (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`): cihaz yedeğiyle başka
+bir cihaza **taşınmaz**. Bu bilinçlidir (ADR-002) — şifreli DB dosyası bir
+şekilde kopyalansa bile yeni cihazda açılamaz; kullanıcının taşınma yolu
+uygulamanın kendi yedeğidir (§95). Bunun bedeli şudur: **anahtar kaybı = veri
+kaybı**, bu yüzden düzenli yedek hatırlatması bir özellik değil zorunluluktur.
+
+`types/expo-modules.d.ts` geçicidir: Expo uygulaması eklendiğinde gerçek
+paketler kurulur ve o dosya silinir.
+
 ## Sırada ne var
 
 1. Expo uygulaması ve ekranlar — `06-ux-flows.md`
-2. Şifreli sağlayıcı (SQLCipher + SecureStore) — 02 §12.2
-3. Progress fotoğrafı depolama ve `OrphanSweeper` — 02 §13.2
+   (prebuild + `['expo-sqlite', { useSQLCipher: true }]`; Expo Go yalnızca UI prototipi)
+2. Progress fotoğrafı depolama ve `OrphanSweeper` — 02 §13.2
+3. App lock / biyometri (AT-19) — §94; iOS'ta ekran görüntüsü engellemesi
+   **vaat edilmeyecek** (R94.6)
 4. Kalan AT senaryolarının E2E karşılıkları (Maestro)
 
 R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.

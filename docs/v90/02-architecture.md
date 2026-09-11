@@ -528,14 +528,77 @@ Testler (R92.7): `test/fixtures/db/v001.sql … v00N.sql` her sürüm için; `mi
 
 ### 12.2 Şifreleme (§93)
 
+**Sürücü portu.** SQLCipher production'da `expo-sqlite` içinden gelir ve Node
+testlerinde yoktur. Şifreli yolun yalnızca cihazda değil CI'da da koşması için
+sağlayıcının altına bir sürücü portu konur; `DatabaseProvider` tektir, değişen
+yalnızca bağlantıyı kimin açtığıdır (R93.3).
+
 ```
-DatabaseProvider { open(): Promise<Db>; close(); path; isEncrypted: boolean }
-EncryptedSqliteProvider: expo-sqlite (SQLCipher) + PRAGMA key = <hex from DbKeyManager>
-PlainSqliteProvider   : yalnızca __DEV__
-DbKeyManager: SecureStore.getItemAsync('v90.dbkey') ?? generate(32 bytes, expo-crypto) → setItemAsync(…, { keychainAccessible: WHEN_UNLOCKED_THIS_DEVICE_ONLY })
+SqliteDriver { name; supportsEncryption: boolean; open(path): Promise<SqliteConnection> }
+  expoSqlite     → production (SQLCipher, useSQLCipher: true)   supportsEncryption = true
+  sqlcipherNode  → test (@journeyapps/sqlcipher)                supportsEncryption = true
+  nodeSqlite     → test/geliştirme (node:sqlite, ŞİFRESİZ)      supportsEncryption = false
+
+DatabaseProvider { open(): Promise<Db>; path; isEncrypted: boolean }
+  SqliteDatabaseProvider { driver, path, keyManager?, pragmas? }   ← tek gerçekleştirme
+  EncryptedSqliteProvider  = SqliteDatabaseProvider(expoSqlite,  keyManager)   ← production
+  NodeSqliteProvider       = SqliteDatabaseProvider(nodeSqlite,  anahtarsız)   ← yalnızca __DEV__/test
 ```
 
+- `keyManager` verilip sürücü `supportsEncryption = false` ise yapıcı
+  `EncryptionUnsupportedError` fırlatır: yanlış eşleşme sessizce **şifresiz**
+  açılmaya dönüşemez.
+- Repository'ler, servisler ve `MigrationRunner` yalnızca `Db` portunu görür;
+  hangi sürücünün koştuğunu bilmezler.
+
+**Açılış sırası** (bağlantı başına, migration transaction'larının dışında):
+
+1. `DbKeyManager.getOrCreate()` — **bağlantı açılmadan önce**. SQLite dosyayı
+   açılışta oluşturduğu için önce açmak "DB zaten var mı?" kontrolünü daima
+   `true` yapar ve aşağıdaki anahtar-yok / anahtar-erişilemez ayrımını bozar;
+   ayrıca anahtar alınamadığında ortada yarım dosya kalmaz.
+2. `driver.open(path)`.
+3. `PRAGMA key = "x'<64 hex>'"` — bağlantının **ilk** ifadesi. Ham 32 bayt
+   `x'…'` blob sözdizimiyle verilir; bare string verilseydi SQLCipher bunu
+   parola sayıp PBKDF2 uygulardı.
+4. `SELECT count(*) FROM sqlite_master` — yanlış anahtar ancak veriye dokununca
+   anlaşılır (`SQLITE_NOTADB` → `DbOpenError`). Kalan PRAGMA'lardan önce
+   yapılır ki hata mesajı "yanlış anahtar" olsun, "journal_mode ayarlanamadı"
+   değil.
+5. `PRAGMA journal_mode = WAL; synchronous = FULL; foreign_keys = ON; busy_timeout = 5000`.
+6. `MigrationRunner.run()`.
+
+**Anahtar yönetimi.**
+
+```
+DbKeyManager { secureStore, randomBytes?, keyId = 'v90.dbkey', dbExists? }
+  getOrCreate(): 64 hane küçük harf hex (32 bayt)
+  exists() / destroy()
+```
+
+- Kaynak: `crypto.getRandomValues`, yoksa `expo-crypto.getRandomBytes`. Zayıf
+  bir kaynağa (ör. `Math.random`) sessiz düşüş yoktur.
+- Depo: `expo-secure-store`, `keychainAccessible: WHEN_UNLOCKED_THIS_DEVICE_ONLY`.
+- **Anahtar yok ≠ anahtar okunamıyor.** Güvenli depo hata verirse, ya da
+  anahtar bulunamayıp `dbExists()` bir veritabanı olduğunu söylerse,
+  `KeyUnavailableError` fırlatılır ve **yeni anahtar üretilmez**. Aksi halde
+  iOS'ta ilk kilit açılmadan yapılan bir açılış denemesi mevcut şifreli
+  veritabanını kalıcı olarak açılamaz hale getirirdi. Çağıran kısa bir
+  beklemeyle yeniden dener.
+- Güvenli depoda geçersiz bir değer varsa `DbKeyError`; hata metnine değerin
+  kendisi değil yalnızca uzunluğu yazılır.
 - Anahtar yalnızca bellekte ve SecureStore'da; log'a yazılmaz, backup'a dahil edilmez (R93.5, R93.6).
+
+**Build koruması (R93.7, R93.4)** — `buildGuard.ts`:
+
+- `assertEncryptedProviderInProduction(provider, { isProduction, isExpoGo })`
+  production'da şifresiz sağlayıcıyla **veya Expo Go üzerinde** başlamayı
+  `InsecureBuildError` ile engeller (bundler alias'ının üstüne çalışma zamanı
+  savunması).
+- `warnIfUnencrypted(...)` geliştirmede şifresiz çalışmanın sessiz kalmamasını sağlar.
+
+**Diğer sonuçlar.**
+
 - Yedek dosyaları (`.bak`) da şifreli DB kopyasıdır (aynı anahtar).
 - Export edilen backup ZIP'i **şifresizdir**, kullanıcı uyarılır ve isteğe bağlı parola ile ZIP AES şifrelemesi (arşivleyici destekliyorsa) sunulur.
 - Anahtar kaybı (cihaz sıfırlama, Keychain silinmesi) = veri kaybı; kullanıcıya düzenli yedek hatırlatması (ayda bir, kapatılabilir).
