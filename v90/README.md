@@ -81,6 +81,7 @@ Node ≥ 22.5 (`node:sqlite` için) ve Python 3.11+. **Harici bağımlılık yok
 | `src/domain/workout/RestTimerService.ts` | Zaman damgasından türetilen sayaç, bildirimler | 04 §2.2.4 |
 | `src/core/db/repositories.ts` | Tipli SQL erişimi; transaction sınırını servis belirler | 02 §3 |
 | `src/core/db/commandLog.ts` | `command_id` ile idempotent komut tekrarı | 04 §2.2.2 |
+| `src/core/backup/` | ZIP arşivleyici, `TableRegistry`, `BackupExporter`, `BackupImporter` | 02 §12.3, ADR-005 |
 
 Motorlar (progression, plateau, PR, hacim, analitik, tarif, ölçüm) **saf
 TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir. Servisler
@@ -98,7 +99,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 143 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 153 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -109,16 +110,34 @@ npm run verify     # kayma + seed + tip denetimi + testler
 npm test           # yalnızca testler
 ```
 
+### Yedekleme neden bu sırayla çalışıyor
+
+R95.7'nin ("import başarısız olursa mevcut veri silinmez") garantisi bir
+`try/catch`'ten değil, **sıralamadan** gelir: arşiv doğrulaması, sha256
+kontrolü, şema sürümü, satır doğrulaması ve tüm yazma işlemleri AYRI bir
+staging veritabanında yapılır. Kullanıcının dosyasına yalnızca `integrity_check`
+ve `foreign_key_check` temiz döndükten sonra, tek bir yeniden adlandırma
+adımıyla dokunulur; o adım da başarısız olursa geri alınır.
+
+Testler yedi ayrı bozulma senaryosunu (ZIP değil, manifest yok, veri
+kurcalanmış, manifest bozuk, gelecek şema sürümü, tip ihlali, fotoğraf sha
+uyuşmazlığı, FK ihlali) tek tek deneyip her birinden sonra **verinin
+bayt bayt aynı kaldığını** doğrular.
+
+ZIP yazıcısı elle yazıldı (sıfır bağımlılık); doğruluğu Python'ın `zipfile`
+modülüyle çift yönlü olarak test ediliyor — bizim ürettiğimizi o okuyor,
+onun ürettiğini biz.
+
 ## Sırada ne var
 
 1. Expo uygulaması ve ekranlar — `06-ux-flows.md`
-2. Yedekleme/geri yükleme (`BackupExporter/Importer`) — 02 §12.3, AT-14/AT-15
-3. Şifreli sağlayıcı (SQLCipher + SecureStore) — 02 §12.2
+2. Şifreli sağlayıcı (SQLCipher + SecureStore) — 02 §12.2
+3. Progress fotoğrafı depolama ve `OrphanSweeper` — 02 §13.2
 4. Kalan AT senaryolarının E2E karşılıkları (Maestro)
 
 R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
 Şu an kod seviyesinde karşılananlar: **AT-01, AT-02, AT-03, AT-04, AT-05,
-AT-06, AT-08, AT-09, AT-10, AT-11, AT-12, AT-16** (12/20). Kalanlar cihaz veya
-henüz yazılmamış katman gerektiriyor: AT-07 (E2E akış), AT-13 (cihaz tz),
-AT-14/15 (yedekleme), AT-17/18 (video/offline UI), AT-19 (biyometri),
+AT-06, AT-08, AT-09, AT-10, AT-11, AT-12, AT-14, AT-15, AT-16** (14/20).
+Kalanlar cihaz veya henüz yazılmamış katman gerektiriyor: AT-07 (E2E akış),
+AT-13 (cihaz tz), AT-17/18 (video/offline UI), AT-19 (biyometri),
 AT-20 (rapor ekranı).
