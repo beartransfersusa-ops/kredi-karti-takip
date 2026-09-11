@@ -36,7 +36,15 @@ try:
 except sqlite3.Error as e:
     sys.exit(f'HATA: üretilen DDL geçersiz — {e}')
 
+# RN bundler'ı .sql dosyası okuyamaz; aynı içeriği TS sabiti olarak da üret.
+ts = ROOT / 'src/core/db/migrations/001_initial.sql.ts'
+esc = sql.replace('\\', '\\\\').replace('`', '\\`').replace('${', '\\${')
+ts.write_text(
+    '// OTOMATİK ÜRETİLDİ — 001_initial.sql ile aynı içerik.\n'
+    '// Elle düzenleme YAPMA; `npm run gen:migration` çalıştır.\n\n'
+    'export const SQL_001_INITIAL = `' + esc + '`;\n', encoding='utf-8')
+
 count = lambda t: con.execute(
     f"SELECT COUNT(*) FROM sqlite_master WHERE type='{t}' AND name NOT LIKE 'sqlite_%'").fetchone()[0]
-print(f'{out.relative_to(ROOT)} — {len(blocks)} blok, '
+print(f'{out.relative_to(ROOT)} (+ .sql.ts) — {len(blocks)} blok, '
       f'{count("table")} tablo, {count("view")} görünüm, {count("index")} indeks · DDL geçerli')

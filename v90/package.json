@@ -4,7 +4,9 @@
   "private": true,
   "description": "V90 – 90 günlük hipertrofi challenge uygulaması (specification: ../docs/v90/)",
   "type": "module",
-  "engines": { "node": ">=22.5" },
+  "engines": {
+    "node": ">=22.5"
+  },
   "scripts": {
     "gen:migration": "python3 scripts/extract-migration.py",
     "gen:seed": "python3 scripts/extract-seed.py",
@@ -12,5 +14,9 @@
     "verify:seed": "node --no-warnings scripts/verify-seed.mjs",
     "verify:drift": "python3 scripts/check-drift.py",
     "verify": "npm run verify:drift && npm run verify:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^5.9.3"
   }
 }
