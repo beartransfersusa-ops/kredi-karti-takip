@@ -76,17 +76,33 @@ Node ≥ 22.5 (`node:sqlite` için) ve Python 3.11+. **Harici bağımlılık yok
 | `src/domain/analytics/` | `TrendCalculator`, `AdherenceCalculator`, `VolumeAnalytics` | 04 §9, §6 |
 | `src/domain/nutrition/RecipeBuilder.ts` | Tarif ve porsiyon hesabı | 04 §10 |
 | `src/domain/measurements/` | `MeasurementQuality`, `BaselineResolver` | 04 §11 |
-| `src/domain/program/` | `ChallengeCalendar`, `TrainingSequence` | 04 §1 |
+| `src/domain/program/` | `ChallengeCalendar`, `TrainingSequence`, `Scheduler`, `PauseService` | 04 §1 |
+| `src/domain/workout/ActiveSessionService.ts` | Komut modeli, autosave, bitirme/iptal, hydrate | 04 §2 |
+| `src/domain/workout/RestTimerService.ts` | Zaman damgasından türetilen sayaç, bildirimler | 04 §2.2.4 |
+| `src/core/db/repositories.ts` | Tipli SQL erişimi; transaction sınırını servis belirler | 02 §3 |
+| `src/core/db/commandLog.ts` | `command_id` ile idempotent komut tekrarı | 04 §2.2.2 |
 
-Domain katmanı **saf TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir,
-bu yüzden Node'da doğrudan ve deterministik test edilir.
+Motorlar (progression, plateau, PR, hacim, analitik, tarif, ölçüm) **saf
+TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir. Servisler
+(`Scheduler`, `ActiveSessionService`, `RestTimerService`) DB'ye yalnızca `Tx`
+portu üzerinden dokunur ve **transaction sınırını kendileri belirler**; bu
+yüzden gerçek SQLite üzerinde entegrasyon testi yapılabilir.
+
+### Neden servis testleri gerçek SQLite üzerinde
+
+Bu katmanın asıl riski SQL ve kısıtların davranışıdır: tek açık plan
+(`ux_sched_one_open`), tek aktif oturum (`ux_sessions_single_active`), tek
+çalışan sayaç (`ux_rest_single_running`), FK'lar ve CHECK'ler. Mock'lanmış bir
+DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
+üzerinde koşar.
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 114 test, `04-domain-engines.md` içindeki **test vektörü
-tablolarının** doğrudan karşılığıdır; her test adı kaynağını taşır (`TV-4.01`,
-`A1`, `G11`, `AT-09` …). Bu sayede bir kural değiştiğinde hangi vektörün
-kırıldığı anında görülür.
+`test/` altındaki 143 test, `04-domain-engines.md` içindeki **test vektörü
+tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
+karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
+`AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
+görülür.
 
 ```bash
 npm run verify     # kayma + seed + tip denetimi + testler
@@ -95,9 +111,14 @@ npm test           # yalnızca testler
 
 ## Sırada ne var
 
-1. Repository katmanı ve servisler (`ActiveSessionService`, `Scheduler`) — 02 §6, §7
-2. Expo uygulaması ve ekranlar — `06-ux-flows.md`
-3. `05-acceptance-tests.md` içindeki AT-01..AT-20 senaryolarının E2E karşılıkları
+1. Expo uygulaması ve ekranlar — `06-ux-flows.md`
+2. Yedekleme/geri yükleme (`BackupExporter/Importer`) — 02 §12.3, AT-14/AT-15
+3. Şifreli sağlayıcı (SQLCipher + SecureStore) — 02 §12.2
+4. Kalan AT senaryolarının E2E karşılıkları (Maestro)
 
-R124.1 gereği: bu 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
-Şu an domain seviyesinde karşılananlar: AT-08, AT-09, AT-10, AT-11, AT-12, AT-16.
+R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
+Şu an kod seviyesinde karşılananlar: **AT-01, AT-02, AT-03, AT-04, AT-05,
+AT-06, AT-08, AT-09, AT-10, AT-11, AT-12, AT-16** (12/20). Kalanlar cihaz veya
+henüz yazılmamış katman gerektiriyor: AT-07 (E2E akış), AT-13 (cihaz tz),
+AT-14/15 (yedekleme), AT-17/18 (video/offline UI), AT-19 (biyometri),
+AT-20 (rapor ekranı).
