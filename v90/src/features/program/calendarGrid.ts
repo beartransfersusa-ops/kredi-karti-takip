@@ -3,7 +3,8 @@
 // Hangi günün seçilebilir olduğunu belirleyen kural burada, SAF biçimde
 // durur: geçmiş kapalı (bugün hariç), dondurma aralıkları kapalı, 90 günlük
 // takvimin dışı uyarılı ama seçilebilir.
-import { addDaysKey, daysBetweenKeys, weekdayIndex } from '../format.ts';
+import { addDaysKey, weekdayIndex } from '../format.ts';
+import { pausedDays } from '../../domain/program/ChallengeCalendar.ts';
 import type { DateKey } from '../../domain/types.ts';
 
 export interface DayCell {
@@ -83,7 +84,13 @@ export function firstPreferredOnOrAfter(
   return from;
 }
 
-/** Program bitiş günü: `activeDays` modunda dondurma günleri eklenir. */
+/**
+ * Program bitiş günü: `activeDays` modunda dondurma günleri eklenir (R89.5).
+ *
+ * Dondurma sayımı motorun `pausedDays`'ine devredilir: `end_date_key` DEVAM
+ * günüdür ve sayılmaz (AT-20: 1–6 Ekim → 5 gün). Burada ayrı bir formül
+ * tutmak bir kez +1 hatası üretti; tek kaynak motor.
+ */
 export function programEndKey(
   startKey: DateKey, durationDays: number, calendarMode: string,
   pauses: ReadonlyArray<{ startDateKey: DateKey; endDateKey: DateKey | null }>,
@@ -91,9 +98,5 @@ export function programEndKey(
 ): DateKey {
   const base = addDaysKey(startKey, durationDays - 1);
   if (calendarMode !== 'activeDays') return base;
-  const pausedDays = pauses.reduce((sum, p) => {
-    const end = p.endDateKey ?? todayKey;
-    return sum + Math.max(0, daysBetweenKeys(p.startDateKey, end) + 1);
-  }, 0);
-  return addDaysKey(base, pausedDays);
+  return addDaysKey(base, pausedDays(pauses, startKey, todayKey));
 }

@@ -103,39 +103,21 @@ export async function loadDay(tx: Tx, dateKey: DateKey): Promise<NutritionDay> {
 
 /**
  * "Copy Yesterday" — dünün öğünleri bugüne EKLENİR, üzerine yazılmaz
- * (06 açık nokta: çakışmada "ekle" seçildi). Snapshot değerleri KOPYALANIR:
- * dünkü öğünün o günkü besin değerleri neyse o taşınır.
+ * (06 açık nokta: çakışmada "ekle" seçildi). Snapshot'lar GÜNCEL
+ * food_items/recipes değerinden YENİDEN hesaplanır (B.12 tablosu): dün
+ * loglanan kayıt olduğu gibi kalır, bugünkü kopya o aradaki düzeltmeleri taşır.
  */
 export async function copyDay(
   tx: Tx, from: DateKey, to: DateKey, nowUtc: string, timeZone: string, newId: () => string,
 ): Promise<number> {
-  const logs = await tx.all<{ id: string; meal_slot: string; note: string | null }>(
-    'SELECT id, meal_slot, note FROM meal_logs WHERE local_date_key = ? ORDER BY logged_at_utc', [from]);
-
+  const { copyMeal } = await import('./copyService.ts');
+  const logs = await tx.all<{ id: string; meal_slot: string }>(
+    'SELECT id, meal_slot FROM meal_logs WHERE local_date_key = ? ORDER BY logged_at_utc', [from]);
+  const clock = { nowUtc: () => new Date(nowUtc), timeZone: () => timeZone, todayKey: () => to };
   let copied = 0;
   for (const log of logs) {
-    const newLogId = newId();
-    await tx.exec(
-      `INSERT INTO meal_logs (id, local_date_key, time_zone, logged_at_utc, meal_slot, copied_from_id, note)
-       VALUES (?,?,?,?,?,?,?)`,
-      [newLogId, to, timeZone, nowUtc, log.meal_slot, log.id, log.note]);
-
-    const entries = await tx.all<{
-      food_id: string | null; recipe_id: string | null; grams: number;
-      kcal_snapshot: number; protein_g_snapshot: number; carb_g_snapshot: number;
-      fat_g_snapshot: number; fiber_g_snapshot: number | null; order_index: number;
-    }>('SELECT * FROM meal_entries WHERE meal_log_id = ? ORDER BY order_index', [log.id]);
-
-    for (const e of entries) {
-      await tx.exec(
-        `INSERT INTO meal_entries
-           (id, meal_log_id, food_id, recipe_id, grams, kcal_snapshot, protein_g_snapshot,
-            carb_g_snapshot, fat_g_snapshot, fiber_g_snapshot, order_index)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-        [newId(), newLogId, e.food_id, e.recipe_id, e.grams, e.kcal_snapshot,
-          e.protein_g_snapshot, e.carb_g_snapshot, e.fat_g_snapshot, e.fiber_g_snapshot, e.order_index]);
-      copied++;
-    }
+    const newLogId = await copyMeal(tx, clock, newId, { mealLogId: log.id, toDateKey: to, slot: log.meal_slot as MealSlot });
+    copied += (await tx.get<{ n: number }>('SELECT COUNT(*) n FROM meal_entries WHERE meal_log_id = ?', [newLogId]))?.n ?? 0;
   }
   return copied;
 }

@@ -385,6 +385,27 @@ check('G6 · §42–§44 beslenme hedefi belgeyle aynı ve makro toplamı tutarl
   return `${t.kcal} kcal · P ${t.proteinG} · K ${t.carbG} · Y ${t.fatG}`;
 });
 
+// ---------------------------------------------------------------- H · video manifest'i
+check('H1 · R114 video manifest\'i geçerli; her giriş katalogdaki bir harekete bağlı', () => {
+  const manifest = json('data/exercise-videos.json');
+  assert(manifest.formatVersion === 1 && Array.isArray(manifest.videos), 'formatVersion/videos');
+  const known = new Set(exercises.map((e) => e.id));
+  const ytId = /^[A-Za-z0-9_-]{11}$/;
+  const seen = new Set();
+  for (const v of manifest.videos) {
+    assert(known.has(v.exerciseId), `${v.exerciseId}: katalogda yok`);
+    assert(!seen.has(v.exerciseId), `${v.exerciseId}: tekrar`); seen.add(v.exerciseId);
+    assert(v.videoProvider === 'youtube', `${v.exerciseId}: provider`);
+    assert(ytId.test(v.videoId), `${v.exerciseId}: videoId`);
+    assert(v.channelName && v.sourceUrl?.startsWith('https://') && v.sourceUrl.includes('youtube.com/'),
+      `${v.exerciseId}: channelName/sourceUrl (R114.2, R114.5)`);
+    assert(!Number.isNaN(Date.parse(v.lastVerifiedAt)), `${v.exerciseId}: lastVerifiedAt`);
+  }
+  return manifest.videos.length === 0
+    ? '0 giriş — manifest bilinçli olarak boş; kürasyon manuel (R114.1)'
+    : `${manifest.videos.length} küratörlü video`;
+});
+
 // ---------------------------------------------------------------- rapor
 console.log('\nV90 seed doğrulaması\n' + '─'.repeat(72));
 for (const c of checks)

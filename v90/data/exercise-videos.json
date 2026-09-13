@@ -1,0 +1,5 @@
+{
+  "formatVersion": 1,
+  "note": "Küratörlü video manifest'i (R114.1). Her giriş elle doğrulanmış bir YouTube videosudur; runtime'da arama YAPILMAZ. Boş bırakılmış: gerçek video kimlikleri doğrulanmadan eklenmez — uydurma bir videoId, R114.1'in yasakladığı şeyin ta kendisidir. Girişler `npm run verify:seed` (H1) ile doğrulanır.",
+  "videos": []
+}

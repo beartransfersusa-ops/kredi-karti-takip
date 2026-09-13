@@ -63,7 +63,7 @@ dört kontrol birden kırılır.
 `src/features`+`test`) ve uygulama (React Native, `app`+`src/ui`+`src/platform`).
 Ayrı olmalarının sebebi ikisinin FARKLI platform tiplerine sahip olması.
 
-**4. Testler** — 246 test, gerçek SQLite üzerinde.
+**4. Testler** — 268 test, gerçek SQLite üzerinde.
 
 **5. Bundle denetimi** (`verify:bundle`) — uygulama gerçekten derleniyor mu ve
 şifresiz yol bundle'a sızmış mı? Ayrıntı için aşağı bkz.
@@ -116,7 +116,7 @@ onun uygulamaya girmediğini her çalıştırmada doğrular.
 | `src/platform/` | Expo adaptörleri: saat, dosya, bildirim, hash, id, blob | 02 §2 |
 | `src/features/` | Saf görünüm modelleri (kart önceliği, yük alanı, tam/kısmi) | 06 A.1, A.3, A.4 |
 | `src/ui/` | Tasarım belirteçleri, bileşenler, i18n, AppProvider, kilit | 06 A.0, B.0 |
-| `app/` | expo-router rotaları (20 ekran) | 06 rota haritası |
+| `app/` | expo-router rotaları (21 ekran) | 06 rota haritası |
 
 Motorlar (progression, plateau, PR, hacim, analitik, tarif, ölçüm) **saf
 TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir. Servisler
@@ -134,7 +134,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 246 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 268 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -267,7 +267,7 @@ doğrulandı: SQLCipher, native projeye gerçekten giriyor.
 | Rota | Ne | Belge |
 |------|-----|-------|
 | `(tabs)/index` | Dashboard: 4 kart önceliği, kaçırılan kararı, kol KPI | A.1, A.2, A.5 |
-| `workout/active` | Set girişi, unilateral, dinlenme çubuğu, hareket atlama | A.3 |
+| `workout/active` | Set girişi, unilateral, dinlenme çubuğu, hareket atlama, öneri kartı, "Teknik" (video fallback) | A.3, A.7, B.15 |
 | `workout/finish` | Tam/kısmi kuralı, kısmi karar, antrenman tarihi | A.4 |
 | `workout/substitute` | Alternatif hareket (ekipman + ağrı filtreli) | A.3 |
 | `program/settings` | Dondur/devam ettir, takvim modu önizlemeli | A.9 |
@@ -279,9 +279,11 @@ doğrulandı: SQLCipher, native projeye gerçekten giriyor.
 | `settings/backup` | Dışa aktar / içe aktar / geri al | B.7, B.8 |
 | `measurements/new` | 1–3 örnek, eşik aşımında üçüncüsü önerilir | B.9 |
 | `(tabs)/progress` | Kilo trendi, omuz/bel oranı, haftalık hacim, adherence | B.10, B.11 |
-| `(tabs)/nutrition` | Gün günlüğü, Copy Yesterday | B.12 |
+| `(tabs)/nutrition` | Gün günlüğü, Copy Yesterday, öğün tekrarı, "kayıtlı öğün olarak sakla" | B.12 |
+| `nutrition/add` | Besin arama (son / favori / kayıtlı / tarif / tümü), porsiyon dönüştürücü, yeni besin | B.12 |
 | `nutrition/recipe` | Tarif oluşturucu, cooked yield, porsiyon | B.13 |
 | `photos/index` | İlerleme fotoğrafları, karşılaştırma, silme | B.14 |
+| `report/day90` | Day 90 raporu: kilo/çevre deltaları, oran, adherence, PR'lar; programı kullanıcı kapatır | B.19, AT-20 |
 
 Öneri kartı (A.7) ayrı bir rota değil: aktif antrenman ekranında hareket
 başlığında ve İlerleme ekranında hacim önerisi olarak görünür.
@@ -289,7 +291,7 @@ başlığında ve İlerleme ekranında hacim önerisi olarak görünür.
 ### UI metni de üretilir
 
 `scripts/extract-i18n.py`, `06-ux-flows.md` içindeki "Türkçe metinler"
-tablolarından 495 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
+tablolarından 518 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
 Üretilen `TrParams` tipi yer tutucuları **derleme zamanında** denetler:
 
 ```ts
@@ -348,12 +350,40 @@ bırakmak yerine teste bağladık:
 | R116.3 · cloud sync yok | `app/photos/` ve `src/features/photos/` kaynağı ile `photos.*` metinleri taranıyor: iCloud / Google Drive / "cloud sync" / "yakında" geçemez. Tersine "buluta gönderilmez" cümlesi BULUNMALI (denetim boş koşmasın) |
 | R116.4 · silme dosyayı da temizler | Silme üç adımlı; yarıda kesilirse `sweepOrphans` açılışta tamamlar — test bunu simüle ediyor |
 | R94.6 · tutulamayacak söz verilmez | `preventScreenCaptureAsync` yalnızca Android'de ve ayara bağlı çağrılır; iOS'ta bilgi metni var, anahtar YOK |
+| R111.3 · seed güncellemesi override'ı ezmez | `installSeed`, `custom_edited = 1` besinlere dokunmaz (`preservedFoods` sayacı); seed'den düşen besin **soft-delete** olur, kullanıcı günlüğü bozulmaz |
+| R114.1 · video araması yok | Video ID'leri yalnızca `data/exercise-videos.json` manifest'inden gelir; `verify-seed` H1 her girişi katalogdaki bir harekete bağlar. Manifest bilinçli olarak **boş** |
+| R123 · sahte kesinlik yok (rapor) | Day 90 raporu yalnızca ölçülen deltaları gösterir; e1RM "tahmin" rozetiyle, biceps bilinmiyorsa `0 cm` değil CTA. Test raporun tüm metnini "kesin / kas kazandın" için tarar |
 
 Fotoğraf silme sırası bilinçli: satır önce `pending_delete = 1` yapılır
 (fotoğraf grid'den hemen kaybolur), sonra dosya, sonra satır. Kesinti hâlinde
 kullanıcı için fotoğraf zaten silinmiştir; "sildim ama geri geldi" durumu
 oluşmaz. Dosyası kaybolmuş satır ise **silinmez**, raporlanır — kaydı kaldırmaya
 kullanıcı karar verir.
+
+### Besin seed'i belgeden gelir
+
+`docs/v90/00-specification-part1.md` §46.1'deki 189 satırlık tablo tek
+kaynaktır; `scripts/extract-seed.py` bundan `data/food-items.json` üretir ve
+üretirken **kendi kendini denetler**: kcal ≈ 4P + 4K + 9Y tutmayan, kaynağı
+`usda`/`tr-label` olmayan, birimi/porsiyonu tutarsız veya "iyi/kötü"
+etiketi taşıyan satır üretimi kırar. Marka ürünleri ve alkol kapsam dışıdır
+(belgede gerekçesiyle). Seed **tek doğru değildir** (R111.1): kullanıcı her
+değeri etiketten düzeltebilir ve bu düzeltme seed güncellemesinde korunur.
+
+Copy Yesterday / öğün tekrarı / kayıtlı öğünler geçmiş satırı kopyalamaz;
+**bugünkü** besin değerinden yeniden snapshot alır. Böylece düzeltilmiş bir
+besin, kopyalanan öğünde de doğru görünür.
+
+### Video: manifest boş, fallback tam
+
+§114 çalışma zamanında video aramayı yasaklar; bu yüzden video katmanı
+"kürasyonlu manifest + fallback" olarak kuruldu. Manifest şu an sıfır giriş
+içerir: hareket başına doğru YouTube ID'yi **doğrulamadan** yazmak R114.1'in
+ruhuna aykırıydı. Boş manifestle ekran şunu yapar: hareket ipuçları (cues)
+her zaman görünür, "video yok" rozeti çıkar, çevrimdışı/erişilemez
+durumlarında yeniden dene + kaynağa git vardır. Manifest'e giriş eklemek
+`data/exercise-videos.json` düzenlemek ve `npm run verify:seed` (H1)
+koşturmaktır; oynatıcı ancak o zaman bağlanır.
 
 ### Uçtan uca test
 
@@ -371,22 +401,23 @@ antrenman → bitirme → adherence. Bu test iki gerçek hata buldu:
 
 ## Sırada ne var
 
-1. **Beslenme besin seed'i (§111 USDA / TR etiket)** — en büyük eksik. Şu an
-   yalnızca kullanıcının kendi eklediği besinler aranabiliyor; tarif
-   oluşturucu da bu yüzden pratikte boş bir katalogla başlıyor. Seed geldiğinde
-   `installSeed`'e `custom_edited = 1` satırlarını atlama kuralı eklenmeli
-   (R111.3) — şu an besin seed'i olmadığı için o dal hiç yok.
-2. Video fallback (B.15) ve video manifest'i — §114
-3. Day 90 raporu ekranı (AT-20) ve kayıtlı öğün / Copy Meal akışları (B.12)
-4. Kalan AT senaryolarının E2E karşılıkları (Maestro; AT-13 cihaz tz,
-   AT-17/18 video/offline UI, AT-19 biyometri, AT-20 rapor)
+Kod tarafında belgedeki tüm akışlar yazıldı. Kalanlar cihaz ve içerik işi:
+
+1. **Gerçek cihazda E2E (Maestro)** — AT-07 akış, AT-13 cihaz saat dilimi
+   değişimi, AT-17/18 video ve çevrimdışı UI, AT-19 biyometri, AT-20 Day 90
+   raporu. Bu altı senaryo simülatör/CI'da kanıtlanamaz.
+2. **Video manifest kürasyonu** — her hareket için kanal + ID + doğrulama
+   tarihi elle girilir; manifest dolunca oynatıcı bağlanır (yukarı bkz.).
+3. **İlk gerçek build** — `eas build --platform android --profile preview`
+   ("Telefona kurulum" bölümü). Bu depoda hazır bir APK / indirme bağlantısı
+   **yoktur**; build senin Expo hesabında üretilir.
 
 R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
 Şu an **kod seviyesinde** karşılananlar: AT-01, AT-02, AT-03, AT-04, AT-05,
 AT-06, AT-08, AT-09, AT-10, AT-11, AT-12, AT-14, AT-15, AT-16 (14/20).
 
-Ekranlar yazıldı ama bu, AT sayacını **artırmaz**: kalan altı senaryo gerçek
-cihazda koşan bir E2E (Maestro) gerektirir ve o henüz yok — AT-07 (E2E akış),
-AT-13 (cihaz saat dilimi değişimi), AT-17/18 (video ve çevrimdışı UI),
-AT-19 (biyometri), AT-20 (Day 90 raporu ekranı). Ekran kodunun varlığı
-senaryonun geçtiği anlamına gelmediği için sayaç 14/20'de duruyor.
+Day 90 raporu ve video fallback ekranları yazıldı ama bu, AT sayacını
+**artırmaz**: kalan altı senaryo (AT-07, AT-13, AT-17, AT-18, AT-19, AT-20)
+gerçek cihazda koşan bir E2E gerektirir ve o henüz yok. AT-20'nin veri katmanı
+`test/day90Report.test.ts` içinde belgedeki fixture ile doğrulanıyor; ekranın
+kendisi cihazda görülmeden sayaç 14/20'de durur.

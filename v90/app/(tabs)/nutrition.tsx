@@ -8,6 +8,9 @@ import { View } from 'react-native';
 import { router } from 'expo-router';
 import { newId } from '../../src/platform/id.ts';
 import { MEAL_SLOTS, copyDay, loadDay } from '../../src/features/nutrition/nutritionQuery.ts';
+import { repeatSlot, saveAsMeal } from '../../src/features/nutrition/copyService.ts';
+import { TextInput } from 'react-native';
+import { radius, usePalette } from '../../src/ui/theme.ts';
 import type { MealSlot, NutritionDay, Totals } from '../../src/features/nutrition/nutritionQuery.ts';
 import { addDaysKey, dateTr, num, weekdayTr } from '../../src/features/format.ts';
 import { useCommand, useDbQuery } from '../../src/ui/AppProvider.tsx';
@@ -35,6 +38,8 @@ export default function NutritionRoute() {
 function Nutrition() {
   const [offset, setOffset] = useState(0);
   const [confirmCopy, setConfirmCopy] = useState(false);
+  const [saving, setSaving] = useState<{ mealLogId: string; name: string } | null>(null);
+  const c = usePalette();
 
   const q = useDbQuery(useCallback((s) => s.db.withTransaction(async (tx) => {
     const todayKey = s.clock.todayKey();
@@ -48,6 +53,18 @@ function Nutrition() {
     await s.db.withTransaction((tx) => copyDay(
       tx, addDaysKey(dateKey, -1), dateKey,
       s.clock.nowUtc().toISOString(), s.clock.timeZone(), newId));
+  });
+
+  // "Son {slot} öğününü tekrarla" — son 7 günün en yeni kaydı (B.12).
+  const repeat = useCommand(async (s, slot: MealSlot) => {
+    const id = await s.db.withTransaction((tx) => repeatSlot(tx, s.clock, newId, {
+      slot, toDateKey: addDaysKey(s.clock.todayKey(), offset),
+    }));
+    if (!id) throw new Error(tr['nutrition.repeatSlot.none']);
+  });
+  const save = useCommand(async (s) => {
+    if (!saving || !saving.name.trim()) return;
+    await s.db.withTransaction((tx) => saveAsMeal(tx, s.clock, newId, saving));
   });
 
   if (q.loading) {
@@ -87,6 +104,12 @@ function Nutrition() {
       {!day.yesterdayHasData ? (
         <Text variant="caption" color="faint">{t('nutrition.copyYesterday.emptySource')}</Text>
       ) : null}
+      {/* Repeat Breakfast yalnızca kahvaltı boşsa görünür (B.12). */}
+      {!day.meals.some((m) => m.slot === 'breakfast') ? (
+        <Button label={t('nutrition.repeatBreakfast')} busy={repeat.busy}
+          onPress={async () => { if (await repeat.run('breakfast')) q.reload(); }} />
+      ) : null}
+      {repeat.error ? <ErrorBar message={repeat.error.message} /> : null}
 
       <Divider />
 
@@ -115,12 +138,35 @@ function Nutrition() {
             {meals.some((m) => m.note) ? (
               <Text variant="caption" color="faint">{meals.map((m) => m.note).filter(Boolean).join(' · ')}</Text>
             ) : null}
+            <Row wrap>
+              <Button label={t('nutrition.repeatSlot', { slot: SLOT_LABEL[slot] })} kind="ghost" busy={repeat.busy}
+                onPress={async () => { if (await repeat.run(slot)) q.reload(); }} />
+              <Button label={t('nutrition.savedMeal.saveAs')} kind="ghost"
+                onPress={() => setSaving({ mealLogId: meals[0]!.id, name: '' })} />
+            </Row>
           </Card>
         );
       })}
 
       {day.meals.length === 0 ? (
         <Card><Text color="muted">Bu gün için kayıt yok.</Text></Card>
+      ) : null}
+
+      {saving ? (
+        <Card>
+          <Text variant="label" color="muted">{t('nutrition.savedMeal.namePrompt')}</Text>
+          <TextInput
+            value={saving.name} autoFocus placeholderTextColor={c.textFaint}
+            onChangeText={(name) => setSaving({ ...saving, name })}
+            style={{ minHeight: 44, borderRadius: radius.md, paddingHorizontal: space.md, backgroundColor: c.surfaceAlt, color: c.text }}
+          />
+          {save.error ? <ErrorBar details={save.error.message} /> : null}
+          <Row style={{ justifyContent: 'flex-end' }}>
+            <Button label={t('common.cancel')} kind="ghost" onPress={() => setSaving(null)} />
+            <Button label={t('common.save')} kind="primary" busy={save.busy} disabled={!saving.name.trim()}
+              onPress={async () => { if (await save.run()) setSaving(null); }} />
+          </Row>
+        </Card>
       ) : null}
 
       <ConfirmDialog

@@ -2,7 +2,7 @@
 // Kaynak: docs/v90/06-ux-flows.md "Türkçe metinler" tabloları.
 // Yeniden üretmek için: npm run gen:i18n
 //
-// 495 anahtar. Metin değişecekse ÖNCE belge güncellenir;
+// 518 anahtar. Metin değişecekse ÖNCE belge güncellenir;
 // aksi halde `npm run verify:drift` CI'da kırılır.
 
 export const tr = {
@@ -394,6 +394,29 @@ export const tr = {
   'reco.rationale.example': 'Son antrenmanda 3/3 sette 12 tekrar yaptın ve RIR hedefinin içinde kaldın.',
   'reco.userValueBadge': 'senin değerin',
   'reco.why': 'Neden önerildi?',
+  'report.adherence': '{completed} tam · {partial} kısmi · {skipped} atlandı · {missed} kaçırıldı',
+  'report.complete.button': 'Programı tamamla',
+  'report.complete.confirm': 'Program "tamamlandı" olarak kapatılacak. Kayıtların ve raporun kalır; yeni bir program başlatabilirsin.',
+  'report.complete.hint': 'Kapatmak zorunlu değil; istersen devam edebilirsin.',
+  'report.completedOn': 'Tamamlandı: {date}',
+  'report.delta.cm': '{delta} cm',
+  'report.delta.kg': '{delta} kg',
+  'report.disclaimer': 'Bu rapor ölçümlerinin özetidir; vücut kompozisyonu hakkında kesin bir iddia taşımaz.',
+  'report.noData': 'Bu ölçüm için yeterli kayıt yok',
+  'report.period': '{start} → {end}',
+  'report.preview': 'Day {day} / 90 · ön izleme',
+  'report.prs.bestE1rm': 'En yüksek tahmini 1RM: {kg} kg',
+  'report.prs.count': '{n} kişisel rekor',
+  'report.ratio.title': 'Bel / Omuz oranı',
+  'report.row': '{from} → {to}',
+  'report.section.body': 'Vücut ölçüleri',
+  'report.section.prs': 'Kişisel rekorlar',
+  'report.section.training': 'Antrenman',
+  'report.section.weight': 'Kilo',
+  'report.title': 'Day 90 raporu',
+  'report.weight.baselineHint': 'Başlangıç: ilk 7 günün ortalaması',
+  'report.weight.finalHint': 'Final: Day 90\'da biten 7 günlük ortalama',
+  'report.weight.slope': 'Son 28 gün: {delta} kg/hafta',
   'reschedule.afterEnd': '90 günlük takvimin dışında',
   'reschedule.cancel': 'Vazgeç',
   'reschedule.confirm': 'Taşı',
@@ -895,6 +918,29 @@ export type TrParams = {
   'reco.rationale.example': undefined;
   'reco.userValueBadge': undefined;
   'reco.why': undefined;
+  'report.adherence': { 'completed': string | number; 'missed': string | number; 'partial': string | number; 'skipped': string | number };
+  'report.complete.button': undefined;
+  'report.complete.confirm': undefined;
+  'report.complete.hint': undefined;
+  'report.completedOn': { 'date': string | number };
+  'report.delta.cm': { 'delta': string | number };
+  'report.delta.kg': { 'delta': string | number };
+  'report.disclaimer': undefined;
+  'report.noData': undefined;
+  'report.period': { 'end': string | number; 'start': string | number };
+  'report.preview': { 'day': string | number };
+  'report.prs.bestE1rm': { 'kg': string | number };
+  'report.prs.count': { 'n': string | number };
+  'report.ratio.title': undefined;
+  'report.row': { 'from': string | number; 'to': string | number };
+  'report.section.body': undefined;
+  'report.section.prs': undefined;
+  'report.section.training': undefined;
+  'report.section.weight': undefined;
+  'report.title': undefined;
+  'report.weight.baselineHint': undefined;
+  'report.weight.finalHint': undefined;
+  'report.weight.slope': { 'delta': string | number };
   'reschedule.afterEnd': undefined;
   'reschedule.cancel': undefined;
   'reschedule.confirm': undefined;

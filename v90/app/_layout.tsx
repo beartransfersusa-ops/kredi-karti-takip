@@ -66,6 +66,7 @@ function Shell() {
         <Stack.Screen name="nutrition/add" options={{ title: t('nutrition.addFood') }} />
         <Stack.Screen name="nutrition/recipe" options={{ title: t('recipe.title') }} />
         <Stack.Screen name="photos/index" options={{ title: t('photos.title') }} />
+        <Stack.Screen name="report/day90" options={{ title: t('report.title') }} />
       </Stack>
     </>
   );

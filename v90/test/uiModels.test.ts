@@ -140,9 +140,11 @@ test('varsayılan seçim ilk TERCİH EDİLEN gün; dondurma atlanır', () => {
 });
 
 test('activeDays modunda program bitişi dondurma günü kadar uzar (R89.5)', () => {
-  const pauses = [{ startDateKey: '2026-09-20', endDateKey: '2026-09-22' }];   // 3 gün
+  // end_date_key DEVAM günüdür ve sayılmaz: 20–22 Eylül = 2 dondurma günü
+  // (AT-20: 1–6 Ekim → 5 gün). Sayım motorun pausedDays'ine devredildi.
+  const pauses = [{ startDateKey: '2026-09-20', endDateKey: '2026-09-22' }];
   assert.equal(programEndKey('2026-09-01', 90, 'strictCalendar', pauses, '2026-09-30'), '2026-11-29');
-  assert.equal(programEndKey('2026-09-01', 90, 'activeDays', pauses, '2026-09-30'), '2026-12-02');
+  assert.equal(programEndKey('2026-09-01', 90, 'activeDays', pauses, '2026-09-30'), '2026-12-01');
 });
 
 // ─────────────────────────────────────────────── B.2 · giriş doğrulama

@@ -113,7 +113,7 @@ function FinishedCard() {
   return (
     <Card>
       <Text variant="title">{t('home.finished.title')}</Text>
-      <Button label="Day 90 raporunu aç" kind="primary" onPress={() => router.push('/(tabs)/progress')} />
+      <Button label={t('report.title')} kind="primary" onPress={() => router.push('/report/day90')} />
     </Card>
   );
 }

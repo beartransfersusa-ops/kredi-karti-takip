@@ -31,6 +31,12 @@ import {
 import { ErrorBoundary } from '../../src/ui/components/ErrorBoundary.tsx';
 import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog.tsx';
 import { RecommendationCardView } from '../../src/ui/components/RecommendationCard.tsx';
+import { ExerciseVideo } from '../../src/ui/components/VideoFallback.tsx';
+import { initialState } from '../../src/features/video/videoManifest.ts';
+import type { VideoManifest } from '../../src/features/video/videoManifest.ts';
+import videoManifestJson from '../../data/exercise-videos.json';
+
+const VIDEO_MANIFEST = videoManifestJson as unknown as VideoManifest;
 import { space, usePalette } from '../../src/ui/theme.ts';
 import { t, tr } from '../../src/ui/i18n/index.ts';
 
@@ -191,6 +197,7 @@ function ExerciseCard(p: {
 }) {
   const c = usePalette();
   const { row, exercise } = p;
+  const [showTechnique, setShowTechnique] = useState(false);
   const done = row.status === 'done';
   const skipped = row.status === 'skipped';
 
@@ -246,7 +253,17 @@ function ExerciseCard(p: {
         />
       )}
 
+      {/* "Teknik": ipuçları + (varsa) küratörlü video; ağ yoksa da çalışır (AT-17/18). */}
+      {showTechnique && exercise ? (
+        <ExerciseVideo
+          state={initialState(VIDEO_MANIFEST, exercise.id, true)}
+          cues={exercise.cues}
+          todayKey={new Date().toISOString().slice(0, 10)}
+        />
+      ) : null}
+
       <Row wrap>
+        <Button label="Teknik" kind="ghost" onPress={() => setShowTechnique((v) => !v)} />
         <Button
           label={t('active.substitute')} kind="ghost"
           onPress={() => router.push(`/workout/substitute?sessionExerciseId=${row.id}`)}

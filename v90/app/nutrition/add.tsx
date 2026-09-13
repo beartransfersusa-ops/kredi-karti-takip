@@ -10,6 +10,8 @@ import { TextInput, View } from 'react-native';
 import { newId } from '../../src/platform/id.ts';
 import { MEAL_SLOTS } from '../../src/features/nutrition/nutritionQuery.ts';
 import type { MealSlot } from '../../src/features/nutrition/nutritionQuery.ts';
+import { insertSavedMeal, listSavedMeals, recentFoodIds, toggleFavorite } from '../../src/features/nutrition/copyService.ts';
+import { addRecipeToMeal, listRecipes } from '../../src/features/nutrition/recipeQuery.ts';
 import { num } from '../../src/features/format.ts';
 import { useCommand, useDbQuery } from '../../src/ui/AppProvider.tsx';
 import {
@@ -21,9 +23,19 @@ import { t, tr } from '../../src/ui/i18n/index.ts';
 
 interface FoodRow {
   id: string; name: string; brand: string | null; source: string;
+  serving_unit: string; serving_size_g: number | null;
   kcal_per_100g: number; protein_g_per_100g: number;
   carb_g_per_100g: number; fat_g_per_100g: number; fiber_g_per_100g: number | null;
+  is_favorite: number;
 }
+
+/** Yeni besin formunda kullanıcının girdiği alanlar (100 g bazlı). */
+type NewFoodInput = Pick<FoodRow,
+  'name' | 'brand' | 'kcal_per_100g' | 'protein_g_per_100g' | 'carb_g_per_100g' | 'fat_g_per_100g' | 'fiber_g_per_100g'>;
+
+type Tab = 'recent' | 'favorites' | 'saved' | 'recipes' | 'all';
+
+const UNIT_LABEL: Record<string, string> = { piece: 'adet', scoop: 'ölçek', slice: 'dilim', g: 'g', ml: 'ml' };
 
 const SOURCE_LABEL: Record<string, string> = {
   'seed:usda': tr['nutrition.source.seedUsda'],
@@ -43,15 +55,48 @@ function AddFood() {
   const [slot, setSlot] = useState<MealSlot>('breakfast');
   const [picked, setPicked] = useState<FoodRow | null>(null);
   const [grams, setGrams] = useState<number | null>(100);
+  const [servings, setServings] = useState<number | null>(1);
   const [creating, setCreating] = useState(false);
+  // "Son" varsayılan sekme (B.12); arama yazılınca "Tümü"ne geçilir.
+  const [tab, setTab] = useState<Tab>('recent');
 
   const q = useDbQuery(useCallback((s) => s.db.withTransaction(async (tx) => {
     const like = `%${query.trim()}%`;
-    return tx.all<FoodRow>(
-      `SELECT id, name, brand, source, kcal_per_100g, protein_g_per_100g,
-              carb_g_per_100g, fat_g_per_100g, fiber_g_per_100g
-       FROM food_items WHERE is_deleted = 0 AND name LIKE ? ORDER BY name LIMIT 50`, [like]);
-  }), [query]), [query]);
+    const base = `SELECT f.id, f.name, f.brand, f.source, f.serving_unit, f.serving_size_g,
+                         f.kcal_per_100g, f.protein_g_per_100g, f.carb_g_per_100g, f.fat_g_per_100g, f.fiber_g_per_100g,
+                         CASE WHEN ff.food_id IS NULL THEN 0 ELSE 1 END AS is_favorite
+                  FROM food_items f LEFT JOIN food_favorites ff ON ff.food_id = f.id
+                  WHERE f.is_deleted = 0 AND f.name LIKE ?`;
+    const effective: Tab = query.trim() ? 'all' : tab;
+    let foods: FoodRow[] = [];
+    if (effective === 'recent') {
+      const ids = await recentFoodIds(tx, s.clock.todayKey());
+      const rows = ids.length ? await tx.all<FoodRow>(`${base} AND f.id IN (${ids.map(() => '?').join(',')})`, [like, ...ids]) : [];
+      const order = new Map(ids.map((id, i) => [id, i]));
+      foods = rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    } else if (effective === 'favorites') {
+      foods = await tx.all<FoodRow>(`${base} AND ff.food_id IS NOT NULL ORDER BY f.name`, [like]);
+    } else if (effective === 'all') {
+      foods = await tx.all<FoodRow>(`${base} ORDER BY f.name LIMIT 50`, [like]);
+    }
+    return {
+      effective, foods,
+      saved: effective === 'saved' ? await listSavedMeals(tx) : [],
+      recipes: effective === 'recipes' ? await listRecipes(tx) : [],
+    };
+  }), [query, tab]), [query, tab]);
+
+  const favorite = useCommand(async (s, foodId: string) => {
+    await s.db.withTransaction((tx) => toggleFavorite(tx, s.clock, foodId));
+  });
+  const addSaved = useCommand(async (s, savedMealId: string) => {
+    await s.db.withTransaction((tx) => insertSavedMeal(tx, s.clock, newId, { savedMealId, toDateKey: date, slot }));
+  });
+  const addRecipe = useCommand(async (s, recipeId: string, portionG: number) => {
+    await s.db.withTransaction((tx) => addRecipeToMeal(tx, s.clock, newId, { recipeId, dateKey: date, slot, portionG }));
+  });
+  const [recipePick, setRecipePick] = useState<{ id: string; name: string } | null>(null);
+  const [portionG, setPortionG] = useState<number | null>(250);
 
   const log = useCommand(async (s) => {
     if (!picked || grams === null || grams <= 0) return;
@@ -75,7 +120,7 @@ function AddFood() {
     });
   });
 
-  const createFood = useCommand(async (s, food: Omit<FoodRow, 'id' | 'source'>) => {
+  const createFood = useCommand(async (s, food: NewFoodInput) => {
     const id = newId();
     await s.db.withTransaction(async (tx) => {
       await tx.exec(
@@ -87,7 +132,8 @@ function AddFood() {
           food.carb_g_per_100g, food.fat_g_per_100g, food.fiber_g_per_100g,
           s.clock.nowUtc().toISOString()]);
     });
-    setPicked({ ...food, id, source: 'user' });
+    // Kullanıcı besini gram bazlı girilir; porsiyon/favori satır varsayılanlarıdır.
+    setPicked({ ...food, id, source: 'user', serving_unit: 'g', serving_size_g: null, is_favorite: 0 });
     setCreating(false);
   });
 
@@ -123,7 +169,14 @@ function AddFood() {
             <Text variant="heading" style={{ flex: 1 }}>{picked.name}</Text>
             <Badge label={SOURCE_LABEL[picked.source] ?? picked.source} />
           </Row>
-          <NumericStepper label={t('nutrition.grams')} value={grams} onChange={setGrams}
+          {picked.serving_unit !== 'g' && picked.serving_unit !== 'ml' && picked.serving_size_g ? (
+            <NumericStepper
+              label={t('nutrition.servings', { unit: UNIT_LABEL[picked.serving_unit] ?? picked.serving_unit, g: picked.serving_size_g })}
+              value={servings} step={0.5} min={0} max={50} decimals={1}
+              onChange={(v) => { setServings(v); setGrams(Math.round(v * picked.serving_size_g!)); }}
+            />
+          ) : null}
+          <NumericStepper label={t('nutrition.grams')} value={grams} onChange={(v) => { setGrams(v); setServings(null); }}
             step={10} min={0} max={5000} decimals={0} />
           {grams !== null && grams > 0 ? (
             <Row wrap>
@@ -145,7 +198,54 @@ function AddFood() {
 
       <Divider />
 
-      {q.data?.map((f) => (
+      <Segmented<Tab>
+        value={q.data?.effective ?? tab}
+        disabled={!!query.trim()}
+        options={[
+          { value: 'recent', label: t('nutrition.search.tab.recent') },
+          { value: 'favorites', label: t('nutrition.search.tab.favorites') },
+          { value: 'saved', label: t('nutrition.savedMeal.tab') },
+          { value: 'recipes', label: t('nutrition.search.tab.recipes') },
+          { value: 'all', label: t('nutrition.search.tab.all') },
+        ]}
+        onChange={setTab}
+      />
+
+      {addSaved.error ? <ErrorBar details={addSaved.error.message} /> : null}
+      {q.data?.saved.map((m) => (
+        <Card key={m.id}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <View style={{ flex: 1 }}><Text>{m.name}</Text><Text variant="caption" color="faint">{`${m.itemCount} kalem`}</Text></View>
+            <Button label={t('common.add')} kind="primary" busy={addSaved.busy}
+              onPress={async () => { if (await addSaved.run(m.id)) router.back(); }} />
+          </Row>
+        </Card>
+      ))}
+
+      {addRecipe.error ? <ErrorBar details={addRecipe.error.message} /> : null}
+      {q.data?.recipes.map((r) => (
+        <Card key={r.id}>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <View style={{ flex: 1 }}>
+              <Text>{r.name}</Text>
+              {r.cookedYieldG === null ? <Text variant="caption" color="warning">{t('recipe.noCookedYield')}</Text> : null}
+            </View>
+            <Button label="Seç" onPress={() => setRecipePick({ id: r.id, name: r.name })} />
+          </Row>
+          {recipePick?.id === r.id ? (
+            <>
+              <NumericStepper label={t('recipe.portion')} value={portionG} onChange={setPortionG} step={25} min={0} max={5000} decimals={0} />
+              <Button label={t('recipe.addToMeal')} kind="primary" busy={addRecipe.busy} disabled={!portionG}
+                onPress={async () => { if (portionG && await addRecipe.run(r.id, portionG)) router.back(); }} />
+            </>
+          ) : null}
+        </Card>
+      ))}
+      {q.data?.effective === 'recipes' && q.data.recipes.length === 0 ? (
+        <Button label={t('recipe.title')} onPress={() => router.push(`/nutrition/recipe?date=${date}`)} />
+      ) : null}
+
+      {q.data?.foods.map((f) => (
         <Card key={f.id}>
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={{ flex: 1 }}>
@@ -156,11 +256,20 @@ function AddFood() {
             </View>
             <Badge label={SOURCE_LABEL[f.source] ?? f.source} />
           </Row>
-          <Button label="Seç" onPress={() => { setPicked(f); setGrams(100); }} />
+          <Row>
+            <Button label="Seç" onPress={() => {
+              setPicked(f);
+              const g = f.serving_unit !== 'g' && f.serving_unit !== 'ml' && f.serving_size_g ? f.serving_size_g : 100;
+              setGrams(g); setServings(1);
+            }} />
+            <Button label={f.is_favorite ? '★' : '☆'} kind="ghost" busy={favorite.busy}
+              accessibilityHint={f.is_favorite ? t('nutrition.favorite.remove') : t('nutrition.favorite.add')}
+              onPress={() => void favorite.run(f.id)} />
+          </Row>
         </Card>
       ))}
 
-      {q.data && q.data.length === 0 ? (
+      {q.data && q.data.effective !== 'saved' && q.data.effective !== 'recipes' && q.data.foods.length === 0 ? (
         <Card>
           <Text color="muted">{t('nutrition.search.empty')}</Text>
           {!creating
@@ -177,7 +286,7 @@ function AddFood() {
 
 function NewFoodForm(p: {
   initialName: string; busy: boolean; error: Error | null;
-  onSubmit: (f: Omit<FoodRow, 'id' | 'source'>) => void;
+  onSubmit: (f: NewFoodInput) => void;
 }) {
   const c = usePalette();
   const [name, setName] = useState(p.initialName);

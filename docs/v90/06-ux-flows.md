@@ -1913,6 +1913,70 @@ Aktif antrenman ekranında boundary tetiklenirse veri kaybı yoktur (her şey za
 
 ---
 
+### B.19 Day 90 raporu (ChallengeReportService)
+
+**Amaç:** 90 günün sonunda başlangıç ve final değerlerini yan yana, **sahte kesinlik olmadan** göstermek (R123.1–R123.4) ve programı kullanıcı onayıyla kapatmak (02 §6.5: otomatik kapatma yoktur). AT-20 bu ekrana dayanır; 02'de bileşen olarak tanımsızdı, bu bölüm o boşluğu kapatır.
+
+**Kurallar (AT-20 ile birebir)**
+
+| Değer | Başlangıç | Final |
+|---|---|---|
+| Ölçüm (site) | `BaselineResolver`: `is_baseline=1`, yoksa `start ± 7 gün` içindeki ilk kayıt; pencere dışı kayıt **baseline değil** | `local_date_key ≤ Day 90 tarihi` olan **son** kayıt; Day 90 sonrası kayıt **final değil** |
+| Kilo | Programın ilk 7 gününün ortalaması | Day 90'da biten 7 günlük hareketli ortalama (tekil son tartı **değil**) |
+| Bel/omuz oranı | Başlangıç ölçümlerinden, 2 ondalık | Final ölçümlerinden, 2 ondalık |
+| Kol (bükülü) | `BaselineResolver.biceps()`; `null` ise CTA, **asla `0 cm`** | Aynı kural |
+| Day 90 tarihi | `strictCalendar`: `start + 89`; `activeDays`: dondurma günleri kadar ileri (R89.5) | — |
+| Adherence | 90 günün toplamı; **kısmi `completed`'a dahil değil** (R103.4) | — |
+| e1RM, ikincil set | `tahmin` rozetli (R123.4) | — |
+
+**Durumlar**
+
+| Durum | Koşul | Görünüm / davranış |
+|---|---|---|
+| Boş | Açık program yok | Ekran açılmaz; ana ekran "Programı başlat". |
+| Erken | `challengeDay < 90` ve `status='active'` | Rapor yine görülebilir ama başlıkta "Day {X} / 90 · ön izleme"; **Programı tamamla** gizli. |
+| Normal · Day 90 | `challengeDay ≥ 90` (Day 90 günü dahil) ve `status='active'` | Tam rapor + **Programı tamamla** (onay diyaloğu). |
+| Normal · tamamlandı | `status='completed'` | Aynı rapor, salt okunur; "Tamamlandı: {date}" rozeti. |
+| Hata | Okuma hatası | `ErrorBoundary`. |
+
+**Akış:** ana ekran "90 gün tamamlandı" kartı → rapor → (isteğe bağlı) **Programı tamamla** → onay → tek transaction `programs.status='completed'`, `completed_at_utc`. Sıra ve planlar dokunulmaz. Kapatılmamış program devam edebilir (02 §6.5).
+
+**Kopya kuralı (R123.1):** "kas kazandın", "yağ yaktın", "kesin" gibi mutlak iddialar YOK. Rapor ölçümlerin özetidir, vücut kompozisyonu iddiası değildir; bu cümle ekranda yazılır.
+
+**Türkçe metinler**
+
+| Anahtar | Metin |
+|---|---|
+| `report.title` | Day 90 raporu |
+| `report.preview` | Day {day} / 90 · ön izleme |
+| `report.period` | {start} → {end} |
+| `report.completedOn` | Tamamlandı: {date} |
+| `report.disclaimer` | Bu rapor ölçümlerinin özetidir; vücut kompozisyonu hakkında kesin bir iddia taşımaz. |
+| `report.section.body` | Vücut ölçüleri |
+| `report.section.weight` | Kilo |
+| `report.section.training` | Antrenman |
+| `report.section.prs` | Kişisel rekorlar |
+| `report.row` | {from} → {to} |
+| `report.delta.cm` | {delta} cm |
+| `report.delta.kg` | {delta} kg |
+| `report.weight.baselineHint` | Başlangıç: ilk 7 günün ortalaması |
+| `report.weight.finalHint` | Final: Day 90'da biten 7 günlük ortalama |
+| `report.weight.slope` | Son 28 gün: {delta} kg/hafta |
+| `report.ratio.title` | Bel / Omuz oranı |
+| `report.noData` | Bu ölçüm için yeterli kayıt yok |
+| `report.adherence` | {completed} tam · {partial} kısmi · {skipped} atlandı · {missed} kaçırıldı |
+| `report.prs.count` | {n} kişisel rekor |
+| `report.prs.bestE1rm` | En yüksek tahmini 1RM: {kg} kg |
+| `report.complete.button` | Programı tamamla |
+| `report.complete.confirm` | Program "tamamlandı" olarak kapatılacak. Kayıtların ve raporun kalır; yeni bir program başlatabilirsin. |
+| `report.complete.hint` | Kapatmak zorunlu değil; istersen devam edebilirsin. |
+
+**Servis / DB etkileri:** `ChallengeReportService` (yalnızca okuma: `programs`, `program_pauses`, `body_measurements`, `weight_logs`, `personal_records`, `scheduled_workouts`); **Programı tamamla** → `programs.status`, `completed_at_utc`.
+
+**Gereksinimler:** R88.1, R89.5, R89.8, R96.3–R96.5, R103.4, R107.1, R119.3, R123.1–R123.4, AT-20.
+
+---
+
 ### Tutarsızlık / açık nokta
 
 - **MigrationFailed metni ve aksiyon adları üç yerde farklı:** 02 §12.1 "Veritabanı güncellenemedi. Verilerin güvende; uygulamayı güncelleyip tekrar dene." + yalnızca "Yedeği dışa aktar"; 02 §15 tablosu "Veritabanı güncellenemedi; verilerin güvende." + "Yeniden dene · Yedeği dışa aktar"; 03 §2 "yalnızca 'Yedeği dışa aktar' ve 'Tekrar dene'". Bu belge §12.1 metnini ve "Yeniden dene" adını kullandı; tek bir kaynakta sabitlenmeli.

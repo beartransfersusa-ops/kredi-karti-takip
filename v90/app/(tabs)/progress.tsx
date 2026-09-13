@@ -77,6 +77,10 @@ function Progress() {
 
       <Divider />
       <Card>
+        <Text variant="heading">{t('report.title')}</Text>
+        <Button label="Aç" onPress={() => router.push('/report/day90')} />
+      </Card>
+      <Card>
         <Text variant="heading">{t('photos.title')}</Text>
         <Button label="Aç" onPress={() => router.push('/photos')} />
       </Card>
