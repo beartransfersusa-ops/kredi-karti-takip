@@ -43,17 +43,31 @@ export interface SeedTarget {
   maxRecommendedWeeklySets: number; isPriority: boolean;
 }
 
+export interface SeedFood {
+  id: string; name: string; category: string;
+  source: 'seed:usda' | 'seed:tr-label';
+  servingUnit: 'g' | 'ml' | 'piece' | 'scoop' | 'slice';
+  servingSizeG: number;
+  per100g: { kcal: number; protein: number; carb: number; fat: number; fiber: number | null };
+}
+
 export interface SeedBundle {
   seedVersion: number;
   exercises: readonly SeedExercise[];
   relations: readonly SeedRelation[];
   program: SeedProgram;
   targets: readonly SeedTarget[];
+  /** §46.1 besin listesi. Boş dizi = besin seed'i yok (eski bundle). */
+  foods: readonly SeedFood[];
 }
 
 export interface SeedResult {
   insertedExercises: number; updatedExercises: number; softDeletedExercises: number;
   relations: number; workoutTemplates: number; targets: number;
+  insertedFoods: number; updatedFoods: number;
+  /** R111.3: kullanıcı override'ı olduğu için DOKUNULMAYAN seed besinleri. */
+  preservedFoods: number;
+  softDeletedFoods: number;
   skipped: boolean;
 }
 
@@ -63,7 +77,9 @@ const SEED_VERSION_KEY = 'seed.version';
 export async function installSeed(tx: Tx, bundle: SeedBundle, nowUtc: string): Promise<SeedResult> {
   const empty: SeedResult = {
     insertedExercises: 0, updatedExercises: 0, softDeletedExercises: 0,
-    relations: 0, workoutTemplates: 0, targets: 0, skipped: true,
+    relations: 0, workoutTemplates: 0, targets: 0,
+    insertedFoods: 0, updatedFoods: 0, preservedFoods: 0, softDeletedFoods: 0,
+    skipped: true,
   };
 
   const current = await tx.get<{ value_json: string }>(
@@ -181,6 +197,56 @@ export async function installSeed(tx: Tx, bundle: SeedBundle, nowUtc: string): P
       [target.muscle, target.baselineWeeklyDirectSets, target.maxRecommendedWeeklySets,
         target.isPriority ? 1 : 0, nowUtc]);
     r.targets++;
+  }
+
+  // -------------------------------------------------------------- besinler
+  //
+  // R111.3 burada uygulanır: `custom_edited = 1` olan satıra seed DOKUNMAZ.
+  // Kullanıcı etiketten düzenlediyse (source='label-override') ya da kendi
+  // eklediyse (source='user') o satır artık kullanıcınındır. Seed yalnızca
+  // kendi dokunulmamış satırlarını tazeler.
+  const existingFoods = new Map<string, { source: string; custom_edited: number }>();
+  for (const row of await tx.all<{ id: string; source: string; custom_edited: number }>(
+    'SELECT id, source, custom_edited FROM food_items')) existingFoods.set(row.id, row);
+
+  const seedFoodIds = new Set<string>();
+  for (const f of bundle.foods) {
+    seedFoodIds.add(f.id);
+    const prev = existingFoods.get(f.id);
+    const values = [
+      f.name, f.source, f.servingUnit, f.servingSizeG,
+      f.per100g.kcal, f.per100g.protein, f.per100g.carb, f.per100g.fat, f.per100g.fiber,
+      nowUtc, bundle.seedVersion,
+    ];
+    if (!prev) {
+      await tx.exec(
+        `INSERT INTO food_items
+           (name, source, serving_unit, serving_size_g, kcal_per_100g, protein_g_per_100g,
+            carb_g_per_100g, fat_g_per_100g, fiber_g_per_100g, last_updated, seed_version,
+            id, brand, custom_edited, is_deleted)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,0)`,
+        [...values, f.id]);
+      r.insertedFoods++;
+    } else if (prev.custom_edited === 1) {
+      r.preservedFoods++;                       // R111.3: override korunur
+    } else {
+      await tx.exec(
+        `UPDATE food_items SET
+           name=?, source=?, serving_unit=?, serving_size_g=?, kcal_per_100g=?,
+           protein_g_per_100g=?, carb_g_per_100g=?, fat_g_per_100g=?, fiber_g_per_100g=?,
+           last_updated=?, seed_version=?, is_deleted=0
+         WHERE id = ?`, [...values, f.id]);
+      r.updatedFoods++;
+    }
+  }
+
+  // Seed'den düşen besin silinmez, işaretlenir (meal_entries ona referans verir).
+  // Kullanıcı satırları (user / label-override / custom_edited) hiç dokunulmaz.
+  for (const [id, row] of existingFoods) {
+    if (row.custom_edited === 0 && row.source.startsWith('seed:') && !seedFoodIds.has(id)) {
+      await tx.exec('UPDATE food_items SET is_deleted = 1, last_updated = ? WHERE id = ?', [nowUtc, id]);
+      r.softDeletedFoods++;
+    }
   }
 
   await tx.exec(

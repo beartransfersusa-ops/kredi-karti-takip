@@ -5,7 +5,8 @@
 import exercisesJson from '../../data/exercises.json';
 import programJson from '../../data/programs/v90.json';
 import targetsJson from '../../data/muscle-volume-targets.json';
-import type { SeedBundle, SeedExercise, SeedProgram, SeedRelation, SeedTarget } from '../core/db/seed.ts';
+import foodsJson from '../../data/food-items.json';
+import type { SeedBundle, SeedExercise, SeedFood, SeedProgram, SeedRelation, SeedTarget } from '../core/db/seed.ts';
 
 // JSON literal tipleri gerçek şemadan daha dardır (ör. boş dizi -> never[]);
 // doğrulama derleyicide değil, `npm run verify:seed` içindeki 12 kontrolde
@@ -18,4 +19,5 @@ export const SEED_BUNDLE: SeedBundle = {
   relations: ex.relations,
   program: programJson as unknown as SeedProgram,
   targets: (targetsJson as unknown as { targets: SeedTarget[] }).targets,
+  foods: (foodsJson as unknown as { foods: SeedFood[] }).foods,
 };

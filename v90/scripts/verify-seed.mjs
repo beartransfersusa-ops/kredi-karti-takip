@@ -36,6 +36,8 @@ const { exercises, relations } = json('data/exercises.json');
 const program = json('data/programs/v90.json');
 const { targets } = json('data/muscle-volume-targets.json');
 const profile = json('data/initial-profile.json');
+const foodSeed = json('data/food-items.json');
+const foods = foodSeed.foods;
 
 const enumOf = (name) => {
   const m = dataModel.match(new RegExp(`export type ${name}\\s*=\\s*([\\s\\S]*?);`));
@@ -298,6 +300,89 @@ check('F2 · şema kısıtları hatalı veriyi reddediyor', () => {
     'geçersiz session_id (FK)');
   db.close();
   return '0 cm ölçüm · max<baseline · geçersiz FK';
+});
+
+// ---------------------------------------------------------------- G · besin
+check('G1 · R46.1 kapsam: 150–250 kalem, her kategoriden en az bir tane', () => {
+  assert(foods.length >= 150 && foods.length <= 250, `${foods.length} besin (150–250 bekleniyor)`);
+  const cats = new Set(foods.map((f) => f.category));
+  for (const need of ['protein', 'tahıl', 'süt ürünü', 'meyve', 'sebze', 'yağ']) {
+    assert(cats.has(need), `R46.1 kategorisi eksik: ${need}`);
+  }
+  const ids = new Set(foods.map((f) => f.id));
+  assert(ids.size === foods.length, 'id tekrarı var');
+  return `${foods.length} besin · ${cats.size} kategori`;
+});
+
+check('G2 · R46.2/R46.4: kaynak, birim ve 100 g tabanı', () => {
+  const units = new Set(['g', 'ml', 'piece', 'scoop', 'slice']);
+  const sources = new Set(['seed:usda', 'seed:tr-label']);
+  for (const f of foods) {
+    assert(sources.has(f.source), `${f.id}: kaynak ${f.source}`);
+    assert(units.has(f.servingUnit), `${f.id}: birim ${f.servingUnit}`);
+    assert(f.servingSizeG > 0, `${f.id}: porsiyon ≤ 0`);
+    if (f.servingUnit === 'g' || f.servingUnit === 'ml') {
+      assert(f.servingSizeG === 100, `${f.id}: g/ml biriminde porsiyon 100 olmalı`);
+    }
+    const m = f.per100g;
+    for (const k of ['kcal', 'protein', 'carb', 'fat']) assert(m[k] >= 0, `${f.id}: ${k} negatif`);
+    assert(m.fiber === null || m.fiber <= m.carb + 0.01, `${f.id}: lif > karbonhidrat`);
+  }
+  const usda = foods.filter((f) => f.source === 'seed:usda').length;
+  return `usda ${usda} · tr-label ${foods.length - usda} · marka yok (bilinçli)`;
+});
+
+check('G3 · makro-tutarlılık: kcal ≈ 4P + 4K + 9Y (±12 % / ±25 kcal)', () => {
+  // Üretici bunu zaten denetliyor; burada ÜRETİLMİŞ dosyanın da tutarlı olduğu
+  // ayrıca doğrulanır — biri elle düzenlenmişse burada yakalanır.
+  let worst = { id: '', diff: 0 };
+  for (const f of foods) {
+    const { kcal, protein: p, carb: c, fat: fa, fiber } = f.per100g;
+    const full = 4 * p + 4 * c + 9 * fa;
+    const net = 4 * p + 4 * (c - (fiber ?? 0)) + 9 * fa;
+    const tol = Math.max(25, 0.12 * Math.max(kcal, full));
+    const diff = Math.min(Math.abs(kcal - full), Math.abs(kcal - net));
+    assert(diff <= tol, `${f.id}: ${kcal} kcal vs ${full.toFixed(0)}`);
+    if (diff > worst.diff) worst = { id: f.id, diff };
+  }
+  return `en büyük sapma ${worst.diff.toFixed(0)} kcal (${worst.id})`;
+});
+
+check('G4 · R46.5: iyi/kötü, temiz/kirli etiketi yok', () => {
+  const banned = /\b(iyi|kötü|temiz|kirli|sağlıksız|junk|clean|dirty)\b/i;
+  for (const f of foods) assert(!banned.test(f.name), `${f.id}: yargılayıcı ad "${f.name}"`);
+  return `${foods.length} ad tarandı`;
+});
+
+check('G5 · besinler gerçek SQLite şemasına yükleniyor (F1 ile aynı şema)', () => {
+  const db = new DatabaseSync(':memory:');
+  db.exec('PRAGMA foreign_keys = ON');
+  db.exec(read('src/core/db/migrations/001_initial.sql'));
+  const NOW = '2026-09-07T05:00:00.000Z';
+  const ins = db.prepare(`INSERT INTO food_items
+    (id,name,source,serving_unit,serving_size_g,kcal_per_100g,protein_g_per_100g,
+     carb_g_per_100g,fat_g_per_100g,fiber_g_per_100g,last_updated,custom_edited,seed_version)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?)`);
+  for (const f of foods) {
+    ins.run(f.id, f.name, f.source, f.servingUnit, f.servingSizeG, f.per100g.kcal,
+      f.per100g.protein, f.per100g.carb, f.per100g.fat, f.per100g.fiber, NOW, foodSeed.seedVersion);
+  }
+  const n = db.prepare('SELECT COUNT(*) c FROM food_items').get().c;
+  const integrity = db.prepare('PRAGMA integrity_check').get();
+  db.close();
+  assert(n === foods.length, 'satır sayısı uyuşmuyor');
+  assert(Object.values(integrity)[0] === 'ok', 'integrity_check başarısız');
+  return `${n} satır · integrity ok`;
+});
+
+check('G6 · §42–§44 beslenme hedefi belgeyle aynı ve makro toplamı tutarlı', () => {
+  const t = profile.nutritionTarget;
+  assert(t, 'initial-profile.json içinde nutritionTarget yok');
+  assert(t.kcal === 2800 && t.proteinG === 200 && t.carbG === 320 && t.fatG === 80,
+    `hedef ${JSON.stringify(t)} — R42.1/R43.1/R44.1/R44.2 ile uyuşmuyor`);
+  assert(Math.abs(4 * t.proteinG + 4 * t.carbG + 9 * t.fatG - t.kcal) <= 20, 'R44.3 dağılımı tutarsız');
+  assert(typeof t.rationaleTr === 'string' && t.rationaleTr.length > 20, 'gerekçe yok (R122)');
+  return `${t.kcal} kcal · P ${t.proteinG} · K ${t.carbG} · Y ${t.fatG}`;
 });
 
 // ---------------------------------------------------------------- rapor

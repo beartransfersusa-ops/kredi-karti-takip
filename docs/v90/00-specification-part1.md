@@ -635,6 +635,210 @@ Bir tam rotasyon (5 antrenman) sonunda kas başına **direkt working set** sayı
 | R46.4 | Besin değerleri 100 g üzerinden saklanır; porsiyon birimleri gram karşılığıyla tanımlanır. |
 | R46.5 | Uygulama besinleri "iyi/kötü", "temiz/kirli" olarak **YASAK** olarak etiketlemez. |
 
+### §46.1 Seed besin listesi (normatif)
+
+`data/food-items.json` bu tablodan ÜRETİLİR (`npm run gen:seed`); tablo elle değil belge üzerinden güncellenir. Değerler **100 g başına**dır (R46.4). Alanlar:
+
+- **Kaynak** — `usda`: USDA SR Legacy / FoodData Central'daki jenerik girdiyle hizalı yuvarlanmış referans değer. `tr`: Türkiye'ye özgü besin/yemek için tipik etiket ve TürKomp düzeyi referans değer. İkisi de *birebir veritabanı alıntısı değildir* ve **tek doğru gerçek sayılmaz** (R46.3, R111.1); kullanıcı etiketle override eder, override korunur (R111.3).
+- **Birim / Porsiyon g** — porsiyon birimi ve gram karşılığı (R46.4). `g`/`ml` için porsiyon 100'dür.
+- **Lif** — bilinmiyorsa `—` (NULL yazılır, 0 değil — R119.3 ilkesi burada da geçerlidir).
+
+**Kapsam dışı (bilinçli):** belirli marka ürünleri — etiket değerleri reformülasyonla değişir ve doğrulanamaz; marka adı taşıyan uydurma bir sayı sahte kesinlik olurdu. Kullanıcı marka ürünü "Yeni besin" ile ekler (`source='user'`). Alkollü içecekler — alkol kalorisi (7 kcal/g) makro toplamına girmez; makro-tutarlılık denetimini (bkz. `verify-seed` F3) anlamsız kılar.
+
+**Tutarlılık kuralı (üreticide denetlenir):** her satırda `kcal`, `4·P + 4·K + 9·Y` toplamına ya da lif düşülmüş hâline (`4·P + 4·(K−Lif) + 9·Y`) ±12 % veya ±25 kcal içinde olmalıdır; aksi yazım hatasıdır ve üretim durur.
+
+| id | Ad | Kategori | Kaynak | Birim | Porsiyon g | kcal | P | K | Y | Lif |
+|---|---|---|---|---|---|---|---|---|---|---|
+| tavuk-gogus-cig | Tavuk göğsü (derisiz, çiğ) | protein | usda | g | 100 | 120 | 22.5 | 0 | 2.6 | 0 |
+| tavuk-but-cig | Tavuk but (derisiz, çiğ) | protein | usda | g | 100 | 119 | 19.5 | 0 | 4.2 | 0 |
+| tavuk-kanat-cig | Tavuk kanat (derili, çiğ) | protein | usda | g | 100 | 191 | 18 | 0 | 13 | 0 |
+| tavuk-butun-derili-cig | Tavuk (bütün, derili, çiğ) | protein | usda | g | 100 | 215 | 18.6 | 0 | 15.1 | 0 |
+| tavuk-ciger-cig | Tavuk ciğeri (çiğ) | protein | usda | g | 100 | 119 | 17 | 0.7 | 4.8 | 0 |
+| hindi-gogus-cig | Hindi göğsü (çiğ) | protein | usda | g | 100 | 114 | 24 | 0 | 1.5 | 0 |
+| hindi-fume | Hindi füme | protein | tr | slice | 20 | 105 | 18 | 2 | 2.5 | 0 |
+| dana-kiyma-yagsiz-cig | Dana kıyma (%10 yağ, çiğ) | protein | usda | g | 100 | 176 | 20 | 0 | 10 | 0 |
+| dana-kiyma-orta-cig | Dana kıyma (%20 yağ, çiğ) | protein | usda | g | 100 | 254 | 17 | 0 | 20 | 0 |
+| dana-bonfile-cig | Dana bonfile (çiğ) | protein | usda | g | 100 | 143 | 21 | 0 | 6 | 0 |
+| dana-kusbasi-cig | Dana kuşbaşı (yağsız, çiğ) | protein | usda | g | 100 | 130 | 21 | 0 | 4.5 | 0 |
+| dana-ciger-cig | Dana ciğeri (çiğ) | protein | usda | g | 100 | 135 | 20 | 3.9 | 3.6 | 0 |
+| kuzu-kusbasi-cig | Kuzu kuşbaşı (çiğ) | protein | usda | g | 100 | 230 | 17 | 0 | 18 | 0 |
+| kuzu-pirzola-cig | Kuzu pirzola (çiğ) | protein | usda | g | 100 | 282 | 16.5 | 0 | 23.5 | 0 |
+| somon-cig | Somon fileto (çiğ) | protein | usda | g | 100 | 208 | 20 | 0 | 13 | 0 |
+| somon-fume | Somon füme | protein | usda | g | 100 | 117 | 18 | 0 | 4.3 | 0 |
+| levrek-cig | Levrek (çiğ) | protein | usda | g | 100 | 97 | 18 | 0 | 2.5 | 0 |
+| cipura-cig | Çipura (çiğ) | protein | tr | g | 100 | 115 | 19 | 0 | 4 | 0 |
+| hamsi-cig | Hamsi (çiğ) | protein | usda | g | 100 | 131 | 20 | 0 | 5 | 0 |
+| uskumru-cig | Uskumru (çiğ) | protein | usda | g | 100 | 205 | 19 | 0 | 14 | 0 |
+| ton-konserve-su | Ton balığı (konserve, suda, süzülmüş) | protein | usda | g | 100 | 116 | 26 | 0 | 1 | 0 |
+| ton-konserve-yag | Ton balığı (konserve, yağda, süzülmüş) | protein | usda | g | 100 | 198 | 29 | 0 | 8 | 0 |
+| sardalya-konserve | Sardalya (konserve, yağda) | protein | usda | g | 100 | 208 | 25 | 0 | 11.5 | 0 |
+| karides-cig | Karides (çiğ) | protein | usda | g | 100 | 85 | 20 | 0 | 0.5 | 0 |
+| midye-cig | Midye (çiğ) | protein | usda | g | 100 | 86 | 12 | 3.7 | 2.2 | 0 |
+| kalamar-cig | Kalamar (çiğ) | protein | usda | g | 100 | 92 | 16 | 3 | 1.4 | 0 |
+| yumurta-butun | Yumurta (bütün, çiğ) | protein | usda | piece | 55 | 143 | 12.6 | 0.7 | 9.5 | 0 |
+| yumurta-haslanmis | Yumurta (haşlanmış) | protein | usda | piece | 50 | 155 | 12.6 | 1.1 | 10.6 | 0 |
+| yumurta-beyazi | Yumurta beyazı | protein | usda | piece | 33 | 52 | 11 | 0.7 | 0.2 | 0 |
+| omlet-sade | Omlet (2 yumurta, yağda) | protein | tr | g | 100 | 175 | 11 | 1 | 14 | 0 |
+| sucuk | Sucuk (dana) | protein | tr | slice | 10 | 450 | 20 | 2 | 40 | 0 |
+| pastirma | Pastırma | protein | tr | g | 100 | 250 | 38 | 1 | 10 | 0 |
+| salam-dana | Salam (dana) | protein | tr | slice | 15 | 260 | 14 | 3 | 21 | 0 |
+| sosis-dana | Sosis (dana) | protein | tr | piece | 40 | 280 | 13 | 4 | 24 | 0 |
+| whey-konsantre | Whey protein tozu (konsantre, ~%75) | protein | tr | scoop | 30 | 380 | 75 | 8 | 6 | 0 |
+| whey-izolat | Whey protein tozu (izolat, ~%90) | protein | tr | scoop | 30 | 370 | 90 | 1 | 1 | 0 |
+| sut-tam-yagli | Süt (tam yağlı, %3) | süt ürünü | usda | ml | 100 | 61 | 3.2 | 4.8 | 3.3 | 0 |
+| sut-yarim-yagli | Süt (yarım yağlı, %1,5) | süt ürünü | usda | ml | 100 | 47 | 3.3 | 4.8 | 1.5 | 0 |
+| sut-yagsiz | Süt (yağsız) | süt ürünü | usda | ml | 100 | 35 | 3.4 | 5 | 0.1 | 0 |
+| sut-laktozsuz | Laktozsuz süt (yarım yağlı) | süt ürünü | tr | ml | 100 | 46 | 3.3 | 4.7 | 1.5 | 0 |
+| yogurt-tam-yagli | Yoğurt (tam yağlı) | süt ürünü | tr | g | 100 | 61 | 3.5 | 4.7 | 3.3 | 0 |
+| yogurt-yarim-yagli | Yoğurt (yarım yağlı) | süt ürünü | tr | g | 100 | 48 | 4 | 5 | 1.5 | 0 |
+| yogurt-yagsiz | Yoğurt (yağsız) | süt ürünü | tr | g | 100 | 40 | 4.5 | 5 | 0.2 | 0 |
+| suzme-yogurt | Süzme yoğurt (%10 yağ) | süt ürünü | tr | g | 100 | 130 | 5 | 4 | 10 | 0 |
+| ayran | Ayran | süt ürünü | tr | ml | 100 | 36 | 1.8 | 2.5 | 1.8 | 0 |
+| kefir | Kefir | süt ürünü | usda | ml | 100 | 55 | 3.3 | 4.5 | 2.5 | 0 |
+| beyaz-peynir-tam-yagli | Beyaz peynir (tam yağlı) | süt ürünü | tr | g | 100 | 270 | 16 | 2 | 22 | 0 |
+| beyaz-peynir-yarim-yagli | Beyaz peynir (yarım yağlı) | süt ürünü | tr | g | 100 | 190 | 18 | 2 | 12 | 0 |
+| lor-peyniri | Lor peyniri | süt ürünü | tr | g | 100 | 140 | 15 | 3 | 7 | 0 |
+| cokelek | Çökelek | süt ürünü | tr | g | 100 | 130 | 17 | 2 | 6 | 0 |
+| kasar-peyniri | Kaşar peyniri | süt ürünü | tr | slice | 20 | 350 | 24 | 1 | 27 | 0 |
+| tulum-peyniri | Tulum peyniri | süt ürünü | tr | g | 100 | 360 | 22 | 1 | 30 | 0 |
+| hellim | Hellim | süt ürünü | tr | g | 100 | 320 | 22 | 2 | 25 | 0 |
+| labne | Labne | süt ürünü | tr | g | 100 | 240 | 6 | 4 | 22 | 0 |
+| cottage-peyniri | Cottage peyniri (%4) | süt ürünü | usda | g | 100 | 98 | 11 | 3.4 | 4.3 | 0 |
+| krema-sivi | Krema (sıvı, %35) | süt ürünü | usda | ml | 100 | 340 | 2 | 3 | 35 | 0 |
+| tereyagi | Tereyağı | yağ | usda | g | 100 | 717 | 0.9 | 0.1 | 81 | 0 |
+| dondurma-sade | Dondurma (vanilya) | süt ürünü | usda | g | 100 | 207 | 3.5 | 24 | 11 | 0.7 |
+| sutlac | Sütlaç | süt ürünü | tr | g | 100 | 130 | 3.5 | 22 | 3 | — |
+| pirinc-beyaz-cig | Pirinç (beyaz, çiğ) | tahıl | usda | g | 100 | 360 | 7 | 79 | 0.6 | 1.3 |
+| pirinc-esmer-cig | Esmer pirinç (çiğ) | tahıl | usda | g | 100 | 367 | 7.5 | 76 | 2.7 | 3.6 |
+| pirinc-pilavi-pismis | Pirinç pilavı (pişmiş, sade) | tahıl | tr | g | 100 | 130 | 2.7 | 28 | 0.3 | 0.4 |
+| bulgur-cig | Bulgur (çiğ) | tahıl | usda | g | 100 | 342 | 12 | 76 | 1.3 | 12.5 |
+| bulgur-pilavi-pismis | Bulgur pilavı (pişmiş) | tahıl | tr | g | 100 | 120 | 3.5 | 23 | 1.5 | 4 |
+| makarna-cig | Makarna (çiğ) | tahıl | usda | g | 100 | 371 | 13 | 75 | 1.5 | 3 |
+| makarna-haslanmis | Makarna (haşlanmış) | tahıl | usda | g | 100 | 158 | 5.8 | 31 | 0.9 | 1.8 |
+| eriste | Erişte | tahıl | tr | g | 100 | 380 | 13 | 72 | 4 | — |
+| yulaf-ezmesi | Yulaf ezmesi | tahıl | usda | g | 100 | 379 | 13 | 68 | 6.5 | 10 |
+| granola | Granola | tahıl | usda | g | 100 | 471 | 10 | 64 | 20 | 7 |
+| musli | Müsli (sade) | tahıl | usda | g | 100 | 340 | 10 | 66 | 5 | 8 |
+| misir-gevregi | Mısır gevreği (sade) | tahıl | usda | g | 100 | 357 | 7.5 | 84 | 0.4 | 3 |
+| ekmek-beyaz | Ekmek (beyaz) | tahıl | tr | slice | 30 | 265 | 9 | 49 | 3.2 | 2.7 |
+| ekmek-tam-bugday | Ekmek (tam buğday) | tahıl | tr | slice | 30 | 247 | 13 | 41 | 3.4 | 7 |
+| ekmek-cavdar | Çavdar ekmeği | tahıl | usda | slice | 30 | 259 | 8.5 | 48 | 3.3 | 5.8 |
+| lavas | Lavaş | tahıl | tr | piece | 60 | 275 | 9 | 55 | 2 | 2 |
+| pide-ramazan | Pide (ramazan) | tahıl | tr | g | 100 | 280 | 9 | 54 | 3 | 2 |
+| simit | Simit | tahıl | tr | piece | 90 | 320 | 10 | 58 | 5 | 3 |
+| galeta | Galeta | tahıl | tr | piece | 8 | 400 | 12 | 75 | 5 | 3 |
+| bugday-unu | Buğday unu (beyaz) | tahıl | usda | g | 100 | 364 | 10 | 76 | 1 | 2.7 |
+| kinoa-cig | Kinoa (çiğ) | tahıl | usda | g | 100 | 368 | 14 | 64 | 6 | 7 |
+| kuskus-cig | Kuskus (çiğ) | tahıl | usda | g | 100 | 376 | 13 | 77 | 0.6 | 5 |
+| patates-cig | Patates (çiğ) | tahıl | usda | g | 100 | 77 | 2 | 17 | 0.1 | 2.2 |
+| patates-haslanmis | Patates (haşlanmış) | tahıl | usda | g | 100 | 87 | 1.9 | 20 | 0.1 | 1.8 |
+| tatli-patates-cig | Tatlı patates (çiğ) | tahıl | usda | g | 100 | 86 | 1.6 | 20 | 0.1 | 3 |
+| kirmizi-mercimek-cig | Kırmızı mercimek (çiğ) | baklagil | usda | g | 100 | 352 | 24 | 63 | 1.1 | 11 |
+| yesil-mercimek-cig | Yeşil mercimek (çiğ) | baklagil | usda | g | 100 | 352 | 25 | 63 | 1 | 11 |
+| nohut-cig | Nohut (çiğ) | baklagil | usda | g | 100 | 364 | 19 | 61 | 6 | 17 |
+| nohut-haslanmis | Nohut (haşlanmış) | baklagil | usda | g | 100 | 164 | 8.9 | 27 | 2.6 | 7.6 |
+| kuru-fasulye-cig | Kuru fasulye (çiğ) | baklagil | usda | g | 100 | 333 | 23 | 60 | 0.8 | 15 |
+| kuru-fasulye-haslanmis | Kuru fasulye (haşlanmış) | baklagil | usda | g | 100 | 127 | 8.7 | 23 | 0.5 | 6.4 |
+| barbunya-haslanmis | Barbunya (haşlanmış) | baklagil | usda | g | 100 | 127 | 8.7 | 23 | 0.5 | 6.4 |
+| humus | Humus | baklagil | usda | g | 100 | 166 | 7.9 | 14.3 | 9.6 | 6 |
+| mercimek-corbasi | Mercimek çorbası | yemek | tr | ml | 100 | 60 | 3.5 | 9 | 1.2 | 2 |
+| kuru-fasulye-yemegi | Kuru fasulye (etli, yemek) | yemek | tr | g | 100 | 120 | 6 | 12 | 5 | 3 |
+| domates | Domates | sebze | usda | g | 100 | 18 | 0.9 | 3.9 | 0.2 | 1.2 |
+| salatalik | Salatalık | sebze | usda | g | 100 | 15 | 0.7 | 3.6 | 0.1 | 0.5 |
+| biber-yesil | Yeşil biber | sebze | usda | g | 100 | 20 | 0.9 | 4.6 | 0.2 | 1.7 |
+| sogan | Soğan | sebze | usda | g | 100 | 40 | 1.1 | 9.3 | 0.1 | 1.7 |
+| sarimsak | Sarımsak | sebze | usda | g | 100 | 149 | 6.4 | 33 | 0.5 | 2.1 |
+| havuc | Havuç | sebze | usda | g | 100 | 41 | 0.9 | 9.6 | 0.2 | 2.8 |
+| brokoli | Brokoli | sebze | usda | g | 100 | 34 | 2.8 | 6.6 | 0.4 | 2.6 |
+| karnabahar | Karnabahar | sebze | usda | g | 100 | 25 | 1.9 | 5 | 0.3 | 2 |
+| ispanak | Ispanak | sebze | usda | g | 100 | 23 | 2.9 | 3.6 | 0.4 | 2.2 |
+| marul | Marul | sebze | usda | g | 100 | 15 | 1.4 | 2.9 | 0.2 | 1.3 |
+| roka | Roka | sebze | usda | g | 100 | 25 | 2.6 | 3.7 | 0.7 | 1.6 |
+| kabak | Kabak | sebze | usda | g | 100 | 17 | 1.2 | 3.1 | 0.3 | 1 |
+| patlican | Patlıcan | sebze | usda | g | 100 | 25 | 1 | 5.9 | 0.2 | 3 |
+| taze-fasulye | Taze fasulye | sebze | usda | g | 100 | 31 | 1.8 | 7 | 0.2 | 2.7 |
+| bezelye-taze | Bezelye (taze) | sebze | usda | g | 100 | 81 | 5.4 | 14 | 0.4 | 5.1 |
+| mantar | Mantar | sebze | usda | g | 100 | 22 | 3.1 | 3.3 | 0.3 | 1 |
+| misir-tane-haslanmis | Mısır (tane, haşlanmış) | sebze | usda | g | 100 | 96 | 3.4 | 21 | 1.5 | 2.4 |
+| pirasa | Pırasa | sebze | usda | g | 100 | 61 | 1.5 | 14 | 0.3 | 1.8 |
+| lahana-beyaz | Lahana (beyaz) | sebze | usda | g | 100 | 25 | 1.3 | 5.8 | 0.1 | 2.5 |
+| pancar | Pancar | sebze | usda | g | 100 | 43 | 1.6 | 9.6 | 0.2 | 2.8 |
+| avokado | Avokado | sebze | usda | g | 100 | 160 | 2 | 8.5 | 15 | 6.7 |
+| zeytin-yesil | Yeşil zeytin | sebze | tr | piece | 4 | 145 | 1 | 3.8 | 15 | 3.3 |
+| zeytin-siyah | Siyah zeytin | sebze | tr | piece | 4 | 115 | 0.8 | 6 | 11 | 3.2 |
+| muz | Muz | meyve | usda | piece | 120 | 89 | 1.1 | 23 | 0.3 | 2.6 |
+| elma | Elma | meyve | usda | piece | 180 | 52 | 0.3 | 14 | 0.2 | 2.4 |
+| portakal | Portakal | meyve | usda | piece | 150 | 47 | 0.9 | 12 | 0.1 | 2.4 |
+| mandalina | Mandalina | meyve | usda | piece | 90 | 53 | 0.8 | 13 | 0.3 | 1.8 |
+| cilek | Çilek | meyve | usda | g | 100 | 32 | 0.7 | 7.7 | 0.3 | 2 |
+| karpuz | Karpuz | meyve | usda | g | 100 | 30 | 0.6 | 7.6 | 0.2 | 0.4 |
+| kavun | Kavun | meyve | usda | g | 100 | 34 | 0.8 | 8.2 | 0.2 | 0.9 |
+| uzum | Üzüm | meyve | usda | g | 100 | 69 | 0.7 | 18 | 0.2 | 0.9 |
+| kiraz | Kiraz | meyve | usda | g | 100 | 63 | 1.1 | 16 | 0.2 | 2.1 |
+| seftali | Şeftali | meyve | usda | piece | 150 | 39 | 0.9 | 9.5 | 0.3 | 1.5 |
+| armut | Armut | meyve | usda | piece | 170 | 57 | 0.4 | 15 | 0.1 | 3.1 |
+| kivi | Kivi | meyve | usda | piece | 75 | 61 | 1.1 | 15 | 0.5 | 3 |
+| nar | Nar | meyve | usda | g | 100 | 83 | 1.7 | 19 | 1.2 | 4 |
+| incir-taze | İncir (taze) | meyve | usda | piece | 50 | 74 | 0.8 | 19 | 0.3 | 2.9 |
+| kayisi-taze | Kayısı (taze) | meyve | usda | piece | 35 | 48 | 1.4 | 11 | 0.4 | 2 |
+| limon | Limon | meyve | usda | g | 100 | 29 | 1.1 | 9.3 | 0.3 | 2.8 |
+| yaban-mersini | Yaban mersini | meyve | usda | g | 100 | 57 | 0.7 | 14 | 0.3 | 2.4 |
+| kuru-kayisi | Kuru kayısı | meyve | tr | piece | 8 | 241 | 3.4 | 63 | 0.5 | 7.3 |
+| kuru-uzum | Kuru üzüm | meyve | usda | g | 100 | 299 | 3.1 | 79 | 0.5 | 3.7 |
+| hurma | Hurma | meyve | usda | piece | 8 | 277 | 1.8 | 75 | 0.2 | 6.7 |
+| kuru-incir | Kuru incir | meyve | tr | piece | 20 | 249 | 3.3 | 64 | 0.9 | 9.8 |
+| badem | Badem | kuruyemiş | usda | g | 100 | 579 | 21 | 22 | 50 | 12.5 |
+| ceviz | Ceviz | kuruyemiş | usda | g | 100 | 654 | 15 | 14 | 65 | 6.7 |
+| findik | Fındık | kuruyemiş | tr | g | 100 | 628 | 15 | 17 | 61 | 9.7 |
+| yer-fistigi | Yer fıstığı | kuruyemiş | usda | g | 100 | 567 | 26 | 16 | 49 | 8.5 |
+| antep-fistigi | Antep fıstığı | kuruyemiş | tr | g | 100 | 560 | 20 | 27 | 45 | 10 |
+| kaju | Kaju | kuruyemiş | usda | g | 100 | 553 | 18 | 30 | 44 | 3.3 |
+| ay-cekirdegi | Ay çekirdeği (iç) | kuruyemiş | usda | g | 100 | 584 | 21 | 20 | 51 | 8.6 |
+| kabak-cekirdegi | Kabak çekirdeği (iç) | kuruyemiş | usda | g | 100 | 559 | 30 | 11 | 49 | 6 |
+| chia-tohumu | Chia tohumu | kuruyemiş | usda | g | 100 | 486 | 17 | 42 | 31 | 34 |
+| keten-tohumu | Keten tohumu | kuruyemiş | usda | g | 100 | 534 | 18 | 29 | 42 | 27 |
+| fistik-ezmesi | Fıstık ezmesi (sade) | kuruyemiş | usda | g | 100 | 588 | 25 | 20 | 50 | 6 |
+| tahin | Tahin | kuruyemiş | tr | g | 100 | 595 | 17 | 21 | 54 | 9 |
+| zeytinyagi | Zeytinyağı | yağ | usda | ml | 100 | 884 | 0 | 0 | 100 | 0 |
+| aycicek-yagi | Ayçiçek yağı | yağ | usda | ml | 100 | 884 | 0 | 0 | 100 | 0 |
+| hindistan-cevizi-yagi | Hindistan cevizi yağı | yağ | usda | g | 100 | 862 | 0 | 0 | 100 | 0 |
+| bal | Bal | tatlı | tr | g | 100 | 304 | 0.3 | 82 | 0 | 0 |
+| recel | Reçel | tatlı | tr | g | 100 | 250 | 0.3 | 62 | 0.1 | — |
+| pekmez-uzum | Üzüm pekmezi | tatlı | tr | g | 100 | 290 | 0.5 | 71 | 0.1 | — |
+| seker-toz | Şeker (toz) | tatlı | usda | g | 100 | 387 | 0 | 100 | 0 | 0 |
+| cikolata-bitter | Bitter çikolata (%70) | tatlı | usda | g | 100 | 598 | 7.8 | 46 | 43 | 11 |
+| cikolata-sutlu | Sütlü çikolata | tatlı | usda | g | 100 | 535 | 7.6 | 59 | 30 | 3.4 |
+| helva-tahin | Tahin helvası | tatlı | tr | g | 100 | 516 | 12 | 55 | 28 | — |
+| lokum | Lokum | tatlı | tr | g | 100 | 360 | 0.2 | 89 | 0.2 | 0 |
+| baklava | Baklava | tatlı | tr | piece | 40 | 430 | 6 | 50 | 23 | — |
+| menemen | Menemen | yemek | tr | g | 100 | 110 | 5 | 5 | 8 | 1 |
+| lahmacun | Lahmacun | yemek | tr | piece | 130 | 230 | 10 | 30 | 8 | 2 |
+| doner-tavuk | Tavuk döner (et) | yemek | tr | g | 100 | 190 | 24 | 2 | 10 | 0 |
+| doner-et | Et döner | yemek | tr | g | 100 | 240 | 20 | 2 | 17 | 0 |
+| kofte-izgara | Izgara köfte | yemek | tr | g | 100 | 250 | 18 | 5 | 18 | 0 |
+| tavuklu-pilav | Tavuklu pilav | yemek | tr | g | 100 | 165 | 9 | 22 | 4.5 | 1 |
+| karniyarik | Karnıyarık | yemek | tr | g | 100 | 130 | 5 | 8 | 9 | 3 |
+| imam-bayildi | İmam bayıldı | yemek | tr | g | 100 | 95 | 1.5 | 8 | 6.5 | 3 |
+| cacik | Cacık | yemek | tr | ml | 100 | 45 | 2.5 | 3.5 | 2.2 | 0.3 |
+| tavuk-corbasi | Tavuk çorbası | yemek | tr | ml | 100 | 45 | 3 | 5 | 1.5 | — |
+| yayla-corbasi | Yayla çorbası | yemek | tr | ml | 100 | 70 | 3 | 8 | 3 | — |
+| pide-kiymali | Kıymalı pide | yemek | tr | piece | 250 | 260 | 11 | 32 | 10 | 2 |
+| borek-peynirli | Peynirli börek | yemek | tr | g | 100 | 300 | 9 | 30 | 16 | — |
+| gozleme-peynirli | Peynirli gözleme | yemek | tr | piece | 180 | 250 | 9 | 32 | 10 | — |
+| pogaca | Poğaça | yemek | tr | piece | 70 | 340 | 8 | 40 | 16 | — |
+| acma | Açma | yemek | tr | piece | 80 | 320 | 8 | 50 | 10 | — |
+| tost-kasarli | Kaşarlı tost | yemek | tr | piece | 130 | 290 | 13 | 32 | 12 | 2 |
+| kola-sekerli | Kola (şekerli) | içecek | usda | ml | 100 | 42 | 0 | 10.6 | 0 | 0 |
+| kola-sekersiz | Kola (şekersiz) | içecek | usda | ml | 100 | 0 | 0 | 0 | 0 | 0 |
+| portakal-suyu | Portakal suyu (%100) | içecek | usda | ml | 100 | 45 | 0.7 | 10.4 | 0.2 | 0.2 |
+| limonata | Limonata (şekerli) | içecek | tr | ml | 100 | 40 | 0.1 | 10 | 0 | 0 |
+| cay-sekersiz | Çay (şekersiz) | içecek | usda | ml | 100 | 1 | 0 | 0.3 | 0 | 0 |
+| turk-kahvesi | Türk kahvesi (şekersiz) | içecek | tr | ml | 100 | 5 | 0.3 | 0.7 | 0.2 | 0 |
+| filtre-kahve | Filtre kahve (sade) | içecek | usda | ml | 100 | 2 | 0.3 | 0 | 0 | 0 |
+| latte | Latte (tam yağlı süt) | içecek | usda | ml | 100 | 45 | 2.4 | 3.6 | 2.4 | 0 |
+| su | Su | içecek | usda | ml | 100 | 0 | 0 | 0 | 0 | 0 |
+| maden-suyu | Maden suyu | içecek | tr | ml | 100 | 0 | 0 | 0 | 0 | 0 |
+
 ## §47. Tartım ve porsiyon
 
 | ID | Gereksinim |

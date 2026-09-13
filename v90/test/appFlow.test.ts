@@ -37,6 +37,7 @@ function seedBundle(): SeedBundle {
     seedVersion: ex.seedVersion, exercises: ex.exercises, relations: ex.relations,
     program: readJson('data/programs/v90.json'),
     targets: readJson('data/muscle-volume-targets.json').targets,
+    foods: readJson('data/food-items.json').foods,
   };
 }
 
@@ -68,6 +69,7 @@ async function completeOnboarding(s: Services): Promise<void> {
     await saveInitialValues(tx, s.clock, testId, {
       heightCm: 187, weightKg: 107,
       measurementsCm: { waist: 95, shoulder: 137, chest: 110, abdomen: 114, hip: 119, forearm: 37 },
+      nutritionTarget: readJson('data/initial-profile.json').nutritionTarget,
     });
     await saveBiceps(tx, s.clock, testId, {
       mode: 'single', samples: { bicepsFlexed: [38.5, 38.7] },
@@ -133,6 +135,23 @@ test('onboarding · adım DB\'den türetilir, hiçbir adım iki kez sorulmaz', a
       'SELECT final_value_cm, is_baseline FROM body_measurements WHERE site = ?', ['waist']);
     assert.equal(waist?.final_value_cm, 95);
     assert.equal(waist?.is_baseline, 1);
+  } finally { await s.close(); }
+});
+
+test('§42–§44 · onboarding sonrası beslenme günlüğü hedefi ve seed besinleri görüyor', async () => {
+  const { s } = await boot();
+  try {
+    await completeOnboarding(s);
+    const { loadDay } = await import('../src/features/nutrition/nutritionQuery.ts');
+    const day = await s.db.withTransaction((tx) => loadDay(tx, s.clock.todayKey()));
+    assert.deepEqual(day.target, { kcal: 2800, proteinG: 200 }, 'R42.1/R43.1 başlangıç hedefi');
+
+    // Besin seed'i arama için hazır (R46.1) — "Tavuk göğsü" gibi bir arama sonuç verir.
+    const hits = await s.db.all<{ id: string; source: string }>(
+      `SELECT id, source FROM food_items WHERE is_deleted = 0 AND name LIKE '%Tavuk göğsü%'`);
+    assert.ok(hits.length >= 1);
+    assert.ok(hits.every((h) => h.source.startsWith('seed:')));
+    assert.equal(s.seed.insertedFoods, 189);
   } finally { await s.close(); }
 });
 

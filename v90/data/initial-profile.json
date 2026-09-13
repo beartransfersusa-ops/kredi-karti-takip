@@ -14,5 +14,12 @@
   "unknown": [
     "bicepsFlexed"
   ],
+  "nutritionTarget": {
+    "kcal": 2800,
+    "proteinG": 200,
+    "carbG": 320,
+    "fatG": 80,
+    "rationaleTr": "Başlangıç hedefi: ~500 kcal açık (R42.2), 200 g protein (R43.1), 80 g yağ (R44.1), kalan karbonhidrat (R44.2). Bu bir tahmindir; kilo trendi ve bel ölçüsüyle 2 haftada bir gözden geçirilir (R41.3, R49.1)."
+  },
   "note": "Bükülü üst kol BİLİNMİYOR — onboarding'de istenir (§11.2, R96.1)."
 }

@@ -49,11 +49,21 @@ export async function saveTrainingProfile(
       JSON.stringify(input.painAreas), now]);
 }
 
+export interface NutritionTargetInput {
+  kcal: number; proteinG: number; carbG: number; fatG: number; rationaleTr: string;
+}
+
 export interface InitialValuesInput {
   heightCm: number | null;
   weightKg: number | null;
   /** site → cm; `null` olan alan YAZILMAZ. */
   measurementsCm: Partial<Record<'waist' | 'abdomen' | 'shoulder' | 'hip' | 'chest' | 'forearm', number | null>>;
+  /**
+   * §42–§44 başlangıç hedefi (data/initial-profile.json'dan gelir). Kullanıcı
+   * ölçümü değil, programın tahminidir; R41.3 gereği "başlangıç tahmini" olarak
+   * gerekçesiyle yazılır ve sonradan değiştirilebilir (R42.4).
+   */
+  nutritionTarget?: NutritionTargetInput;
 }
 
 /**
@@ -94,6 +104,20 @@ export async function saveInitialValues(
     await tx.exec(
       `INSERT INTO measurement_samples (id, measurement_id, sample_index, value_cm)
        VALUES (?,?,1,?)`, [newId(), measurementId, value]);
+  }
+
+  // Hedef zaten varsa (tekrar ziyaret) ÜZERİNE YAZILMAZ: nutrition_targets
+  // tarihli geçmiştir (R42.4); ilk satır yalnızca bir kez yazılır.
+  if (input.nutritionTarget) {
+    const existing = await tx.get<{ id: string }>('SELECT id FROM nutrition_targets LIMIT 1');
+    if (!existing) {
+      const t = input.nutritionTarget;
+      await tx.exec(
+        `INSERT INTO nutrition_targets
+           (id, effective_from_date_key, kcal, protein_g, carb_g, fat_g, rationale_tr, created_at_utc)
+         VALUES (?,?,?,?,?,?,?,?)`,
+        [newId(), todayKey, t.kcal, t.proteinG, t.carbG, t.fatG, t.rationaleTr, now]);
+    }
   }
 }
 

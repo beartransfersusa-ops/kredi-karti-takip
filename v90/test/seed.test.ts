@@ -32,6 +32,7 @@ function realBundle(): SeedBundle {
     relations: ex.relations,
     program: readJson('data/programs/v90.json'),
     targets: readJson('data/muscle-volume-targets.json').targets,
+    foods: readJson('data/food-items.json').foods,
   };
 }
 
@@ -201,5 +202,87 @@ test('katalog okuması JSON kolonlarını doğru çözer', async () => {
     assert.deepEqual(parsed.cues, source.cues);
     assert.equal(parsed.isUnilateral, source.isUnilateral);
     assert.equal(parsed.defaultIncrementKg, source.defaultIncrementKg);
+  } finally { await db.close(); }
+});
+
+// ───────────────────────────────────────────────── §46 · besin seed'i (R111.3)
+
+test('besin seed\'i · ilk kurulumda tüm besinler, hepsi seed kaynaklı', async () => {
+  const db = await freshDb();
+  const bundle = realBundle();
+  try {
+    const r = await db.withTransaction((tx) => installSeed(tx, bundle, NOW));
+    assert.equal(r.insertedFoods, bundle.foods.length);
+    assert.equal(r.preservedFoods, 0);
+    assert.equal(await count(db, 'food_items'), bundle.foods.length);
+
+    const simit = await db.get<{ source: string; serving_unit: string; serving_size_g: number; kcal_per_100g: number; custom_edited: number }>(
+      'SELECT source, serving_unit, serving_size_g, kcal_per_100g, custom_edited FROM food_items WHERE id = ?', ['simit']);
+    assert.equal(simit?.source, 'seed:tr-label');
+    assert.equal(simit?.serving_unit, 'piece');
+    assert.equal(simit?.serving_size_g, 90);
+    assert.equal(simit?.kcal_per_100g, 320, 'değer 100 g başına (R46.4)');
+    assert.equal(simit?.custom_edited, 0);
+  } finally { await db.close(); }
+});
+
+test('R111.3 · etiketten düzenlenen besin seed tazelemesinde KORUNUR', async () => {
+  const db = await freshDb();
+  const v1 = realBundle();
+  try {
+    await db.withTransaction((tx) => installSeed(tx, v1, NOW));
+
+    // Kullanıcı yoğurdun değerini etiketten düzeltti (B.13 adım 8–9).
+    await db.exec(
+      `UPDATE food_items SET kcal_per_100g = 55, source = 'label-override', custom_edited = 1
+       WHERE id = 'yogurt-tam-yagli'`);
+
+    // Yeni seed sürümü aynı besini farklı bir değerle getiriyor.
+    const v2: SeedBundle = {
+      ...v1, seedVersion: v1.seedVersion + 1,
+      foods: v1.foods.map((f) => (f.id === 'yogurt-tam-yagli'
+        ? { ...f, per100g: { ...f.per100g, kcal: 99 } } : f)),
+    };
+    const r = await db.withTransaction((tx) => installSeed(tx, v2, NOW));
+    assert.equal(r.preservedFoods, 1, 'override edilen satır sayılmalı');
+    assert.equal(r.updatedFoods, v1.foods.length - 1, 'dokunulmamış olanlar tazelenir');
+
+    const row = await db.get<{ kcal_per_100g: number; source: string; custom_edited: number }>(
+      'SELECT kcal_per_100g, source, custom_edited FROM food_items WHERE id = ?', ['yogurt-tam-yagli']);
+    assert.equal(row?.kcal_per_100g, 55, 'kullanıcının değeri kalmalı, 99 DEĞİL');
+    assert.equal(row?.source, 'label-override');
+    assert.equal(row?.custom_edited, 1);
+  } finally { await db.close(); }
+});
+
+test('kullanıcının kendi eklediği besin seed tazelemesinde silinmez', async () => {
+  const db = await freshDb();
+  const v1 = realBundle();
+  try {
+    await db.withTransaction((tx) => installSeed(tx, v1, NOW));
+    await db.exec(
+      `INSERT INTO food_items (id, name, source, serving_unit, kcal_per_100g, protein_g_per_100g,
+         carb_g_per_100g, fat_g_per_100g, last_updated, custom_edited)
+       VALUES ('benim-besinim', 'Benim Besinim', 'user', 'g', 100, 10, 10, 2, ?, 1)`, [NOW]);
+
+    const r = await db.withTransaction((tx) => installSeed(tx, { ...v1, seedVersion: v1.seedVersion + 1 }, NOW));
+    assert.equal(r.softDeletedFoods, 0, 'kullanıcı besini seed dışı diye silinmemeli');
+    const mine = await db.get<{ is_deleted: number }>('SELECT is_deleted FROM food_items WHERE id = ?', ['benim-besinim']);
+    assert.equal(mine?.is_deleted, 0);
+  } finally { await db.close(); }
+});
+
+test('seed\'den düşen besin SİLİNMEZ, is_deleted=1 olur (meal_entries referansı)', async () => {
+  const db = await freshDb();
+  const v1 = realBundle();
+  try {
+    await db.withTransaction((tx) => installSeed(tx, v1, NOW));
+    const dropped = v1.foods[0]!;
+    const v2: SeedBundle = { ...v1, seedVersion: v1.seedVersion + 1, foods: v1.foods.slice(1) };
+    const r = await db.withTransaction((tx) => installSeed(tx, v2, NOW));
+    assert.equal(r.softDeletedFoods, 1);
+    const row = await db.get<{ is_deleted: number }>('SELECT is_deleted FROM food_items WHERE id = ?', [dropped.id]);
+    assert.equal(row?.is_deleted, 1);
+    assert.equal(await count(db, 'food_items'), v1.foods.length, 'satır sayısı değişmez');
   } finally { await db.close(); }
 });

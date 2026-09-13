@@ -1,0 +1,27 @@
+# Android APK — elle tetiklenir. EAS Build kullanır; EXPO_TOKEN gizli anahtarı
+# gerekir (Expo hesabı → Access tokens). Çıktı: EAS panelinde indirilebilir APK.
+# Expo Go KULLANILMAZ: SQLCipher native modüldür (R93.4).
+name: v90-build-android
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS profili'
+        type: choice
+        options: [preview, development, production]
+        default: preview
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: v90 } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: v90/package-lock.json }
+      - uses: expo/expo-github-action@v8
+        with: { eas-version: latest, token: ${{ secrets.EXPO_TOKEN }} }
+      - run: npm ci
+      - name: EAS build (Android, ${{ inputs.profile }})
+        run: eas build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait

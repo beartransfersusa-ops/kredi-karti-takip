@@ -1,0 +1,33 @@
+# V90 doğrulama — her push'ta docs/v90 ile üretilmiş dosyalar arasındaki kayma,
+# seed tutarlılığı, iki tsconfig, 250+ test ve bundle güvenlik denetimi.
+# Bu iş DEĞİŞTİRİLMEMELİ diye değil, kırıldığında NEDEN kırıldığı belli olsun
+# diye adım adım yazıldı.
+name: v90-verify
+
+on:
+  push:
+    paths: ['v90/**', 'docs/v90/**', '.github/workflows/v90-verify.yml']
+  pull_request:
+    paths: ['v90/**', 'docs/v90/**']
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: v90 } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: v90/package-lock.json }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: npm ci
+      - name: Kayma (belge ↔ üretilmiş dosyalar)
+        run: npm run verify:drift
+      - name: Seed doğrulaması (18 kontrol)
+        run: npm run verify:seed
+      - name: Tip denetimi (çekirdek + uygulama)
+        run: npm run typecheck && npm run typecheck:app
+      - name: Testler (gerçek SQLite + SQLCipher)
+        run: npm test
+      - name: Bundle güvenlik denetimi (R93.7)
+        run: npm run verify:bundle

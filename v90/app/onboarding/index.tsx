@@ -30,6 +30,7 @@ const INITIAL = initialProfileJson as {
   profile: { heightCm: number };
   weightKg: number;
   measurementsCm: Record<string, number>;
+  nutritionTarget: { kcal: number; proteinG: number; carbG: number; fatG: number; rationaleTr: string };
 };
 
 const SITES = ['waist', 'abdomen', 'shoulder', 'hip', 'chest', 'forearm'] as const;
@@ -207,8 +208,11 @@ function InitialValuesStep({ onNext }: { onNext: () => void }) {
       if (!v.ok) throw new Error(`${SITE_LABEL[site]}: ${tr[v.messageKey]}`);
       measurements[site] = v.value;
     }
+    // Beslenme hedefi "Kendim gireceğim" yolunda da yazılır: bu, kullanıcının
+    // ölçümü değil programın başlangıç tahminidir (§42–§44, R41.3).
     await s.db.withTransaction((tx) => saveInitialValues(tx, s.clock, newId, {
       heightCm: h.value, weightKg: w.value, measurementsCm: measurements,
+      nutritionTarget: INITIAL.nutritionTarget,
     }));
   });
 

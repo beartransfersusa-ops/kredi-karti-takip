@@ -215,17 +215,52 @@ kaybı**, bu yüzden düzenli yedek hatırlatması bir özellik değil zorunlulu
 `types/expo-modules.d.ts` geçicidir: Expo uygulaması eklendiğinde gerçek
 paketler kurulur ve o dosya silinir.
 
-## Uygulama
+## Telefona kurulum
+
+**Hazır bir indirme linki yok** ve `Expo Go` ile ÇALIŞMAZ: SQLCipher native bir
+modüldür ve Expo Go'da yoktur. Bu bilinçli bir karardır (R93.4) — şifreleme,
+migration ve WAL davranışı ilk günden gerçek koşullarda test edilsin diye.
+Uygulamayı telefona koymanın yolu bir **Development / Preview Build**'dir.
+
+### En kısa yol: EAS Build (bulutta derlenir, bilgisayarında Android SDK / Xcode gerekmez)
 
 ```bash
-npm run prebuild          # native proje üret (SQLCipher plugin'i burada devreye girer)
-npm run ios               # ya da: npm run android
-npm start                 # Development Build ile Metro
+npm install -g eas-cli
+eas login                              # ücretsiz Expo hesabı (expo.dev)
+cd v90 && npm ci
+eas build --platform android --profile preview
 ```
 
-**Expo Go çalışmaz ve çalıştırılmamalıdır**: SQLCipher native bir modüldür.
-Development Build zorunluluğu bilinçlidir (R93.4) — şifreleme, migration ve WAL
-davranışı ilk günden gerçek koşullarda test edilsin diye.
+Derleme ~10–15 dk sürer; bitince terminalde ve expo.dev panelinde bir **APK
+indirme linki** çıkar. Linki telefonda aç, "bilinmeyen kaynaklara izin ver",
+kur, başla. Aynı komut GitHub'dan da tetiklenebilir: **Actions → v90-build-android
+→ Run workflow** (repo secret olarak `EXPO_TOKEN` gerekir; expo.dev → Access tokens).
+
+**iPhone** için: `--platform ios`. Apple Developer hesabı ($99/yıl) ve cihazın
+UDID'sinin kayıtlı olması gerekir (`eas device:create` bunu yönetir); ya da
+TestFlight. Apple'ın kısıtıdır, uygulamanın değil.
+
+### Geliştirme döngüsü (kod değiştirirken)
+
+```bash
+eas build --platform android --profile development   # bir kez: dev client
+npm start                                             # sonra: Metro, canlı yenileme
+```
+
+`development` profili bir **dev client** üretir: bir kez kurarsın, sonra her
+kod değişikliği Metro üzerinden anında telefona gider; yeniden build yalnızca
+native bağımlılık değişince gerekir.
+
+### Yerel derleme (Android SDK / Xcode kuruluysa)
+
+```bash
+npm run prebuild          # native projeyi üretir; SQLCipher plugin'i burada devreye girer
+npm run android           # ya da: npm run ios
+```
+
+`npx expo prebuild --platform android` bu ortamda çalıştırıldı ve
+`android/gradle.properties` içine `expo.sqlite.useSQLCipher=true` yazdığı
+doğrulandı: SQLCipher, native projeye gerçekten giriyor.
 
 ### Ekranlar
 

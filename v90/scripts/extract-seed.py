@@ -17,6 +17,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPEC = ROOT / '../docs/v90/00-specification-part1.md'
 DOC = SPEC.read_text(encoding='utf-8')
 
+# Tüm seed dosyaları aynı sürümü taşır; installSeed bunu tek kapı olarak kullanır.
+# 2: besin listesi (§46.1) ve beslenme hedefi (§42–§44) eklendi.
+SEED_VERSION = 2
+
 LPT = {'ext': 'externalLoadHigherIsHarder', 'asst': 'assistanceLowerIsHarder',
        'bw': 'bodyweight', 'bw+': 'bodyweightPlusExternalLoad',
        'lvl': 'machineLevel', 'band': 'distanceOrBand'}
@@ -163,7 +167,105 @@ def build_profile():
         else:                   meas[name] = val
     return {'profile': prof, 'weightKg': weight, 'measurementsCm': meas,
             'unknown': ['bicepsFlexed'],
+            'nutritionTarget': build_nutrition_target(),
             'note': 'Bükülü üst kol BİLİNMİYOR — onboarding\'de istenir (§11.2, R96.1).'}
+
+
+def build_nutrition_target():
+    """§42–§44: başlangıç kalori/makro hedefi. Değerler belgeden okunur, uydurulmaz."""
+    def grab(sec, rid, pattern):
+        m = re.search(rf'\| {re.escape(rid)} \|(.+?)\|', section(sec), re.S)
+        if not m:
+            sys.exit(f'HATA: {rid} bulunamadı')
+        v = re.search(pattern, m.group(1))
+        if not v:
+            sys.exit(f'HATA: {rid} içinde değer okunamadı: {m.group(1)[:80]}')
+        return int(v.group(1).replace('.', ''))
+    kcal = grab('42', 'R42.1', r'\*\*([\d.]+)\s*kcal\*\*')
+    protein = grab('43', 'R43.1', r'\*\*(\d+)\s*g/gün\*\*')
+    fat = grab('44', 'R44.1', r'\*\*(\d+)\s*g/gün\*\*')
+    carb = grab('44', 'R44.2', r'\*\*(\d+)\s*g/gün\*\*')
+    # R44.3 makro dağılımı toplamla tutarlı olmalı (4/4/9).
+    if abs(4 * protein + 4 * carb + 9 * fat - kcal) > 20:
+        sys.exit(f'HATA: §44 makro dağılımı {kcal} kcal ile tutarsız')
+    return {'kcal': kcal, 'proteinG': protein, 'carbG': carb, 'fatG': fat,
+            'rationaleTr': ('Başlangıç hedefi: ~500 kcal açık (R42.2), 200 g protein (R43.1), '
+                            '80 g yağ (R44.1), kalan karbonhidrat (R44.2). Bu bir tahmindir; '
+                            'kilo trendi ve bel ölçüsüyle 2 haftada bir gözden geçirilir (R41.3, R49.1).')}
+
+# ---------------------------------------------------------------- foods
+SERVING_UNITS = {'g', 'ml', 'piece', 'scoop', 'slice'}
+SOURCE = {'usda': 'seed:usda', 'tr': 'seed:tr-label'}
+CATEGORIES = {'protein', 'süt ürünü', 'tahıl', 'baklagil', 'sebze', 'meyve',
+              'kuruyemiş', 'yağ', 'tatlı', 'yemek', 'içecek'}
+
+
+def build_foods():
+    """§46.1 tablosu → food-items.json. Tutarsız satır üretimi DURDURUR."""
+    body = section('46')
+    if '§46.1' not in body:
+        sys.exit('HATA: §46.1 seed besin listesi bulunamadı')
+    out, ids, names, errors = [], set(), set(), []
+
+    def num(cell, field, fid):
+        if cell == '—':
+            return None
+        try:
+            return float(cell)
+        except ValueError:
+            errors.append(f'{fid}: {field} sayı değil: {cell!r}')
+            return None
+
+    for cells in rows(body, 11):
+        fid, name, cat, src, unit, serving, kcal, p, c, f, fiber = cells
+        if fid == 'id':
+            continue
+        if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*', fid):
+            errors.append(f'{fid}: id kebab-case değil'); continue
+        if fid in ids:
+            errors.append(f'{fid}: id tekrar ediyor')
+        if name in names:
+            errors.append(f'{fid}: ad tekrar ediyor: {name}')
+        ids.add(fid); names.add(name)
+        if cat not in CATEGORIES:
+            errors.append(f'{fid}: bilinmeyen kategori {cat!r}')
+        if src not in SOURCE:
+            errors.append(f'{fid}: kaynak usda|tr olmalı: {src!r}')
+        if unit not in SERVING_UNITS:
+            errors.append(f'{fid}: birim {sorted(SERVING_UNITS)} içinde değil: {unit!r}')
+
+        kcal_v, p_v, c_v, f_v = (num(kcal, 'kcal', fid), num(p, 'P', fid),
+                                 num(c, 'K', fid), num(f, 'Y', fid))
+        fiber_v = num(fiber, 'Lif', fid)
+        serving_v = num(serving, 'porsiyon', fid)
+        if None in (kcal_v, p_v, c_v, f_v, serving_v):
+            continue
+        if kcal_v < 0 or p_v < 0 or c_v < 0 or f_v < 0 or serving_v <= 0:
+            errors.append(f'{fid}: negatif değer ya da porsiyon ≤ 0')
+        if unit in ('g', 'ml') and serving_v != 100:
+            errors.append(f'{fid}: g/ml biriminde porsiyon 100 olmalı (R46.4)')
+        if fiber_v is not None and fiber_v > c_v + 0.01:
+            errors.append(f'{fid}: lif ({fiber_v}) karbonhidrattan ({c_v}) büyük')
+
+        # Makro-tutarlılık (belgedeki kural): 4P+4K+9Y ya da lif düşülmüş hâli.
+        full = 4 * p_v + 4 * c_v + 9 * f_v
+        net = 4 * p_v + 4 * (c_v - (fiber_v or 0)) + 9 * f_v
+        tol = max(25, 0.12 * max(kcal_v, full))
+        if abs(kcal_v - full) > tol and abs(kcal_v - net) > tol:
+            errors.append(f'{fid}: kcal {kcal_v} makro toplamıyla ({full:.0f} / net {net:.0f}) tutarsız')
+
+        out.append({
+            'id': fid, 'name': name, 'category': cat, 'source': SOURCE.get(src, src),
+            'servingUnit': unit, 'servingSizeG': serving_v,
+            'per100g': {'kcal': kcal_v, 'protein': p_v, 'carb': c_v, 'fat': f_v, 'fiber': fiber_v},
+        })
+
+    if errors:
+        sys.exit('HATA: §46.1 besin tablosu tutarsız:\n  ' + '\n  '.join(errors))
+    if not 150 <= len(out) <= 250:
+        sys.exit(f'HATA: R46.1 150–250 kalem ister, {len(out)} bulundu')
+    return out
+
 
 # ---------------------------------------------------------------- yaz
 EXERCISES, RELATIONS = build_exercises()
@@ -175,11 +277,13 @@ def write(rel_path, data):
     print(f'  {rel_path:38s} {p.stat().st_size:>7,} B')
 
 print('seed üretiliyor (kaynak: docs/v90/00-specification-part1.md)')
-write('data/exercises.json', {'seedVersion': 1, 'exercises': EXERCISES, 'relations': RELATIONS})
+write('data/exercises.json', {'seedVersion': SEED_VERSION, 'exercises': EXERCISES, 'relations': RELATIONS})
 write('data/programs/v90.json', build_program())
-write('data/muscle-volume-targets.json', {'seedVersion': 1, 'targets': build_volume()})
+write('data/muscle-volume-targets.json', {'seedVersion': SEED_VERSION, 'targets': build_volume()})
 write('data/initial-profile.json', build_profile())
-print(f'  {len(EXERCISES)} hareket · {len(RELATIONS)} alternatif ilişkisi')
+FOODS = build_foods()
+write('data/food-items.json', {'seedVersion': SEED_VERSION, 'foods': FOODS})
+print(f'  {len(EXERCISES)} hareket · {len(RELATIONS)} alternatif ilişkisi · {len(FOODS)} besin')
 
 # ---------------------------------------------------------------- presets
 # Ekipman preset'leri 02-architecture.md §11.4'teki normatif tablodadır.
@@ -204,6 +308,6 @@ def equipment_presets() -> dict:
     for name in ('homeGym', 'limitedGym'):
         if 'bodyweightOnly' not in presets[name]:
             sys.exit(f'HATA: {name} preset\'inde bodyweightOnly yok')
-    return {'seedVersion': 1, 'presets': presets}
+    return {'seedVersion': SEED_VERSION, 'presets': presets}
 
 write('data/equipment-presets.json', equipment_presets())
