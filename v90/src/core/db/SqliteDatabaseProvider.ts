@@ -28,47 +28,108 @@ class Conn implements Tx {
   all<T>(sql: string, params?: readonly unknown[]): Promise<T[]> { return this.c.all<T>(sql, params); }
 }
 
+/**
+ * Kuyrukta bu kadar bekleyen çağrı "kendini bekliyor" sayılır (iç içe çağrı).
+ * Meşru bekleme milisaniyelerdir (bir ekranın okuması, bir komut + persist);
+ * 15 s yalnızca programlama hatasını gizlemek yerine adlandırmak içindir.
+ */
+export const LOCK_TIMEOUT_MS = 15_000;
+
 class DbImpl extends Conn implements Db {
   readonly path: string;
   readonly isEncrypted: boolean;
-  #inTx = false;
+  /** `fn`'e verilen Tx: aynı bağlantı, ama kilit ALMAZ (kilit dışarıda tutulur). */
+  readonly #scope: Conn;
+  /** FIFO kuyruğun kuyruğu: her çağrı bir öncekinin bitişini bekler. */
+  #tail: Promise<void> = Promise.resolve();
+  readonly #lockTimeoutMs: number;
 
-  constructor(c: SqliteConnection, path: string, isEncrypted: boolean) {
+  constructor(c: SqliteConnection, path: string, isEncrypted: boolean, lockTimeoutMs = LOCK_TIMEOUT_MS) {
     super(c);
     this.path = path;
     this.isEncrypted = isEncrypted;
+    this.#scope = new Conn(c);
+    this.#lockTimeoutMs = lockTimeoutMs;
   }
 
-  async withTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
-    if (this.#inTx) throw new Error('iç içe transaction desteklenmiyor (02 §3)');
-    this.#inTx = true;
-    await this.c.execScript('BEGIN IMMEDIATE');
-    let out: T;
+  /**
+   * Tek bağlantı = tek sıra (02 §3). Eşzamanlı çağrılar — iki ekranın aynı anda
+   * okuması, bir komut ve onun tetiklediği yeniden okuma, sekmeye dönüşte
+   * yinelenen sorgu — FIFO kuyrukta bekler; hiçbiri diğerinin BEGIN/COMMIT'i
+   * arasına giremez. İç içe çağrı (fn içinden `db.withTransaction`) ise kendi
+   * kendini beklerdi: eşik aşılınca sessiz kilitlenme yerine açık hata verir.
+   */
+  async #exclusive<T>(what: string, task: () => Promise<T>): Promise<T> {
+    const prev = this.#tail;
+    let release!: () => void;
+    this.#tail = new Promise<void>((r) => { release = r; });
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(
+        `transaction kuyrukta ${this.#lockTimeoutMs} ms bekledi — iç içe çağrı olabilir (02 §3): ${what}`)),
+        this.#lockTimeoutMs);
+    });
     try {
-      out = await fn(this);
-      await this.c.execScript('COMMIT');
+      await Promise.race([prev, timeout]);
     } catch (e) {
-      await this.c.execScript('ROLLBACK').catch(() => { /* zaten kapalı */ });
+      // Sıra bize gelmedi. Yerimizi öncekine bağlıyoruz ki arkamızdakiler
+      // gerçek tutucuyu beklemeye devam etsin (kuyruk kopmaz).
+      void prev.then(release);
       throw e;
     } finally {
-      this.#inTx = false;
+      clearTimeout(timer);
     }
-    // COMMIT başarılı: bellek içi motor görüntüyü kalıcı depoya yazar.
-    // Depo hatası YUTULMAZ; kullanıcı "Kaydedilemedi" görür (02 §15).
-    await this.#persist();
-    return out;
+
+    try {
+      return await task();
+    } finally {
+      release();
+    }
   }
 
-  /** Transaction dışı tekil yazma da kalıcılaştırılır; içerideyse COMMIT bekler. */
-  override async exec(sql: string, params?: readonly unknown[]): Promise<ExecResult> {
-    const r = await this.c.exec(sql, params);
-    if (!this.#inTx) await this.#persist();
-    return r;
+  withTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
+    return this.#exclusive('withTransaction', async () => {
+      await this.c.execScript('BEGIN IMMEDIATE');
+      let out: T;
+      try {
+        out = await fn(this.#scope);
+        await this.c.execScript('COMMIT');
+      } catch (e) {
+        await this.c.execScript('ROLLBACK').catch(() => { /* zaten kapalı */ });
+        throw e;
+      }
+      // COMMIT başarılı: bellek içi motor görüntüyü kalıcı depoya yazar.
+      // Depo hatası YUTULMAZ; kullanıcı "Kaydedilemedi" görür (02 §15).
+      // Persist kilit İÇİNDE: sıradaki transaction, görüntü yazılmadan başlamaz.
+      await this.#persist();
+      return out;
+    });
   }
 
-  override async execScript(sql: string): Promise<void> {
-    await this.c.execScript(sql);
-    if (!this.#inTx) await this.#persist();
+  /** Transaction dışı tekil yazma da sıraya girer ve kalıcılaştırılır. */
+  override exec(sql: string, params?: readonly unknown[]): Promise<ExecResult> {
+    return this.#exclusive('exec', async () => {
+      const r = await this.c.exec(sql, params);
+      await this.#persist();
+      return r;
+    });
+  }
+
+  override execScript(sql: string): Promise<void> {
+    return this.#exclusive('execScript', async () => {
+      await this.c.execScript(sql);
+      await this.#persist();
+    });
+  }
+
+  /** Transaction dışı okuma da sıraya girer: açık bir transaction'ın ortasına düşmez. */
+  override get<T>(sql: string, params?: readonly unknown[]): Promise<T | undefined> {
+    return this.#exclusive('get', () => this.c.get<T>(sql, params));
+  }
+
+  override all<T>(sql: string, params?: readonly unknown[]): Promise<T[]> {
+    return this.#exclusive('all', () => this.c.all<T>(sql, params));
   }
 
   async #persist(): Promise<void> {
@@ -80,7 +141,10 @@ class DbImpl extends Conn implements Db {
     }
   }
 
-  async close(): Promise<void> { await this.c.close(); }
+  /** Kapatma da sırayı bekler: yarıda kalan transaction yok. */
+  close(): Promise<void> {
+    return this.#exclusive('close', () => this.c.close());
+  }
 }
 
 export interface SqliteDatabaseProviderOptions {
@@ -90,6 +154,8 @@ export interface SqliteDatabaseProviderOptions {
   keyManager?: DbKeyManager;
   /** Bağlantı düzeyi PRAGMA'lar (02 §7.1 dayanıklılık). */
   pragmas?: readonly string[];
+  /** Kuyrukta bekleme eşiği (ms); aşılırsa iç içe çağrı hatası. Testler kısaltır. */
+  lockTimeoutMs?: number;
 }
 
 export const DEFAULT_PRAGMAS: readonly string[] = [
@@ -135,7 +201,7 @@ export class SqliteDatabaseProvider implements DatabaseProvider {
         if (this.#o.path === ':memory:' && p.includes('journal_mode')) continue;
         await conn.execScript(p);
       }
-      return new DbImpl(conn, this.#o.path, this.isEncrypted);
+      return new DbImpl(conn, this.#o.path, this.isEncrypted, this.#o.lockTimeoutMs ?? LOCK_TIMEOUT_MS);
     } catch (e) {
       await conn.close().catch(() => {});
       if (e instanceof DbOpenError) throw e;

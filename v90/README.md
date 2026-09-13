@@ -63,7 +63,7 @@ dört kontrol birden kırılır.
 `src/features`+`test`) ve uygulama (React Native, `app`+`src/ui`+`src/platform`).
 Ayrı olmalarının sebebi ikisinin FARKLI platform tiplerine sahip olması.
 
-**4. Testler** — 315 test, gerçek SQLite (ve web için sql.js) üzerinde.
+**4. Testler** — 320 test, gerçek SQLite (ve web için sql.js) üzerinde.
 
 **5. Bundle denetimi** (`verify:bundle`) — iki platform (ios + web) gerçekten
 derleniyor mu, şifresiz yol ya da öteki platformun motoru bundle'a sızmış mı?
@@ -135,7 +135,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 315 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 320 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -468,6 +468,13 @@ antrenman → bitirme → adherence. Bu test iki gerçek hata buldu:
    `done` yalnızca bitirme anında yazılıyordu. `04-domain-engines.md` §2 zaten
    doğru davranışı tanımlıyordu (`n >= planned_working_sets ? 'done' : …`) —
    **kod belgeden sapmıştı**, belge değil.
+
+Gerçek tarayıcıda koşan onboarding yürüyüşü (headless Chromium, `scratchpad`)
+üçüncü bir hatayı buldu: `withTransaction` **eşzamanlı** çağrıları "iç içe"
+sanıp reddediyordu (onboarding sorgusu + altta açık dashboard sorgusu).
+Artık tek bağlantı FIFO sıraya alır; gerçek iç içe çağrı eşikte açık hata verir
+(`test/dbLock.test.ts`). Aynı taramada yedekleme ekranındaki gerçek bir iç içe
+çağrı da (`session.findActive()` transaction içinde) düzeltildi.
 
 ## Sırada ne var
 

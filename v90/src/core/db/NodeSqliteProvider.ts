@@ -6,7 +6,7 @@ import { nodeSqliteDriver } from './drivers/nodeSqlite.ts';
 import { SqliteDatabaseProvider } from './SqliteDatabaseProvider.ts';
 
 export class NodeSqliteProvider extends SqliteDatabaseProvider {
-  constructor(path = ':memory:') {
-    super({ driver: nodeSqliteDriver, path });
+  constructor(path = ':memory:', opts: { lockTimeoutMs?: number } = {}) {
+    super({ driver: nodeSqliteDriver, path, ...opts });
   }
 }

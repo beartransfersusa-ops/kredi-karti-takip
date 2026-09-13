@@ -128,6 +128,16 @@ scripts/
 
 ---
 
+**Transaction eşzamanlılığı (tek bağlantı).** `Db.withTransaction`, `exec`, `get`, `all`
+tek bağlantı üzerinde **FIFO sıraya** girer: iki ekranın aynı anda okuması, bir komut ve
+onun tetiklediği yeniden okuma ya da sekmeye/ön plana dönüşte yinelenen sorgu hata
+değil sıradır; hiçbiri diğerinin `BEGIN`/`COMMIT`'i arasına giremez. `fn`'e verilen `Tx`
+kilit almaz. **İç içe çağrı** (`fn` içinden `db.withTransaction`) kendini beklerdi; bekleme
+eşiği (`LOCK_TIMEOUT_MS`, 15 s) aşılınca sessiz kilitlenme yerine açık hata verir —
+hizmetler transaction içinden çağrılacaksa `tx` almalıdır (Scheduler, repository'ler).
+Bu kural tarayıcıda gerçek bir hata olarak görüldü: onboarding sorgusu, altta açık kalan
+dashboard sorgusuyla çakışınca eski "iç içe transaction desteklenmiyor" korumasına takılıyordu.
+
 ## 4. Sözlük (Glossary)
 
 | Terim | Tanım |

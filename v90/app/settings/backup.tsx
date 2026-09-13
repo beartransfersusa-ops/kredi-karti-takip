@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import { Platform, View } from 'react-native';
 import Constants from 'expo-constants';
 import { BackupImportError } from '../../src/core/backup/errors.ts';
-import { settings } from '../../src/core/db/repositories.ts';
+import { sessions, settings } from '../../src/core/db/repositories.ts';
 import {
   LAST_EXPORT_BYTES_KEY, LAST_EXPORT_KEY, REMINDER_KEY, formatBytes,
   makeExporter, makeImporter, undoWindow,
@@ -67,7 +67,8 @@ function Backup() {
     lastExport: await settings.get<string>(tx, LAST_EXPORT_KEY),
     lastExportBytes: await settings.get<number>(tx, LAST_EXPORT_BYTES_KEY),
     reminder: (await settings.get<boolean>(tx, REMINDER_KEY)) ?? true,
-    hasActive: (await s.session.findActive()) !== null,
+    // Transaction İÇİNDEYİZ: servis kendi transaction'ını açar (iç içe olurdu); repo ile okunur.
+    hasActive: (await sessions.findActive(tx)) !== undefined,
     todayKey: s.clock.todayKey(),
     // "Geri al" kaydı DB dışındadır (import DB'nin kendisini değiştirir); platform okur.
     restorePoint: await readRestorePoint(),

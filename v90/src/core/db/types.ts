@@ -13,7 +13,11 @@ export interface Tx {
 }
 
 export interface Db extends Tx {
-  /** Tek kullanıcı eylemi = tek transaction (03 §0). İç içe çağrı hatadır. */
+  /**
+   * Tek kullanıcı eylemi = tek transaction (03 §0). Eşzamanlı çağrılar (iki ekranın
+   * aynı anda okuması, komut + yeniden okuma) tek bağlantıda FIFO sıraya girer;
+   * iç içe çağrı (fn içinden db.withTransaction) kendini bekler ve eşikte hatadır (02 §3).
+   */
   withTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
   close(): Promise<void>;
   readonly path: string;
