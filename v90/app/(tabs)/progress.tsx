@@ -12,7 +12,11 @@ import type { MuscleGroup } from '../../src/domain/types.ts';
 import { loadProgress } from '../../src/features/progress/progressQuery.ts';
 import type { ProgressData } from '../../src/features/progress/progressQuery.ts';
 import { dateTr, num } from '../../src/features/format.ts';
-import { useDbQuery } from '../../src/ui/AppProvider.tsx';
+import { newId } from '../../src/platform/id.ts';
+import { decide } from '../../src/features/active-workout/recommendationService.ts';
+import type { RecommendationCard } from '../../src/features/active-workout/recommendation.ts';
+import { useCommand, useDbQuery } from '../../src/ui/AppProvider.tsx';
+import { RecommendationCardView } from '../../src/ui/components/RecommendationCard.tsx';
 import {
   Badge, Button, Card, Divider, ErrorBar, Row, Screen, Segmented, Skeleton, Text,
 } from '../../src/ui/components/primitives.tsx';
@@ -36,7 +40,7 @@ function Progress() {
   const [tab, setTab] = useState<'direct' | 'secondary'>('direct');
   const q = useDbQuery(useCallback(async (s) => {
     const catalog = await s.catalog.all();
-    return s.db.withTransaction((tx) => loadProgress(tx, s.clock.todayKey(), catalog));
+    return s.db.withTransaction((tx) => loadProgress(tx, s.clock.todayKey(), catalog, s.clock.nowUtc()));
   }, []));
 
   if (q.loading) {
@@ -50,6 +54,11 @@ function Progress() {
       <WeightCard data={d} />
       <RatioCard data={d} />
       <AdherenceCard data={d} />
+
+      {/* Hacim önerileri (R105.4: haftada +1–2 set sınırı motorda) */}
+      {d.volumeRecommendations.map((card) => (
+        <VolumeRecommendation key={card.id} card={card} onChanged={q.reload} />
+      ))}
 
       <Divider />
       <Text variant="title">{t('progress.volume.title')}</Text>
@@ -66,6 +75,12 @@ function Progress() {
       </Text>
       <VolumeList data={d} mode={tab} />
 
+      <Divider />
+      <Card>
+        <Text variant="heading">{t('photos.title')}</Text>
+        <Button label="Aç" onPress={() => router.push('/photos')} />
+      </Card>
+
       {d.openPlateaus.length > 0 ? (
         <>
           <Divider />
@@ -79,6 +94,26 @@ function Progress() {
         </>
       ) : null}
     </Screen>
+  );
+}
+
+function VolumeRecommendation({ card, onChanged }: { card: RecommendationCard; onChanged: () => void }) {
+  const decideCmd = useCommand(async (s, decision: 'accepted' | 'modified' | 'ignored', userValue?: number) => {
+    await s.db.withTransaction((tx) => decide(tx, s.clock, {
+      commandId: newId(), recommendationId: card.id, decision,
+      ...(userValue !== undefined ? { userValue } : {}),
+    }));
+  });
+  return (
+    <RecommendationCardView
+      card={card}
+      step={1}
+      busy={decideCmd.busy}
+      error={decideCmd.error}
+      onDecide={async (decision, userValue) => {
+        if (await decideCmd.run(decision, userValue)) onChanged();
+      }}
+    />
   );
 }
 

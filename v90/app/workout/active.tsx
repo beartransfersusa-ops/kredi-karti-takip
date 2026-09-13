@@ -17,6 +17,12 @@ import type { ActiveWorkoutSnapshot } from '../../src/domain/workout/ActiveSessi
 import type { Exercise } from '../../src/domain/types.ts';
 import { fromRawLoad, loadField, toRawLoad } from '../../src/features/active-workout/loadField.ts';
 import type { LoadField } from '../../src/features/active-workout/loadField.ts';
+import { prefillValue } from '../../src/features/active-workout/recommendation.ts';
+import type { RecommendationCard } from '../../src/features/active-workout/recommendation.ts';
+import {
+  closeOpenOnSetLogged, decide, openForExercise,
+} from '../../src/features/active-workout/recommendationService.ts';
+import { resolveIncrement } from '../../src/domain/exercise/IncrementResolver.ts';
 import { elapsed, mmss } from '../../src/features/format.ts';
 import { useCommand, useDbQuery, useServices } from '../../src/ui/AppProvider.tsx';
 import {
@@ -24,6 +30,7 @@ import {
 } from '../../src/ui/components/primitives.tsx';
 import { ErrorBoundary } from '../../src/ui/components/ErrorBoundary.tsx';
 import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog.tsx';
+import { RecommendationCardView } from '../../src/ui/components/RecommendationCard.tsx';
 import { space, usePalette } from '../../src/ui/theme.ts';
 import { t, tr } from '../../src/ui/i18n/index.ts';
 
@@ -39,6 +46,8 @@ interface Loaded {
   snapshot: ActiveWorkoutSnapshot;
   catalog: ReadonlyMap<string, Exercise>;
   templateName: string;
+  /** Hareket başına açık ya da karar verilmiş öneri (A.7 (a)). */
+  recommendations: Map<string, RecommendationCard>;
 }
 
 function ActiveWorkout() {
@@ -47,13 +56,19 @@ function ActiveWorkout() {
     const snapshot = await s.session.hydrate();
     if (!snapshot) return null;
     const catalog = await s.catalog.all();
-    const name = await s.db.withTransaction(async (tx) => {
+    return s.db.withTransaction(async (tx) => {
       const id = snapshot.session.workout_template_id;
-      if (!id) return '';
-      const row = await tx.get<{ name_tr: string }>('SELECT name_tr FROM workout_templates WHERE id = ?', [id]);
-      return row?.name_tr ?? '';
+      const row = id
+        ? await tx.get<{ name_tr: string }>('SELECT name_tr FROM workout_templates WHERE id = ?', [id])
+        : undefined;
+
+      const recommendations = new Map<string, RecommendationCard>();
+      for (const ex of snapshot.exercises) {
+        const cards = await openForExercise(tx, ex.exercise_id, s.clock.nowUtc());
+        if (cards[0]) recommendations.set(ex.id, cards[0]);
+      }
+      return { snapshot, catalog, templateName: row?.name_tr ?? '', recommendations };
     });
-    return { snapshot, catalog, templateName: name };
   }, []));
 
   const [focusId, setFocusId] = useState<string | null>(params.focus ?? null);
@@ -88,7 +103,7 @@ function ActiveBody({ loaded, reload, focusId, setFocusId }: {
   loaded: Loaded; reload: () => void;
   focusId: string | null; setFocusId: (id: string | null) => void;
 }) {
-  const { snapshot, catalog, templateName } = loaded;
+  const { snapshot, catalog, templateName, recommendations } = loaded;
   const [cancelling, setCancelling] = useState(false);
   const cancel = useCommand(async (s) => {
     await s.session.cancel({ commandId: newId(), origin: 'workoutScreen' });
@@ -125,6 +140,8 @@ function ActiveBody({ loaded, reload, focusId, setFocusId }: {
             exercise={exercise}
             setLogs={snapshot.setLogs.filter((l) => l.session_exercise_id === ex.id)}
             bodyweightKg={snapshot.session.bodyweight_kg_snapshot}
+            recommendation={recommendations.get(ex.id) ?? null}
+            sessionId={snapshot.session.id}
             focused={isFocus}
             onFocus={() => setFocusId(ex.id)}
             onChanged={reload}
@@ -168,6 +185,8 @@ function ExerciseCard(p: {
   row: ExRow; exercise: Exercise | undefined;
   setLogs: ActiveWorkoutSnapshot['setLogs'];
   bodyweightKg: number | null;
+  recommendation: RecommendationCard | null;
+  sessionId: string;
   focused: boolean; onFocus: () => void; onChanged: () => void;
 }) {
   const c = usePalette();
@@ -204,6 +223,16 @@ function ExerciseCard(p: {
 
       <UnilateralToggle row={row} exercise={exercise} onChanged={p.onChanged} />
 
+      {/* Öneri kartı ilk working set'ten ÖNCE görünür (A.7 (a)). */}
+      {p.recommendation && p.setLogs.length === 0 ? (
+        <RecommendationSlot
+          card={p.recommendation}
+          exercise={exercise}
+          sessionId={p.sessionId}
+          onChanged={p.onChanged}
+        />
+      ) : null}
+
       {p.setLogs.length > 0 ? <LoggedSets logs={p.setLogs} exercise={exercise} /> : null}
 
       {done || skipped ? null : (
@@ -211,6 +240,7 @@ function ExerciseCard(p: {
           row={row}
           exercise={exercise}
           bodyweightKg={p.bodyweightKg}
+          recommendation={p.recommendation}
           nextSetIndex={nextSetIndex(p.setLogs)}
           onChanged={p.onChanged}
         />
@@ -273,6 +303,37 @@ function SkipExerciseButton(p: { sessionExerciseId: string; onChanged: () => voi
   );
 }
 
+/** Kart + karar komutu. Karar prefill'i değiştirir, seti KULLANICI loglar. */
+function RecommendationSlot(p: {
+  card: RecommendationCard; exercise: Exercise | undefined;
+  sessionId: string; onChanged: () => void;
+}) {
+  const decideCmd = useCommand(async (s, decision: 'accepted' | 'modified' | 'ignored', userValue?: number) => {
+    await s.db.withTransaction((tx) => decide(tx, s.clock, {
+      commandId: newId(),
+      recommendationId: p.card.id,
+      decision,
+      ...(userValue !== undefined ? { userValue } : {}),
+      appliedSessionId: p.sessionId,
+    }));
+  });
+
+  // "Değiştir" adımı hareketin kendi artışından gelir (R100.1).
+  const step = p.exercise ? resolveIncrement(p.exercise).incrementKg : undefined;
+
+  return (
+    <RecommendationCardView
+      card={p.card}
+      {...(step !== undefined ? { step } : {})}
+      busy={decideCmd.busy}
+      error={decideCmd.error}
+      onDecide={async (decision, userValue) => {
+        if (await decideCmd.run(decision, userValue)) p.onChanged();
+      }}
+    />
+  );
+}
+
 function LoggedSets({ logs, exercise }: { logs: ActiveWorkoutSnapshot['setLogs']; exercise: Exercise | undefined }) {
   const field = exercise ? loadField(exercise) : null;
   return (
@@ -305,12 +366,22 @@ function describeLoad(field: LoadField, l: ActiveWorkoutSnapshot['setLogs'][numb
 /** Set girişi — hedef ≤ 3 dokunuş (R108.3, R108.4). */
 function SetEntry(p: {
   row: ExRow; exercise: Exercise | undefined; bodyweightKg: number | null;
+  recommendation: RecommendationCard | null;
   nextSetIndex: number; onChanged: () => void;
 }) {
   const field = useMemo(() => (p.exercise ? loadField(p.exercise) : null), [p.exercise]);
   const prefill = p.row.prefill;
 
-  const [load, setLoad] = useState<number | null>(field ? fromRawLoad(field, prefill.load) : null);
+  /*
+   * Prefill kaynağı (02 §7.3): kabul/değiştirilmiş öneri, hareketin İLK
+   * working set'inde kaynak 2'nin (son antrenman) ÖNÜNE geçer. Yok sayılmış
+   * öneri prefill'i etkilemez (A.7 adım 5).
+   */
+  const fromReco = p.recommendation && p.nextSetIndex === 0
+    ? prefillValue(p.recommendation) : null;
+
+  const [load, setLoad] = useState<number | null>(
+    fromReco?.value ?? (field ? fromRawLoad(field, prefill.load) : null));
   const [reps, setReps] = useState<number>(prefill.reps ?? p.row.rep_min);
   const [rir, setRir] = useState<number>(prefill.rir ?? p.row.target_rir);
   const [side, setSide] = useState<'left' | 'right'>('left');
@@ -329,13 +400,24 @@ function SetEntry(p: {
       reps,
       rir,
     });
+
+    /*
+     * İlk working set karar verilmeden loglandıysa açık öneri `ignored`
+     * olarak kapanır ve LOGLANAN değeri taşır: kullanıcının fiili tercihi
+     * kaydedilir, sessizce kaybolmaz (R121.3, A.7 adım 6).
+     */
+    if (p.nextSetIndex === 0 && p.recommendation && p.recommendation.decision === null) {
+      await s.db.withTransaction((tx) => closeOpenOnSetLogged(tx, s.clock, {
+        exerciseId: p.row.exercise_id,
+        loggedValue: load,
+        sessionId: p.row.session_id,
+      }));
+    }
   });
 
-  const prefillBadge = {
-    draft: null,
-    previousSet: t('active.prefill.prevSet'),
-    template: t('active.prefill.target'),
-  }[prefill.source];
+  const prefillBadge = fromReco
+    ? (fromReco.source === 'userValue' ? t('reco.userValueBadge') : t('active.prefill.recommended'))
+    : { draft: null, previousSet: t('active.prefill.prevSet'), template: t('active.prefill.target') }[prefill.source];
 
   return (
     <View style={{ gap: space.md }}>

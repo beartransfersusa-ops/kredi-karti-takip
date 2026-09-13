@@ -11,11 +11,16 @@ import { t } from '../i18n/index.ts';
 type Variant = TypeVariant;
 
 export function Text(p: {
-  children: React.ReactNode; variant?: Variant; color?: 'text' | 'muted' | 'faint' | 'danger' | 'primary';
+  children: React.ReactNode;
+  variant?: Variant;
+  color?: 'text' | 'muted' | 'faint' | 'danger' | 'warning' | 'primary';
   style?: StyleProp<TextStyle>; numberOfLines?: number;
 }) {
   const c = usePalette();
-  const tone = { text: c.text, muted: c.textMuted, faint: c.textFaint, danger: c.danger, primary: c.primary };
+  const tone = {
+    text: c.text, muted: c.textMuted, faint: c.textFaint,
+    danger: c.danger, warning: c.warning, primary: c.primary,
+  };
   return (
     <RNText
       numberOfLines={p.numberOfLines}

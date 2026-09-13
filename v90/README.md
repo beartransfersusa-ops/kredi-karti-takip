@@ -63,7 +63,7 @@ dört kontrol birden kırılır.
 `src/features`+`test`) ve uygulama (React Native, `app`+`src/ui`+`src/platform`).
 Ayrı olmalarının sebebi ikisinin FARKLI platform tiplerine sahip olması.
 
-**4. Testler** — 221 test, gerçek SQLite üzerinde.
+**4. Testler** — 246 test, gerçek SQLite üzerinde.
 
 **5. Bundle denetimi** (`verify:bundle`) — uygulama gerçekten derleniyor mu ve
 şifresiz yol bundle'a sızmış mı? Ayrıntı için aşağı bkz.
@@ -116,7 +116,7 @@ onun uygulamaya girmediğini her çalıştırmada doğrular.
 | `src/platform/` | Expo adaptörleri: saat, dosya, bildirim, hash, id, blob | 02 §2 |
 | `src/features/` | Saf görünüm modelleri (kart önceliği, yük alanı, tam/kısmi) | 06 A.1, A.3, A.4 |
 | `src/ui/` | Tasarım belirteçleri, bileşenler, i18n, AppProvider, kilit | 06 A.0, B.0 |
-| `app/` | expo-router rotaları (18 ekran) | 06 rota haritası |
+| `app/` | expo-router rotaları (20 ekran) | 06 rota haritası |
 
 Motorlar (progression, plateau, PR, hacim, analitik, tarif, ölçüm) **saf
 TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir. Servisler
@@ -134,7 +134,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 221 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 246 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -245,6 +245,11 @@ davranışı ilk günden gerçek koşullarda test edilsin diye.
 | `measurements/new` | 1–3 örnek, eşik aşımında üçüncüsü önerilir | B.9 |
 | `(tabs)/progress` | Kilo trendi, omuz/bel oranı, haftalık hacim, adherence | B.10, B.11 |
 | `(tabs)/nutrition` | Gün günlüğü, Copy Yesterday | B.12 |
+| `nutrition/recipe` | Tarif oluşturucu, cooked yield, porsiyon | B.13 |
+| `photos/index` | İlerleme fotoğrafları, karşılaştırma, silme | B.14 |
+
+Öneri kartı (A.7) ayrı bir rota değil: aktif antrenman ekranında hareket
+başlığında ve İlerleme ekranında hacim önerisi olarak görünür.
 
 ### UI metni de üretilir
 
@@ -294,6 +299,27 @@ Aynı ayrım hash için de yapıldı: `hash.node.ts` (test) ↔ `platform/hash.t
 > kodu da bunları taşıyor — cihazdaki Hermes destekliyor, sorun eski
 > hermesc'te.
 
+### Üç kuralın kodla korunması
+
+Bu üç ekran, belgede en çok "yapılmayacak" içeren yerler. Niyeti yoruma
+bırakmak yerine teste bağladık:
+
+| Kural | Nasıl korunuyor |
+|---|---|
+| R104.7 / R121.1 · hiçbir öneri otomatik uygulanmaz | Öneri kartı yalnızca `recommendations.decision_*` yazar; "Kabul" bile sadece prefill'i değiştirir, seti kullanıcı loglar |
+| R121.3 · karar kaybolmaz | Karar verilmeden ilk set loglanırsa öneri `ignored` olarak LOGLANAN değerle kapanır; test bunu doğruluyor |
+| R110.5 · sahte kesinlik yok | Cooked yield yoksa taban "ham toplam"dır ve ekranda açıkça yazılır; boş tarifin toplamı `0` değil `—` |
+| R111.3 · kullanıcı düzenlemesi korunur | Etiket override `custom_edited = 1` yazar |
+| R116.3 · cloud sync yok | `app/photos/` ve `src/features/photos/` kaynağı ile `photos.*` metinleri taranıyor: iCloud / Google Drive / "cloud sync" / "yakında" geçemez. Tersine "buluta gönderilmez" cümlesi BULUNMALI (denetim boş koşmasın) |
+| R116.4 · silme dosyayı da temizler | Silme üç adımlı; yarıda kesilirse `sweepOrphans` açılışta tamamlar — test bunu simüle ediyor |
+| R94.6 · tutulamayacak söz verilmez | `preventScreenCaptureAsync` yalnızca Android'de ve ayara bağlı çağrılır; iOS'ta bilgi metni var, anahtar YOK |
+
+Fotoğraf silme sırası bilinçli: satır önce `pending_delete = 1` yapılır
+(fotoğraf grid'den hemen kaybolur), sonra dosya, sonra satır. Kesinti hâlinde
+kullanıcı için fotoğraf zaten silinmiştir; "sildim ama geri geldi" durumu
+oluşmaz. Dosyası kaybolmuş satır ise **silinmez**, raporlanır — kaydı kaldırmaya
+kullanıcı karar verir.
+
 ### Uçtan uca test
 
 `test/appFlow.test.ts` ekranların çağırdığı yolun tamamını gerçek SQLite
@@ -310,12 +336,15 @@ antrenman → bitirme → adherence. Bu test iki gerçek hata buldu:
 
 ## Sırada ne var
 
-1. Beslenme besin seed'i (§111 USDA / TR etiket) — şu an yalnızca kullanıcının
-   kendi eklediği besinler aranabiliyor
-2. Progress fotoğrafı ekranı ve `OrphanSweeper` — 02 §13.2, B.14
-3. Öneri kartı (A.7), tarif oluşturucu (B.13), video fallback (B.15)
+1. **Beslenme besin seed'i (§111 USDA / TR etiket)** — en büyük eksik. Şu an
+   yalnızca kullanıcının kendi eklediği besinler aranabiliyor; tarif
+   oluşturucu da bu yüzden pratikte boş bir katalogla başlıyor. Seed geldiğinde
+   `installSeed`'e `custom_edited = 1` satırlarını atlama kuralı eklenmeli
+   (R111.3) — şu an besin seed'i olmadığı için o dal hiç yok.
+2. Video fallback (B.15) ve video manifest'i — §114
+3. Day 90 raporu ekranı (AT-20) ve kayıtlı öğün / Copy Meal akışları (B.12)
 4. Kalan AT senaryolarının E2E karşılıkları (Maestro; AT-13 cihaz tz,
-   AT-17/18 video/offline UI, AT-19 biyometri, AT-20 Day 90 raporu)
+   AT-17/18 video/offline UI, AT-19 biyometri, AT-20 rapor)
 
 R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
 Şu an **kod seviyesinde** karşılananlar: AT-01, AT-02, AT-03, AT-04, AT-05,

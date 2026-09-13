@@ -8,6 +8,8 @@ import { shoulderToWaist, weightMovingAverage, weightTrend } from '../../domain/
 import { week as adherenceWeek } from '../../domain/analytics/AdherenceCalculator.ts';
 import type { ScheduledRow, WeekAdherence } from '../../domain/analytics/AdherenceCalculator.ts';
 import { programs } from '../../core/db/repositories.ts';
+import { openVolumeRecommendations } from '../active-workout/recommendationService.ts';
+import type { RecommendationCard } from '../active-workout/recommendation.ts';
 import type { Tx } from '../../core/db/types.ts';
 import type { Exercise, MuscleGroup } from '../../domain/types.ts';
 import { addDaysKey } from '../format.ts';
@@ -28,10 +30,12 @@ export interface ProgressData {
   targets: Map<MuscleGroup, VolumeTarget>;
   adherence: WeekAdherence | null;
   openPlateaus: Array<{ id: string; exerciseId: string; exerciseNameTr: string; side: string | null }>;
+  /** Hacim önerileri Progress ekranında gösterilir (A.7 (c), R105). */
+  volumeRecommendations: RecommendationCard[];
 }
 
 export async function loadProgress(
-  tx: Tx, todayKey: string, catalog: ReadonlyMap<string, Exercise>,
+  tx: Tx, todayKey: string, catalog: ReadonlyMap<string, Exercise>, nowUtc = new Date(),
 ): Promise<ProgressData> {
   const weights = await tx.all<{ local_date_key: string; weight_kg: number }>(
     'SELECT local_date_key, weight_kg FROM weight_logs ORDER BY local_date_key');
@@ -91,6 +95,7 @@ export async function loadProgress(
     adherence: program
       ? adherenceWeek(scheduledRows.map(toScheduledRow), todayKey, todayKey, program.status === 'active')
       : null,
+    volumeRecommendations: await openVolumeRecommendations(tx, nowUtc),
     openPlateaus: plateauRows.map((r) => ({
       id: r.id,
       exerciseId: r.exercise_id,

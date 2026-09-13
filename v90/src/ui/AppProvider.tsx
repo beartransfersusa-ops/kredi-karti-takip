@@ -12,6 +12,9 @@ import type { Services } from '../bootstrap/container.ts';
 import { expoSha256 } from '../platform/hash.ts';
 import { DeviceClock } from '../platform/clock.ts';
 import { ExpoFileStore, databasePath } from '../platform/files.ts';
+import { ExpoBlobStore, photosDir } from '../platform/blobs.ts';
+import { expoSha256Bytes } from '../platform/hash.ts';
+import { newId } from '../platform/id.ts';
 import { ExpoNotificationScheduler } from '../platform/notifications.ts';
 import { buildInfo } from '../platform/build.ts';
 import { SEED_BUNDLE } from '../platform/seedBundle.ts';
@@ -63,6 +66,13 @@ export function AppProvider(p: {
       build: buildInfo(),
       notifications: new ExpoNotificationScheduler(),
       dbPath: databasePath(),
+      // Açılışta yarıda kalmış fotoğraf silmeleri tamamlanır (R116.4).
+      photos: {
+        blobs: new ExpoBlobStore(),
+        photosDir: photosDir(),
+        hashBytes: expoSha256Bytes,
+        newId,
+      },
     }).then(
       (services) => { if (mine === attempt.current) setState({ phase: 'ready', services }); },
       (e: unknown) => {

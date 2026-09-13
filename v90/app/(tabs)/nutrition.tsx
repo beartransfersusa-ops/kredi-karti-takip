@@ -81,6 +81,8 @@ function Nutrition() {
         />
         <Button label={t('nutrition.addFood')} kind="primary"
           onPress={() => router.push(`/nutrition/add?date=${day.dateKey}`)} />
+        <Button label={t('recipe.title')}
+          onPress={() => router.push(`/nutrition/recipe?date=${day.dateKey}`)} />
       </Row>
       {!day.yesterdayHasData ? (
         <Text variant="caption" color="faint">{t('nutrition.copyYesterday.emptySource')}</Text>

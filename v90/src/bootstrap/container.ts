@@ -25,6 +25,8 @@ import { ActiveSessionService } from '../domain/workout/ActiveSessionService.ts'
 import { RestTimerService } from '../domain/workout/RestTimerService.ts';
 import type { NotificationScheduler } from '../domain/workout/RestTimerService.ts';
 import { preferredWorkoutDays } from '../features/profile/profileQuery.ts';
+import { sweepOrphans } from '../features/photos/photoStore.ts';
+import type { PhotoEnv, SweepResult } from '../features/photos/photoStore.ts';
 
 export interface Services {
   db: Db;
@@ -36,6 +38,8 @@ export interface Services {
   session: ActiveSessionService;
   restTimers: RestTimerService;
   seed: SeedResult;
+  /** Açılışta yapılan fotoğraf temizliği (02 §13.2); yoksa null. */
+  photoSweep: SweepResult | null;
   isEncrypted: boolean;
   /** Canlı veritabanı dosyasının yolu (yedekleme dosya değişimi için). */
   dbPath: string;
@@ -57,6 +61,11 @@ export interface BootstrapOptions {
   seed: SeedBundle;
   build: BuildInfo;
   notifications?: NotificationScheduler;
+  /**
+   * Fotoğraf deposu. Verilirse açılışta `OrphanSweeper` çalışır: yarıda kalmış
+   * silmeler tamamlanır, sahipsiz dosyalar toplanır (R116.4).
+   */
+  photos?: PhotoEnv;
   /**
    * Verilmezse `dbPath` üzerinden ŞİFRELİ sağlayıcı kurulur. Testler kendi
    * sağlayıcılarını enjekte eder; uygulama bundle'ında şifresiz sağlayıcıya
@@ -115,6 +124,17 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
     throw new BootstrapError('seed', (e as Error).message, e);
   }
 
+  // 4b — fotoğraf temizliği. Başarısızlığı bootstrap'ı DÜŞÜRMEZ: temizlik
+  // bir bakım işidir, uygulamanın açılmasına engel olmamalıdır.
+  let photoSweep: SweepResult | null = null;
+  if (o.photos) {
+    const env = o.photos;
+    photoSweep = await db.withTransaction((tx) => sweepOrphans(tx, env)).catch((e: unknown) => {
+      o.log?.(`[V90] fotoğraf temizliği atlandı: ${(e as Error).message}`);
+      return null;
+    });
+  }
+
   // 5 — servisler.
   const scheduler = new Scheduler({
     clock: o.clock,
@@ -132,6 +152,7 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
     clock: o.clock, files: o.files, catalog, scheduler, restTimers, session,
     pauseService: new PauseService({ clock: o.clock, scheduler }),
     seed: seedResult,
+    photoSweep,
     isEncrypted: provider.isEncrypted,
     dbPath: provider.path,
     openMigrated: (path) => runMigrated(makeProvider(o, path)),
