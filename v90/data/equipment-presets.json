@@ -1,0 +1,50 @@
+{
+  "seedVersion": 1,
+  "presets": {
+    "fullCommercialGym": [
+      "bodyweightOnly",
+      "dumbbells",
+      "adjustableBench",
+      "resistanceBands",
+      "pullupBar",
+      "barbells",
+      "cableStation",
+      "latPulldown",
+      "dipStation",
+      "smithMachine",
+      "legPress",
+      "legExtension",
+      "legCurl",
+      "chestSupportedRow",
+      "plateLoadedMachine",
+      "selectorizedMachine",
+      "hackSquat",
+      "pecDeck",
+      "preacherBench",
+      "assistedPullupMachine"
+    ],
+    "homeGym": [
+      "bodyweightOnly",
+      "dumbbells",
+      "adjustableBench",
+      "resistanceBands",
+      "pullupBar",
+      "barbells",
+      "dipStation"
+    ],
+    "limitedGym": [
+      "bodyweightOnly",
+      "dumbbells",
+      "adjustableBench",
+      "resistanceBands",
+      "pullupBar",
+      "barbells",
+      "cableStation",
+      "latPulldown",
+      "smithMachine",
+      "legPress",
+      "legExtension",
+      "legCurl"
+    ]
+  }
+}

@@ -5,7 +5,7 @@ import { FakeClock } from '../src/core/clock/dateKey.ts';
 import { MigrationRunner, backupPathFor } from '../src/core/db/MigrationRunner.ts';
 import { NodeSqliteProvider } from '../src/core/db/NodeSqliteProvider.ts';
 import { NodeFileStore } from '../src/core/db/NodeFileStore.ts';
-import { nodeSha256 } from '../src/core/db/hash.ts';
+import { nodeSha256 } from '../src/core/db/hash.node.ts';
 import { MIGRATIONS, hasColumn } from '../src/core/db/migrations/index.ts';
 import { DbIntegrityError, InsufficientSpaceError, MigrationFailedError } from '../src/core/db/errors.ts';
 import type { Migration } from '../src/core/db/types.ts';

@@ -10,7 +10,7 @@ import { FakeClock } from '../src/core/clock/dateKey.ts';
 import { MigrationRunner } from '../src/core/db/MigrationRunner.ts';
 import { NodeSqliteProvider } from '../src/core/db/NodeSqliteProvider.ts';
 import { NodeFileStore } from '../src/core/db/NodeFileStore.ts';
-import { nodeSha256, nodeSha256Bytes } from '../src/core/db/hash.ts';
+import { nodeSha256, nodeSha256Bytes } from '../src/core/db/hash.node.ts';
 import type { Db } from '../src/core/db/types.ts';
 import { NodeArchiver, utf8, fromUtf8 } from '../src/core/backup/archive.ts';
 import { NodeBlobStore } from '../src/core/backup/BlobStore.ts';

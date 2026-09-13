@@ -6,7 +6,7 @@ import { FakeClock } from '../src/core/clock/dateKey.ts';
 import { MigrationRunner } from '../src/core/db/MigrationRunner.ts';
 import { NodeSqliteProvider } from '../src/core/db/NodeSqliteProvider.ts';
 import { NodeFileStore } from '../src/core/db/NodeFileStore.ts';
-import { nodeSha256 } from '../src/core/db/hash.ts';
+import { nodeSha256 } from '../src/core/db/hash.node.ts';
 import type { Db } from '../src/core/db/types.ts';
 import { Scheduler, PauseService } from '../src/domain/program/Scheduler.ts';
 import { ActiveSessionService } from '../src/domain/workout/ActiveSessionService.ts';

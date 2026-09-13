@@ -369,6 +369,33 @@ Kullanıcı özelleştirmeleri ayrı tabloda (`user_exercise_settings`: `minIncr
 
 `equipment_profiles` (tek satır): `available: EquipmentTag[]`, `preset: 'fullCommercialGym' | 'homeGym' | 'limitedGym' | 'custom'`. Varsayılan `fullCommercialGym` = tüm etiketler (R98.3). Onboarding'deki `gymType` preset'i ön-seçer (R120.2). `ExerciseCatalog.available()` = `equipment ⊆ profile.available`.
 
+**Preset içerikleri (normatif).** 06-ux-flows.md B.4 "preset içerikleri `data/` seed'indedir" der ama içerikler hiçbir belgede tanımlı değildi; aşağıdaki tablo o boşluğu kapatır ve `data/equipment-presets.json` bu tablodan ÜRETİLİR (`npm run gen:seed`). `bodyweightOnly` her preset'te bulunur: kapatılabilir bir ekipman değildir, yokluğu vücut ağırlığı hareketlerini eler (06 açık nokta).
+
+| EquipmentTag | fullCommercialGym | homeGym | limitedGym |
+|---|:---:|:---:|:---:|
+| `bodyweightOnly` | ✓ | ✓ | ✓ |
+| `dumbbells` | ✓ | ✓ | ✓ |
+| `adjustableBench` | ✓ | ✓ | ✓ |
+| `resistanceBands` | ✓ | ✓ | ✓ |
+| `pullupBar` | ✓ | ✓ | ✓ |
+| `barbells` | ✓ | ✓ | ✓ |
+| `cableStation` | ✓ | — | ✓ |
+| `latPulldown` | ✓ | — | ✓ |
+| `dipStation` | ✓ | ✓ | — |
+| `smithMachine` | ✓ | — | ✓ |
+| `legPress` | ✓ | — | ✓ |
+| `legExtension` | ✓ | — | ✓ |
+| `legCurl` | ✓ | — | ✓ |
+| `chestSupportedRow` | ✓ | — | — |
+| `plateLoadedMachine` | ✓ | — | — |
+| `selectorizedMachine` | ✓ | — | — |
+| `hackSquat` | ✓ | — | — |
+| `pecDeck` | ✓ | — | — |
+| `preacherBench` | ✓ | — | — |
+| `assistedPullupMachine` | ✓ | — | — |
+
+`fullCommercialGym` tanım gereği tüm etiketleri içerir (R98.3); tablo bunu açıkça yazar ki üretici tek kaynaktan okusun. Preset seçmek kullanıcının tek tek yaptığı değişiklikleri ezer; B.5 bunu onay diyaloğuyla sorar.
+
 ### 8.3 Substitution engine (§99)
 
 `SubstitutionEngine.alternatives(exerciseId, ctx)`; deterministik puanlama (R99.2):

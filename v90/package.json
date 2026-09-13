@@ -13,7 +13,7 @@
     "gen": "npm run gen:migration && npm run gen:seed && npm run gen:i18n",
     "verify:seed": "node --no-warnings scripts/verify-seed.mjs",
     "verify:drift": "python3 scripts/check-drift.py",
-    "verify": "npm run verify:drift && npm run verify:seed && npm run typecheck && npm run typecheck:app && npm test",
+    "verify": "npm run verify:drift && npm run verify:seed && npm run typecheck && npm run typecheck:app && npm test && npm run verify:bundle",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --no-warnings --test \"test/**/*.test.ts\"",
     "start": "expo start --dev-client",
@@ -21,12 +21,15 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild --clean",
     "typecheck:app": "tsc --noEmit -p tsconfig.app.json",
-    "bundle:check": "expo export --platform ios --output-dir .expo/export-check --no-minify",
-    "gen:i18n": "python3 scripts/extract-i18n.py"
+    "bundle:check": "expo export --platform ios --output-dir .expo/export-check --no-minify --no-bytecode",
+    "gen:i18n": "python3 scripts/extract-i18n.py",
+    "verify:bundle": "npm run bundle:check && node --no-warnings scripts/check-bundle.mjs"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
     "@journeyapps/sqlcipher": "^6.0.0",
     "@types/node": "^22.20.2",
+    "babel-preset-expo": "^57.0.11",
     "typescript": "^5.9.3"
   },
   "dependencies": {

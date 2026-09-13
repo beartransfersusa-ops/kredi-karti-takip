@@ -7,8 +7,8 @@
 //     kendi Türkçe ekranına düşer.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { bootstrap, BootstrapError } from '../app/container.ts';
-import type { Services } from '../app/container.ts';
+import { bootstrap, BootstrapError } from '../bootstrap/container.ts';
+import type { Services } from '../bootstrap/container.ts';
 import { expoSha256 } from '../platform/hash.ts';
 import { DeviceClock } from '../platform/clock.ts';
 import { ExpoFileStore, databasePath } from '../platform/files.ts';

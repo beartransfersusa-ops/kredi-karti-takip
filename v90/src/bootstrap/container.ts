@@ -12,7 +12,6 @@
 import type { Clock } from '../core/clock/dateKey.ts';
 import { CatalogCache } from '../core/db/catalog.ts';
 import { EncryptedSqliteProvider } from '../core/db/EncryptedSqliteProvider.ts';
-import { NodeSqliteProvider } from '../core/db/NodeSqliteProvider.ts';
 import { MigrationRunner } from '../core/db/MigrationRunner.ts';
 import { installSeed } from '../core/db/seed.ts';
 import type { SeedBundle, SeedResult } from '../core/db/seed.ts';
@@ -25,7 +24,7 @@ import { PauseService, Scheduler } from '../domain/program/Scheduler.ts';
 import { ActiveSessionService } from '../domain/workout/ActiveSessionService.ts';
 import { RestTimerService } from '../domain/workout/RestTimerService.ts';
 import type { NotificationScheduler } from '../domain/workout/RestTimerService.ts';
-import { settings } from '../core/db/repositories.ts';
+import { preferredWorkoutDays } from '../features/profile/profileQuery.ts';
 
 export interface Services {
   db: Db;
@@ -48,7 +47,11 @@ export interface BootstrapOptions {
   seed: SeedBundle;
   build: BuildInfo;
   notifications?: NotificationScheduler;
-  /** Verilmezse şifreli sağlayıcı kurulur (production yolu). */
+  /**
+   * Verilmezse `dbPath` üzerinden ŞİFRELİ sağlayıcı kurulur. Testler kendi
+   * sağlayıcılarını enjekte eder; uygulama bundle'ında şifresiz sağlayıcıya
+   * giden hiçbir yol YOKTUR — `node:sqlite` buraya hiç import edilmez (R93.7).
+   */
   provider?: DatabaseProvider;
   dbPath?: string;
   log?: (m: string) => void;
@@ -102,8 +105,7 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
   // 5 — servisler.
   const scheduler = new Scheduler({
     clock: o.clock,
-    preferredWorkoutDays: () => db.withTransaction(async (tx) =>
-      (await settings.get<number[]>(tx, 'training.preferredWorkoutDays')) ?? []),
+    preferredWorkoutDays: () => db.withTransaction((tx) => preferredWorkoutDays(tx)),
   });
   const restTimers = new RestTimerService({ clock: o.clock, ...(o.notifications ? { notifications: o.notifications } : {}) });
   const catalog = new CatalogCache(db);
@@ -121,11 +123,9 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
 }
 
 function defaultProvider(o: BootstrapOptions): DatabaseProvider {
-  const path = o.dbPath;
-  if (!path) {
-    // Yol verilmediyse yalnızca geliştirme/test anlamlıdır; production'da
-    // adım 1'deki assert zaten durdurur.
-    return new NodeSqliteProvider(':memory:');
+  if (!o.dbPath) {
+    throw new BootstrapError('build',
+      'dbPath verilmedi ve şifresiz sağlayıcıya düşülmez (R93.7)');
   }
-  return new EncryptedSqliteProvider({ path, fileExists: (p) => o.files.exists(p) });
+  return new EncryptedSqliteProvider({ path: o.dbPath, fileExists: (p) => o.files.exists(p) });
 }

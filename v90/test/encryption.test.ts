@@ -17,7 +17,7 @@ import { FakeClock } from '../src/core/clock/dateKey.ts';
 import { MigrationRunner, backupPathFor } from '../src/core/db/MigrationRunner.ts';
 import { MIGRATIONS, hasColumn } from '../src/core/db/migrations/index.ts';
 import { NodeFileStore } from '../src/core/db/NodeFileStore.ts';
-import { nodeSha256, nodeSha256Bytes } from '../src/core/db/hash.ts';
+import { nodeSha256, nodeSha256Bytes } from '../src/core/db/hash.node.ts';
 import { DbOpenError } from '../src/core/db/errors.ts';
 import type { Db, Migration } from '../src/core/db/types.ts';
 

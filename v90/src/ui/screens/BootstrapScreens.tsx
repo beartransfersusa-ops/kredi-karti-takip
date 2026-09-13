@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Platform, View } from 'react-native';
 import Constants from 'expo-constants';
-import type { BootstrapError } from '../../app/container.ts';
+import type { BootstrapError } from '../../bootstrap/container.ts';
 import { Button, Card, Row, Screen, Skeleton, Text } from '../components/primitives.tsx';
 import { space, usePalette } from '../theme.ts';
 import { t } from '../i18n/index.ts';

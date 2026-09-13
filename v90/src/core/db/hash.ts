@@ -1,13 +1,8 @@
-// Checksum portu. Node'da node:crypto, RN'de expo-crypto ile sağlanır.
+// Checksum portu — docs/v90/02-architecture.md §12.1.
+//
+// Yalnızca TİP. Gerçekleştirmeler ayrı dosyalarda durur ki platforma özgü
+// kod yanlış bundle'a girmesin:
+//   • Node/test → hash.node.ts  (node:crypto)
+//   • Uygulama  → platform/hash.ts (expo-crypto)
 export type Hasher = (text: string) => Promise<string>;
 export type BytesHasher = (bytes: Uint8Array) => Promise<string>;
-
-export const nodeSha256: Hasher = async (text) => {
-  const { createHash } = await import('node:crypto');
-  return createHash('sha256').update(text, 'utf8').digest('hex');
-};
-
-export const nodeSha256Bytes: BytesHasher = async (bytes) => {
-  const { createHash } = await import('node:crypto');
-  return createHash('sha256').update(bytes).digest('hex');
-};

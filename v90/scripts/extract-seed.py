@@ -180,3 +180,30 @@ write('data/programs/v90.json', build_program())
 write('data/muscle-volume-targets.json', {'seedVersion': 1, 'targets': build_volume()})
 write('data/initial-profile.json', build_profile())
 print(f'  {len(EXERCISES)} hareket · {len(RELATIONS)} alternatif ilişkisi')
+
+# ---------------------------------------------------------------- presets
+# Ekipman preset'leri 02-architecture.md §11.4'teki normatif tablodadır.
+ARCH = (ROOT / '../docs/v90/02-architecture.md').read_text(encoding='utf-8')
+
+def equipment_presets() -> dict:
+    m = re.search(r'\| EquipmentTag \| fullCommercialGym \| homeGym \| limitedGym \|\n\|[^\n]*\n((?:\|[^\n]*\n)+)', ARCH)
+    if not m:
+        sys.exit('HATA: ekipman preset tablosu bulunamadı (02-architecture.md)')
+    presets = {'fullCommercialGym': [], 'homeGym': [], 'limitedGym': []}
+    order = ['fullCommercialGym', 'homeGym', 'limitedGym']
+    for line in m.group(1).strip().splitlines():
+        cells = [c.strip() for c in line.strip().strip('|').split('|')]
+        if len(cells) != 4:
+            sys.exit(f'HATA: preset satırı 4 hücre değil: {line}')
+        tag = cells[0].strip('`')
+        for i, name in enumerate(order):
+            if cells[i + 1] == '✓':
+                presets[name].append(tag)
+    if len(presets['fullCommercialGym']) != 20:
+        sys.exit(f"HATA: fullCommercialGym 20 etiket olmalı, {len(presets['fullCommercialGym'])} bulundu")
+    for name in ('homeGym', 'limitedGym'):
+        if 'bodyweightOnly' not in presets[name]:
+            sys.exit(f'HATA: {name} preset\'inde bodyweightOnly yok')
+    return {'seedVersion': 1, 'presets': presets}
+
+write('data/equipment-presets.json', equipment_presets())

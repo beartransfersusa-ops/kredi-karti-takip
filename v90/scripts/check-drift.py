@@ -10,7 +10,8 @@ import filecmp, pathlib, shutil, subprocess, sys, tempfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GENERATED = ['src/core/db/migrations/001_initial.sql', 'data/exercises.json',
              'data/programs/v90.json', 'data/muscle-volume-targets.json',
-             'data/initial-profile.json', 'src/ui/i18n/tr.generated.ts']
+             'data/initial-profile.json', 'data/equipment-presets.json',
+             'src/ui/i18n/tr.generated.ts']
 
 snapshot = {}
 with tempfile.TemporaryDirectory() as tmp:
