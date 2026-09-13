@@ -1,6 +1,9 @@
 node_modules/
 .expo/
 dist/
+dist-web/
 ios/
 android/
 *.log
+# postinstall (scripts/copy-web-assets.mjs) node_modules/sql.js'ten üretir; ikililer commit edilmez.
+public/sql-wasm*.wasm

@@ -23,7 +23,11 @@
     "typecheck:app": "tsc --noEmit -p tsconfig.app.json",
     "bundle:check": "expo export --platform ios --output-dir .expo/export-check --no-minify --no-bytecode",
     "gen:i18n": "python3 scripts/extract-i18n.py",
-    "verify:bundle": "npm run bundle:check && node --no-warnings scripts/check-bundle.mjs"
+    "verify:bundle": "npm run bundle:check && node --no-warnings scripts/check-bundle.mjs ios && npm run bundle:check:web && node --no-warnings scripts/check-bundle.mjs web",
+    "web": "expo start --web",
+    "export:web": "expo export --platform web --output-dir dist-web && node scripts/web-postexport.mjs dist-web",
+    "bundle:check:web": "expo export --platform web --output-dir .expo/export-check-web --no-minify --no-bytecode",
+    "postinstall": "node scripts/copy-web-assets.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",

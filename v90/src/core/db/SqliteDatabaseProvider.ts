@@ -3,8 +3,12 @@
 // Şifreleme bir SOYUTLAMA arkasındadır (R93.3): şifreli ve şifresiz yol aynı
 // `Db` portunu döndürür, bu yüzden domain kodu hangisinin çalıştığını bilmez.
 // Fark yalnızca bağlantı açılırken uygulanan `PRAGMA key`'dir.
+//
+// Web'de (sql.js, ADR-013) dosya bellektedir: sağlayıcı her başarılı COMMIT'ten
+// ve transaction dışı her yazmadan sonra `persist()` ile görüntüyü depoya
+// yazdırır. Okumalar (get/all) depoya dokunmaz.
 
-import { DbOpenError } from './errors.ts';
+import { DbOpenError, DbWriteError } from './errors.ts';
 import type { DbKeyManager } from './keys/DbKeyManager.ts';
 import type { SqliteConnection, SqliteDriver } from './SqliteDriver.ts';
 import type { Db, DatabaseProvider, ExecResult, Tx } from './types.ts';
@@ -39,15 +43,40 @@ class DbImpl extends Conn implements Db {
     if (this.#inTx) throw new Error('iç içe transaction desteklenmiyor (02 §3)');
     this.#inTx = true;
     await this.c.execScript('BEGIN IMMEDIATE');
+    let out: T;
     try {
-      const out = await fn(this);
+      out = await fn(this);
       await this.c.execScript('COMMIT');
-      return out;
     } catch (e) {
       await this.c.execScript('ROLLBACK').catch(() => { /* zaten kapalı */ });
       throw e;
     } finally {
       this.#inTx = false;
+    }
+    // COMMIT başarılı: bellek içi motor görüntüyü kalıcı depoya yazar.
+    // Depo hatası YUTULMAZ; kullanıcı "Kaydedilemedi" görür (02 §15).
+    await this.#persist();
+    return out;
+  }
+
+  /** Transaction dışı tekil yazma da kalıcılaştırılır; içerideyse COMMIT bekler. */
+  override async exec(sql: string, params?: readonly unknown[]): Promise<ExecResult> {
+    const r = await this.c.exec(sql, params);
+    if (!this.#inTx) await this.#persist();
+    return r;
+  }
+
+  override async execScript(sql: string): Promise<void> {
+    await this.c.execScript(sql);
+    if (!this.#inTx) await this.#persist();
+  }
+
+  async #persist(): Promise<void> {
+    if (!this.c.persist) return;       // dosya tabanlı sürücü: SQLite zaten yazdı
+    try {
+      await this.c.persist();
+    } catch (e) {
+      throw new DbWriteError(`kalıcı depoya yazılamadı: ${(e as Error).message}`, e);
     }
   }
 
@@ -78,7 +107,10 @@ export class SqliteDatabaseProvider implements DatabaseProvider {
   constructor(o: SqliteDatabaseProviderOptions) {
     this.#o = o;
     this.path = o.path;
-    this.isEncrypted = o.keyManager != null;
+    // İki dürüst kaynak: SQLCipher anahtarı (keyManager) ya da sürücünün
+    // SQLite dışı şifrelemesi (encryptsAtRest, web görüntüsü). Başka hiçbir
+    // şey "şifreli" saydırmaz (R93.4, R93.7).
+    this.isEncrypted = o.keyManager != null || o.driver.encryptsAtRest === true;
     if (o.keyManager && !o.driver.supportsEncryption) {
       throw new EncryptionUnsupportedError(o.driver.name);
     }

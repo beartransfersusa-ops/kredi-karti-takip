@@ -1,10 +1,19 @@
-// Expo yapılandırması — docs/v90/02-architecture.md §2, ADR-002, ADR-003.
+// Expo yapılandırması — docs/v90/02-architecture.md §2, ADR-002, ADR-003, ADR-013.
 //
 // SQLCipher config plugin ile derlenir. Bu, Expo Go'da ÇALIŞMAZ:
 // Development Build / prebuild zorunludur (R93.4). Expo Go yalnızca UI
 // prototiplemesi içindir ve gerçek kullanıcı verisiyle çalıştırılmaz.
+//
+// Web hedefi (ADR-013): aynı yapılandırma `expo export --platform web` ile
+// tarayıcı için de derlenir. Web'de SQLCipher yoktur; veritabanı sql.js +
+// WebCrypto ile şifrelenmiş görüntü olarak IndexedDB'de durur (02 §12.2).
+// GitHub Pages alt yolu build anında V90_WEB_BASE_URL ile verilir
+// (→ experiments.baseUrl → çalışma zamanında EXPO_BASE_URL).
 
 import type { ExpoConfig } from 'expo/config';
+
+// GitHub Pages: /kredi-karti-takip. Yerel `expo start --web` için tanımsız kalır.
+const webBaseUrl = process.env.V90_WEB_BASE_URL?.replace(/\/$/, '');
 
 const config: ExpoConfig = {
   name: 'V90',
@@ -35,6 +44,18 @@ const config: ExpoConfig = {
     allowBackup: false,
   },
 
+  web: {
+    // Metro ile tek sayfa (SPA) çıktı; 404.html ve sw.js export sonrası
+    // scripts/web-postexport.mjs tarafından eklenir (ADR-013).
+    bundler: 'metro',
+    output: 'single',
+    name: 'V90',
+    shortName: 'V90',
+    lang: 'tr',
+    themeColor: '#0f172a',
+    backgroundColor: '#0f172a',
+  },
+
   plugins: [
     'expo-router',
     ['expo-sqlite', { useSQLCipher: true }],
@@ -51,7 +72,11 @@ const config: ExpoConfig = {
     }],
   ],
 
-  experiments: { typedRoutes: true },
+  experiments: {
+    typedRoutes: true,
+    // Yalnızca ayarlandığında: expo-router'ın okuduğu EXPO_BASE_URL buradan üretilir.
+    ...(webBaseUrl ? { baseUrl: webBaseUrl } : {}),
+  },
 
   extra: {
     // Analytics ve crash reporting v1'de YOK (R118.3: varsayılan kapalı).

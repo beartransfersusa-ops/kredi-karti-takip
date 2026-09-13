@@ -1,4 +1,4 @@
-// Uygulama bileşimi ve veri erişimi — docs/v90/06-ux-flows.md A.0, B.16.
+// Uygulama bileşimi ve veri erişimi — docs/v90/06-ux-flows.md A.0, B.16, B.20.
 //
 // İki kural bu dosyanın tamamını belirler:
 //   • DB tek doğruluk kaynağıdır; optimistic update YOKTUR (R90.7). Bir komut
@@ -6,7 +6,7 @@
 //   • Hiçbir akış beyaz ekranla bitmez (R117.1): bootstrap'ın her hata adımı
 //     kendi Türkçe ekranına düşer.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { bootstrap, BootstrapError } from '../bootstrap/container.ts';
 import type { Services } from '../bootstrap/container.ts';
 import { expoSha256 } from '../platform/hash.ts';
@@ -19,14 +19,27 @@ import { PlatformNotificationScheduler } from '../platform/notifications.ts';
 import { makeProvider } from '../platform/db.ts';
 import { buildInfo } from '../platform/build.ts';
 import { SEED_BUNDLE } from '../platform/seedBundle.ts';
+import { requestPersistentStorage } from '../platform/storage.ts';
+import type { PersistState } from '../platform/storage.ts';
+import { registerServiceWorker } from '../platform/serviceWorker.ts';
 
 export type BootState =
   | { phase: 'loading' }
   | { phase: 'ready'; services: Services }
   | { phase: 'failed'; error: BootstrapError };
 
+/**
+ * Platformun bootstrap ÖNCESİNDE bildirdiği durum (06 B.20). Ekranlar bunu
+ * yalnızca gösterir; hiçbir akış buna göre engellenmez.
+ */
+export interface PlatformInfo {
+  /** Kalıcı depolama izni. Yerelde her zaman 'unsupported': sandbox zaten kalıcıdır, soru sorulmaz. */
+  persist: PersistState;
+}
+
 interface AppContextValue {
   services: Services;
+  platformInfo: PlatformInfo;
   /** Herhangi bir yazma sonrası artar; açık sorgular yeniden okur. */
   revision: number;
   invalidate: () => void;
@@ -41,6 +54,8 @@ const Ctx = createContext<AppContextValue | null>(null);
 
 export function useServices(): Services { return useAppContext().services; }
 
+export function usePlatformInfo(): PlatformInfo { return useAppContext().platformInfo; }
+
 export function useAppContext(): AppContextValue {
   const v = useContext(Ctx);
   if (!v) throw new Error('AppProvider dışında kullanıldı');
@@ -53,30 +68,41 @@ export function AppProvider(p: {
   renderError: (e: BootstrapError, retry: () => void) => React.ReactNode;
 }) {
   const [state, setState] = useState<BootState>({ phase: 'loading' });
+  const [platformInfo, setPlatformInfo] = useState<PlatformInfo>({ persist: 'unsupported' });
   const [revision, setRevision] = useState(0);
   const attempt = useRef(0);
+  const swRegistered = useRef(false);
 
   const run = useCallback(() => {
     const mine = ++attempt.current;
     setState({ phase: 'loading' });
-    bootstrap({
-      clock: new DeviceClock(),
-      files: new PlatformFileStore(),
-      hash: expoSha256,
-      seed: SEED_BUNDLE,
-      build: buildInfo(),
-      notifications: new PlatformNotificationScheduler(),
-      dbPath: databasePath(),
-      // Sağlayıcı platformdan gelir: yerelde SQLCipher, web'de sql.js + AES-GCM görüntü.
-      makeProvider,
-      // Açılışta yarıda kalmış fotoğraf silmeleri tamamlanır (R116.4).
-      photos: {
-        blobs: new PlatformBlobStore(),
-        photosDir: photosDir(),
-        hashBytes: expoSha256Bytes,
-        newId,
-      },
-    }).then(
+    (async () => {
+      // Web: kalıcı depolama izni bootstrap'tan ÖNCE istenir (06 B.20 adım 1).
+      // Sonuç yalnızca Ayarlar'da gösterilir; reddedilse de açılış sürer —
+      // kullanıcıya "düzenli yedek al" denir, açılış engellenmez.
+      if (Platform.OS === 'web') {
+        const persist = await requestPersistentStorage();
+        if (mine === attempt.current) setPlatformInfo({ persist });
+      }
+      return bootstrap({
+        clock: new DeviceClock(),
+        files: new PlatformFileStore(),
+        hash: expoSha256,
+        seed: SEED_BUNDLE,
+        build: buildInfo(),
+        notifications: new PlatformNotificationScheduler(),
+        dbPath: databasePath(),
+        // Sağlayıcı platformdan gelir: yerelde SQLCipher, web'de sql.js + AES-GCM görüntü.
+        makeProvider,
+        // Açılışta yarıda kalmış fotoğraf silmeleri tamamlanır (R116.4).
+        photos: {
+          blobs: new PlatformBlobStore(),
+          photosDir: photosDir(),
+          hashBytes: expoSha256Bytes,
+          newId,
+        },
+      });
+    })().then(
       (services) => { if (mine === attempt.current) setState({ phase: 'ready', services }); },
       (e: unknown) => {
         if (mine !== attempt.current) return;
@@ -90,16 +116,26 @@ export function AppProvider(p: {
 
   useEffect(run, [run]);
 
+  // Çevrimdışı kabuk: uygulama hazır olduktan sonra BİR KEZ kaydedilir
+  // (06 B.20; 02 §2.2). Yerelde iş yapmaz; web'de sw.js. Kayıt başarısızlığı
+  // uygulamayı düşürmez, yalnızca sonraki çevrimdışı açılış garantisi olmaz.
+  useEffect(() => {
+    if (state.phase !== 'ready' || swRegistered.current) return;
+    swRegistered.current = true;
+    registerServiceWorker();
+  }, [state.phase]);
+
   const value = useMemo<AppContextValue | null>(
     () => (state.phase === 'ready'
       ? {
         services: state.services,
+        platformInfo,
         revision,
         invalidate: () => setRevision((v) => v + 1),
         restart: run,
       }
       : null),
-    [state, revision, run],
+    [state, platformInfo, revision, run],
   );
 
   if (state.phase === 'loading') return <>{p.renderLoading()}</>;
@@ -117,7 +153,8 @@ export interface QueryState<T> {
 
 /**
  * DB okuması. `revision` değiştiğinde ve uygulama ön plana döndüğünde
- * (AppState → active, R112.5) yeniden koşar.
+ * (AppState → active, R112.5) yeniden koşar. Web'de AppState sekme
+ * görünürlüğüne eşlenir; sekmeye dönüş de yeniden okutur.
  */
 export function useDbQuery<T>(fn: (s: Services) => Promise<T>, deps: readonly unknown[] = []): QueryState<T> {
   const { services, revision } = useAppContext();

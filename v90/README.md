@@ -10,7 +10,7 @@ Bu dizin, [`../docs/v90/`](../docs/v90/) altındaki specification'dan **üretile
 | Yol | Ne | Kaynak |
 |-----|-----|--------|
 | `src/core/db/migrations/001_initial.sql` | Tam şema (45 tablo, 2 görünüm, 21 indeks) | `docs/v90/03-data-model.md` §1 |
-| `src/ui/i18n/tr.generated.ts` | 495 Türkçe UI metni | `docs/v90/06-ux-flows.md` metin tabloları |
+| `src/ui/i18n/tr.generated.ts` | 530 Türkçe UI metni | `docs/v90/06-ux-flows.md` metin tabloları |
 | `data/equipment-presets.json` | 3 ekipman preset'i | `docs/v90/02-architecture.md` §11.4 |
 | `data/exercises.json` | 32 hareketlik katalog + 14 alternatif ilişkisi | Bölüm I §35, §36 |
 | `data/programs/v90.json` | 5 antrenman şablonu, 30 şablon hareketi | Bölüm I §21–§26 |
@@ -63,10 +63,11 @@ dört kontrol birden kırılır.
 `src/features`+`test`) ve uygulama (React Native, `app`+`src/ui`+`src/platform`).
 Ayrı olmalarının sebebi ikisinin FARKLI platform tiplerine sahip olması.
 
-**4. Testler** — 268 test, gerçek SQLite üzerinde.
+**4. Testler** — 297 test, gerçek SQLite (ve web için sql.js) üzerinde.
 
-**5. Bundle denetimi** (`verify:bundle`) — uygulama gerçekten derleniyor mu ve
-şifresiz yol bundle'a sızmış mı? Ayrıntı için aşağı bkz.
+**5. Bundle denetimi** (`verify:bundle`) — iki platform (ios + web) gerçekten
+derleniyor mu, şifresiz yol ya da öteki platformun motoru bundle'a sızmış mı?
+Ayrıntı için aşağı bkz.
 
 ## Gereksinimler
 
@@ -113,7 +114,7 @@ onun uygulamaya girmediğini her çalıştırmada doğrular.
 | `src/core/db/buildGuard.ts` | Production'da şifresiz DB ve Expo Go yasağı | §93.4, §93.7 |
 | `src/core/db/seed.ts` | Idempotent katalog/şablon kurulumu | 03 §1 |
 | `src/bootstrap/container.ts` | Build koruması → DB → migration → seed → servisler | 02 §2, §12 |
-| `src/platform/` | Expo adaptörleri: saat, dosya, bildirim, hash, id, blob | 02 §2 |
+| `src/platform/` | Platform adaptörleri: saat, dosya, bildirim, hash, id, blob, DB sağlayıcısı; `x.web.ts` tarayıcı karşılıkları (IndexedDB, WebCrypto) | 02 §2, ADR-013 |
 | `src/features/` | Saf görünüm modelleri (kart önceliği, yük alanı, tam/kısmi) | 06 A.1, A.3, A.4 |
 | `src/ui/` | Tasarım belirteçleri, bileşenler, i18n, AppProvider, kilit | 06 A.0, B.0 |
 | `app/` | expo-router rotaları (21 ekran) | 06 rota haritası |
@@ -134,7 +135,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 268 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 297 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -217,28 +218,80 @@ paketler kurulur ve o dosya silinir.
 
 ## Telefona kurulum
 
-**Hazır bir indirme linki yok** ve `Expo Go` ile ÇALIŞMAZ: SQLCipher native bir
-modüldür ve Expo Go'da yoktur. Bu bilinçli bir karardır (R93.4) — şifreleme,
-migration ve WAL davranışı ilk günden gerçek koşullarda test edilsin diye.
-Uygulamayı telefona koymanın yolu bir **Development / Preview Build**'dir.
+`Expo Go` ile ÇALIŞMAZ: SQLCipher native bir modüldür ve Expo Go'da yoktur. Bu
+bilinçli bir karardır (R93.4) — şifreleme, migration ve WAL davranışı ilk günden
+gerçek koşullarda test edilsin diye. Uygulamayı telefona koymanın iki yolu var:
+CI'ın ürettiği **APK** (Android) ve **tarayıcı sürümü** (her cihaz).
 
-### En kısa yol: EAS Build (bulutta derlenir, bilgisayarında Android SDK / Xcode gerekmez)
+### En kısa yol: GitHub Actions'ın ürettiği APK (Android, Expo hesabı gerekmez)
+
+Her `v90/**` push'unda **V90 Android APK** iş akışı
+(`.github/workflows/v90-build-android.yml`) `expo prebuild` + `gradle
+assembleRelease` ile APK üretir ve `v90-android` ön sürümüne ekler:
+
+- **Son derleme:** <https://github.com/beartransfersusa-ops/kredi-karti-takip/releases/download/v90-android/v90.apk>
+- Sürüm sayfası (commit'e göre kopyalar): <https://github.com/beartransfersusa-ops/kredi-karti-takip/releases/tag/v90-android>
+
+Telefonda linki aç → indir → "bilinmeyen kaynaklara izin ver" → kur. Elle
+tetiklemek: **Actions → V90 Android APK → Run workflow**. Derleme ~20–30 dk sürer;
+iş akışının özetinde de aynı link yazar.
+
+Dürüst notlar:
+
+- APK **debug keystore** ile imzalıdır (Expo şablonunun varsayılanı): telefona
+  yüklenir, Play Store'a gönderilemez. Keystore herkese açık olduğu için
+  "bu APK'yı yalnızca ben üretmiş olabilirim" güvencesi de yoktur — mağaza için
+  kendi keystore'un gerekir.
+- `expo prebuild` CI'da `android/gradle.properties` içine
+  `expo.sqlite.useSQLCipher=true` yazar ve iş akışı bunu **denetler**; SQLCipher
+  derlemeye gerçekten girer.
+- **iPhone:** CI'da iOS derlemesi yok (Apple Developer hesabı ve imza gerekir).
+  Yol: EAS (aşağıda) ya da Mac'te `npm run ios`.
+
+### Tarayıcıda çalıştırma (web)
+
+Aynı uygulama **V90 Web (GitHub Pages)** iş akışıyla (`.github/workflows/v90-web.yml`)
+yayınlanır:
+
+- **Adres:** <https://beartransfersusa-ops.github.io/kredi-karti-takip/>
+
+Android Chrome'da "Ana ekrana ekle" ile uygulama gibi açılır; ilk açılıştan sonra
+çevrimdışı da açılır (service worker, 02 §2.2). İlk yayında Pages otomatik
+açılamazsa: **Settings → Pages → Source: GitHub Actions**, sonra iş akışını
+yeniden çalıştır.
+
+Web'de ne farklı (ADR-013, 06 B.20):
+
+- **SQLCipher yok.** Veritabanı sql.js ile bellekte çalışır; her commit'ten
+  sonra görüntüsü AES-GCM-256 ile şifrelenip IndexedDB'ye yazılır. Anahtar
+  çıkarılamaz bir WebCrypto `CryptoKey`'dir; JS baytlarını göremez. Bu
+  "SQLCipher" değildir ve ekranda öyle anlatılmaz (R93.4).
+- Tarayıcı site verisini silerse (yer sıkışması, "site verilerini temizle")
+  görüntü ve anahtar birlikte gider: **veri gider.** Uygulama açılışta kalıcı
+  depolama izni ister ve sonucu Ayarlar'da gösterir; düzenli yedek al.
+- Biyometrik kilit, bildirim ve ekran görüntüsü engelleme yok; fotoğraflar
+  tarayıcı deposunda. Aynı anda **tek sekme** (ikincisi "Veritabanı açılamadı" der).
+- Yedek ZIP'i indirme klasörüne iner; formatı Android ile aynıdır.
+
+**Web'de başla, telefona taşı:** web'de Ayarlar → Yedekleme → Dışa aktar (ZIP
+iner) → Android uygulamasında Ayarlar → Yedekleme → İçe aktar. Tersi de aynı.
+
+Yerel geliştirme: `npm run web` (Metro, <http://localhost:8081>);
+`npm run export:web` `dist-web/` üretir (`404.html`, `manifest.webmanifest`,
+`sw.js` dahil). `verify:bundle` web bundle'ını da denetler: `expo-sqlite` /
+Keychain izi yok, `sqlJsDriver` / `AES-GCM` / `V90E` izi var.
+
+### EAS Build (isteğe bağlı; iOS için gerekli)
 
 ```bash
 npm install -g eas-cli
 eas login                              # ücretsiz Expo hesabı (expo.dev)
 cd v90 && npm ci
-eas build --platform android --profile preview
+eas build --platform android --profile preview    # ya da --platform ios
 ```
 
-Derleme ~10–15 dk sürer; bitince terminalde ve expo.dev panelinde bir **APK
-indirme linki** çıkar. Linki telefonda aç, "bilinmeyen kaynaklara izin ver",
-kur, başla. Aynı komut GitHub'dan da tetiklenebilir: **Actions → v90-build-android
-→ Run workflow** (repo secret olarak `EXPO_TOKEN` gerekir; expo.dev → Access tokens).
-
-**iPhone** için: `--platform ios`. Apple Developer hesabı ($99/yıl) ve cihazın
-UDID'sinin kayıtlı olması gerekir (`eas device:create` bunu yönetir); ya da
-TestFlight. Apple'ın kısıtıdır, uygulamanın değil.
+Derleme bitince expo.dev panelinde indirme linki çıkar. iOS için Apple Developer
+hesabı ($99/yıl) ve cihaz UDID kaydı (`eas device:create`) ya da TestFlight gerekir.
 
 ### Geliştirme döngüsü (kod değiştirirken)
 
@@ -291,7 +344,7 @@ başlığında ve İlerleme ekranında hacim önerisi olarak görünür.
 ### UI metni de üretilir
 
 `scripts/extract-i18n.py`, `06-ux-flows.md` içindeki "Türkçe metinler"
-tablolarından 518 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
+tablolarından 530 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
 Üretilen `TrParams` tipi yer tutucuları **derleme zamanında** denetler:
 
 ```ts
@@ -309,6 +362,8 @@ ve iki eksik anahtar buldu; **kod değil belge** düzeltildi.
 
 | Bulunmamalı | Neden |
 |---|---|
+| `sqlJsDriver`, `EncryptedImageStore`, `sql-wasm` (ios) | web motoru yerel bundle'a giremez (ADR-013) |
+| `expo-sqlite`, `ExpoSecureStore`, `WHEN_UNLOCKED_THIS_DEVICE_ONLY` (web) | web'de SQLCipher/Keychain varmış gibi görünmez (R93.4) |
 | `node:sqlite`, `NodeSqliteProvider`, `nodeSqliteDriver` | şifresiz sağlayıcı production'a giremez (R93.7) |
 | `@journeyapps/sqlcipher` | yalnızca test sürücüsü |
 | `node:crypto`, `node:fs` | Node'a özgü kod cihazda çalışmaz |
@@ -408,9 +463,10 @@ Kod tarafında belgedeki tüm akışlar yazıldı. Kalanlar cihaz ve içerik iş
    raporu. Bu altı senaryo simülatör/CI'da kanıtlanamaz.
 2. **Video manifest kürasyonu** — her hareket için kanal + ID + doğrulama
    tarihi elle girilir; manifest dolunca oynatıcı bağlanır (yukarı bkz.).
-3. **İlk gerçek build** — `eas build --platform android --profile preview`
-   ("Telefona kurulum" bölümü). Bu depoda hazır bir APK / indirme bağlantısı
-   **yoktur**; build senin Expo hesabında üretilir.
+3. **Gerçek cihazda ilk kullanım** — APK ve web adresi artık CI'dan geliyor
+   ("Telefona kurulum"). Cihazda görülen her sorun bir AT senaryosuna bağlanıp
+   düzeltilecek; web için IndexedDB/Web Locks yolları yalnızca headless
+   Chromium duman testinde koştu, gerçek telefon tarayıcısında henüz değil.
 
 R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
 Şu an **kod seviyesinde** karşılananlar: AT-01, AT-02, AT-03, AT-04, AT-05,

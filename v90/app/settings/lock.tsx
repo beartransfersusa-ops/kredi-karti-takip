@@ -1,7 +1,8 @@
-// Uygulama kilidi ve gizlilik — docs/v90/06-ux-flows.md B.6 (§94, R116.5).
+// Uygulama kilidi ve gizlilik — docs/v90/06-ux-flows.md B.6 (§94, R116.5), B.20 (web).
 //
-// DÜRÜSTLÜK KURALI (R94.6): iOS'ta ekran görüntüsü engelleme VAAT EDİLMEZ.
-// Anahtar orada hiç gösterilmez; yerine ne yapıldığı ve ne yapılmadığı yazılır.
+// DÜRÜSTLÜK KURALI (R94.6): iOS'ta ve web'de ekran görüntüsü engelleme VAAT
+// EDİLMEZ. Anahtar orada hiç gösterilmez; yerine ne yapıldığı ve ne
+// yapılmadığı yazılır. Web'de uygulama kilidi de yoktur ve öyle yazılır.
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { router } from 'expo-router';
@@ -26,6 +27,8 @@ function LockSettings() {
 
   useEffect(() => {
     let alive = true;
+    // Web'de biyometri API'si yok; sorgulamadan "uygun değil" (B.20).
+    if (Platform.OS === 'web') { setAvailability('unavailable'); return; }
     (async () => {
       try {
         const LA = await import('expo-local-authentication');
@@ -88,8 +91,11 @@ function LockSettings() {
         {availability === 'checking' ? (
           <Text variant="caption" color="faint">{t('settings.appLock.checking')}</Text>
         ) : availability === 'unavailable' ? (
-          // Cihaz desteklemiyorsa anahtar pasif; sebep açıkça yazılır.
-          <Text color="muted">{t('settings.appLock.unavailable')}</Text>
+          // Desteklenmiyorsa anahtar pasif; sebep açıkça yazılır. Web'de sebep
+          // cihaz değil platformdur: "cihaz ayarlarından ekle" denmez.
+          <Text color="muted">
+            {Platform.OS === 'web' ? t('settings.appLock.webUnavailable') : t('settings.appLock.unavailable')}
+          </Text>
         ) : (
           <>
             <Row style={{ justifyContent: 'space-between' }}>
@@ -150,6 +156,12 @@ function LockSettings() {
               }}
             />
           </Row>
+        ) : Platform.OS === 'web' ? (
+          /*
+           * Web: tarayıcı ekran görüntüsünü engelleyemez; anahtar YOK, söz YOK
+           * (R94.6). Sekme arka plana geçince perde iner (B.18, B.20).
+           */
+          <Text variant="caption" color="muted">{t('settings.privacy.webNote')}</Text>
         ) : (
           /*
            * iOS: anahtar YOK. Platformun güvenilir desteklemediği bir özelliği

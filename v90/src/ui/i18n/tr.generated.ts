@@ -2,7 +2,7 @@
 // Kaynak: docs/v90/06-ux-flows.md "Türkçe metinler" tabloları.
 // Yeniden üretmek için: npm run gen:i18n
 //
-// 518 anahtar. Metin değişecekse ÖNCE belge güncellenir;
+// 530 anahtar. Metin değişecekse ÖNCE belge güncellenir;
 // aksi halde `npm run verify:drift` CI'da kırılır.
 
 export const tr = {
@@ -295,8 +295,10 @@ export const tr = {
   'photos.privacyNote': 'Fotoğraflar yalnızca uygulamanın özel alanında saklanır; galeriye eklenmez ve buluta gönderilmez.',
   'photos.removeRecord': 'Kaydı kaldır',
   'photos.source.camera': 'Kamera',
+  'photos.source.file': 'Dosya seç',
   'photos.source.library': 'Galeri',
   'photos.title': 'Progress Photos',
+  'photos.webNote': 'Web\'de ekran görüntüsü engellenemez. Fotoğraflar bu tarayıcının deposunda tutulur; sunucuya gönderilmez.',
   'plateau.ack': 'Anladım',
   'plateau.checklist.checked': 'Kontrol ettim',
   'plateau.checklist.noData': 'Veri yok',
@@ -449,8 +451,10 @@ export const tr = {
   'settings.appLock.title': 'Face ID / Touch ID / Biometric Lock',
   'settings.appLock.toggle': 'Uygulama kilidi',
   'settings.appLock.unavailable': 'Bu cihazda biyometrik doğrulama yok ya da kayıtlı değil. Cihaz ayarlarından Face ID / parmak izi ekleyip tekrar dene.',
+  'settings.appLock.webUnavailable': 'Web\'de uygulama kilidi yok; tarayıcı biyometrik doğrulama sunmaz. Sekme arka plana geçince içerik perdelenir.',
   'settings.backup.export.activeSessionNote': 'Devam eden antrenmanın da yedeğe dahil edilir.',
   'settings.backup.export.button': 'Yedeği dışa aktar',
+  'settings.backup.export.downloaded': '{name} indirildi · {size}',
   'settings.backup.export.failed': 'Yedek oluşturulamadı. Boş alanı kontrol et.',
   'settings.backup.export.last': 'Son yedek: {date} · {size}',
   'settings.backup.export.missingPhotos': '{n} fotoğraf dosyası bulunamadı ve yedeğe eklenmedi.',
@@ -494,6 +498,7 @@ export const tr = {
   'settings.backup.undo.card': 'İçe aktarma {date} tarihinde yapıldı. {days} gün içinde geri alabilirsin.',
   'settings.backup.undo.confirm': 'İçe aktarmadan sonra girdiğin her şey silinecek; önceki verin geri gelecek.',
   'settings.backup.undo.success': 'Önceki verin geri yüklendi.',
+  'settings.backup.web.hint': 'Web\'de yedek tarayıcının indirme klasörüne kaydedilir. Tarayıcı verisi silinirse kayıtlar yalnızca bu dosyadan geri gelir; düzenli yedek al.',
   'settings.equipment.activeSessionNote': 'Devam eden antrenman etkilenmez; değişiklik sonraki antrenmanda uygulanır.',
   'settings.equipment.impact': 'Programdaki {n} hareket bu ekipmanla yapılamıyor; antrenmanda alternatif önerilecek.',
   'settings.equipment.impactNone': 'Programdaki tüm hareketler bu ekipmanla yapılabiliyor.',
@@ -510,6 +515,13 @@ export const tr = {
   'settings.privacy.noCloud': 'Tüm veri yalnızca bu cihazda saklanır.',
   'settings.privacy.sensitiveScreens': 'Progress Photos ve Labs ekranları gizlilik hassas görünümdür; uygulama arka plana geçince içerik perdeyle kapatılır.',
   'settings.privacy.title': 'Gizlilik',
+  'settings.privacy.webNote': 'Web\'de ekran görüntüsü engellenemez; sekme arka plana geçince içerik perdelenir.',
+  'settings.web.encryption': 'Veritabanı bu tarayıcıda AES-GCM ile şifreli saklanır; anahtar tarayıcının WebCrypto deposundadır ve dışa aktarılamaz.',
+  'settings.web.limits': 'Biyometrik kilit ve bildirim web\'de yok; fotoğraflar tarayıcı deposunda tutulur.',
+  'settings.web.persist.denied': 'Kalıcı depolama: verilmedi — tarayıcı yer açmak için silebilir; düzenli yedek al',
+  'settings.web.persist.granted': 'Kalıcı depolama: verildi',
+  'settings.web.persist.unsupported': 'Kalıcı depolama: bu tarayıcıda sorulamıyor; düzenli yedek al',
+  'settings.web.title': 'Web sürümü',
   'validation.outOfRange.cm': '1–300 cm arasında bir değer gir.',
   'validation.outOfRange.kg': '1–400 kg arasında bir değer gir.',
   'validation.positiveGrams': 'Gram 0\'dan büyük olmalı.',
@@ -819,8 +831,10 @@ export type TrParams = {
   'photos.privacyNote': undefined;
   'photos.removeRecord': undefined;
   'photos.source.camera': undefined;
+  'photos.source.file': undefined;
   'photos.source.library': undefined;
   'photos.title': undefined;
+  'photos.webNote': undefined;
   'plateau.ack': undefined;
   'plateau.checklist.checked': undefined;
   'plateau.checklist.noData': undefined;
@@ -973,8 +987,10 @@ export type TrParams = {
   'settings.appLock.title': undefined;
   'settings.appLock.toggle': undefined;
   'settings.appLock.unavailable': undefined;
+  'settings.appLock.webUnavailable': undefined;
   'settings.backup.export.activeSessionNote': undefined;
   'settings.backup.export.button': undefined;
+  'settings.backup.export.downloaded': { 'name': string | number; 'size': string | number };
   'settings.backup.export.failed': undefined;
   'settings.backup.export.last': { 'date': string | number; 'size': string | number };
   'settings.backup.export.missingPhotos': { 'n': string | number };
@@ -1018,6 +1034,7 @@ export type TrParams = {
   'settings.backup.undo.card': { 'date': string | number; 'days': string | number };
   'settings.backup.undo.confirm': undefined;
   'settings.backup.undo.success': undefined;
+  'settings.backup.web.hint': undefined;
   'settings.equipment.activeSessionNote': undefined;
   'settings.equipment.impact': { 'n': string | number };
   'settings.equipment.impactNone': undefined;
@@ -1034,6 +1051,13 @@ export type TrParams = {
   'settings.privacy.noCloud': undefined;
   'settings.privacy.sensitiveScreens': undefined;
   'settings.privacy.title': undefined;
+  'settings.privacy.webNote': undefined;
+  'settings.web.encryption': undefined;
+  'settings.web.limits': undefined;
+  'settings.web.persist.denied': undefined;
+  'settings.web.persist.granted': undefined;
+  'settings.web.persist.unsupported': undefined;
+  'settings.web.title': undefined;
   'validation.outOfRange.cm': undefined;
   'validation.outOfRange.kg': undefined;
   'validation.positiveGrams': undefined;

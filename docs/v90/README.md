@@ -1,6 +1,6 @@
 # V90 – 90 Günlük Challenge Uygulaması · Tasarım Belgeleri
 
-Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifreli SQLite) **specification** ve **mimari tasarım** belgelerini içerir. Belgeler Türkçedir; teknik terimler İngilizce bırakılmıştır.
+Bu klasör, V90 uygulamasının (React Native + Expo, offline-first, şifreli SQLite; iOS/Android ve tarayıcı) **specification** ve **mimari tasarım** belgelerini içerir. Belgeler Türkçedir; teknik terimler İngilizce bırakılmıştır.
 
 | Belge | İçerik | Kim okur |
 |-------|--------|----------|
@@ -9,9 +9,9 @@ Bu klasör, V90 mobil uygulamasının (React Native + Expo, offline-first, şifr
 | [`02-architecture.md`](02-architecture.md) | Teknoloji yığını, katmanlar, modül haritası, sözlük, her gereksinim grubunun mimari karşılığı, izlenebilirlik matrisi | Geliştirici, reviewer |
 | [`03-data-model.md`](03-data-model.md) | Tam SQLite DDL (`001_initial`), migration kuralları, türetilmiş görünümler, TypeScript tipleri, Zod/`TableRegistry` | Geliştirici |
 | [`04-domain-engines.md`](04-domain-engines.md) | Algoritmalar: takvim/sıra, autosave/rest timer, artış adımları ve effective load, progression, plateau, hacim, PR, substitution, adherence/trend/rapor, beslenme, ölçüm kalitesi, zaman | Geliştirici, test yazarı |
-| [`05-acceptance-tests.md`](05-acceptance-tests.md) | AT-01..AT-20 için test seviyeleri, adımlar, beklenen sonuçlar, otomatik test kimlikleri | QA, geliştirici |
+| [`05-acceptance-tests.md`](05-acceptance-tests.md) | AT-01..AT-20 için test seviyeleri, adımlar, beklenen sonuçlar, otomatik test kimlikleri; sonunda web kapsamı notu | QA, geliştirici |
 | [`06-ux-flows.md`](06-ux-flows.md) | Ekran durumları, akışlar ve Türkçe UI metinleri | Tasarımcı, geliştirici |
-| [`adr/`](adr/) | Mimari karar kayıtları (ADR-001 … ADR-012) | Reviewer |
+| [`adr/`](adr/) | Mimari karar kayıtları (ADR-001 … ADR-013) | Reviewer |
 
 ## İki bölüm, tek specification
 
@@ -40,6 +40,7 @@ V90, **5 antrenmanlık döngüsel bir rotasyondur** (Gün 1 İtiş, Gün 2 Çeki
 - **DB tek doğruluk kaynağı**: her set kendi transaction'ında, aktif oturum kalıcı (§90).
 - **Rest timer** `restStartedAt + restDurationSeconds`'tan türetilir (§91).
 - **SQLCipher** + SecureStore anahtarı; Expo Development Build zorunlu (§93).
+- **Web hedefi**: sql.js bellek içi motor + her commit sonrası AES-GCM-256 ile şifreli görüntü (IndexedDB), çıkarılamaz WebCrypto anahtarı, GitHub Pages; bu SQLCipher **değildir** ve öyle anlatılmaz (ADR-013, 02 §12.2).
 - **Yedek** = ZIP (`manifest.json`, `data.json`, `photos/`), import staging DB ile atomik (§95).
 - **Öneriler** gerekçeli, kanıtlı, kullanıcı kararlı; asla otomatik uygulanmaz (§104, §105, §121, §122).
 - **Bilinmeyen değer `null`**; biceps baseline yoksa CTA (§96, §119).

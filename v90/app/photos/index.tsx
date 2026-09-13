@@ -1,17 +1,22 @@
-// Progress Photos — docs/v90/06-ux-flows.md B.14 (R116, R94.4–R94.6).
+// Progress Photos — docs/v90/06-ux-flows.md B.14 (R116, R94.4–R94.6), B.20 (web).
 //
 // Bu ekran GİZLİLİK HASSAS bir görünümdür:
 //   • Fotoğraflar yalnızca uygulamanın özel alanında; galeriye YAZILMAZ.
+//     Web'de "özel alan" tarayıcı deposudur (IndexedDB); sunucuya gitmez.
 //   • Cloud sync YOK — ne anahtar, ne buton, ne "yakında" metni (R116.3).
-//   • Android'de ekran görüntüsü engelleme AYARA BAĞLI; iOS'ta VAAT EDİLMEZ,
-//     yalnızca ne olduğu yazılır (R94.6, R116.5).
+//   • Android'de ekran görüntüsü engelleme AYARA BAĞLI; iOS'ta ve web'de VAAT
+//     EDİLMEZ, yalnızca ne olduğu yazılır (R94.6, R116.5).
+//
+// Dosya erişimi platforma aittir (src/platform/photoUri.ts, pickedFile.ts):
+// yerelde file:// yolu, web'de IndexedDB → blob: URL. Ekran yalnızca URI görür.
 import { useCallback, useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { Image, Platform, View } from 'react-native';
-import { File } from 'expo-file-system';
 import { newId } from '../../src/platform/id.ts';
 import { expoSha256Bytes } from '../../src/platform/hash.ts';
 import { PlatformBlobStore, photosDir } from '../../src/platform/blobs.ts';
+import { readPickedBytes } from '../../src/platform/pickedFile.ts';
+import { resolvePhotoUris } from '../../src/platform/photoUri.ts';
 import { settings } from '../../src/core/db/repositories.ts';
 import {
   POSES, finishDeletion, groupByDate, listPhotos, markForDeletion, savePhoto,
@@ -44,7 +49,8 @@ const env = (newIdFn: () => string): PhotoEnv => ({
   newId: newIdFn,
 });
 
-const photoUri = (p: PhotoRow): string => `${photosDir()}/${p.file_name}`;
+/** id → görüntülenebilir URI. Haritada olmayan fotoğrafın dosyası yoktur ("Dosya bulunamadı"). */
+type PhotoUris = Record<string, string>;
 
 export default function PhotosRoute() {
   return <ErrorBoundary onHome={() => router.replace('/')}><Photos /></ErrorBoundary>;
@@ -56,16 +62,20 @@ function Photos() {
   const [compare, setCompare] = useState<PhotoRow[]>([]);
   const [deleting, setDeleting] = useState<PhotoRow | null>(null);
 
-  const q = useDbQuery(useCallback((s) => s.db.withTransaction(async (tx) => ({
-    photos: await listPhotos(tx),
-    flagSecure: (await settings.get<boolean>(tx, 'privacy.androidFlagSecure')) ?? false,
-    todayKey: s.clock.todayKey(),
-  })), []));
+  const q = useDbQuery(useCallback(async (s) => {
+    const data = await s.db.withTransaction(async (tx) => ({
+      photos: await listPhotos(tx),
+      flagSecure: (await settings.get<boolean>(tx, 'privacy.androidFlagSecure')) ?? false,
+      todayKey: s.clock.todayKey(),
+    }));
+    // URI çözümü transaction DIŞINDA: web'de IndexedDB okur, DB'ye dokunmaz.
+    return { ...data, uris: await resolvePhotoUris(data.photos) };
+  }, []));
 
   const flagSecure = q.data?.flagSecure ?? false;
 
   // Android'de ayar açıksa ekran görüntüsü engellenir; çıkışta serbest bırakılır.
-  // iOS'ta bu çağrı hiç yapılmaz: tutulamayacak söz verilmez (R94.6).
+  // iOS'ta ve web'de bu çağrı hiç yapılmaz: tutulamayacak söz verilmez (R94.6).
   useEffect(() => {
     if (Platform.OS !== 'android' || !flagSecure) return;
     let active = true;
@@ -93,6 +103,7 @@ function Photos() {
 
   const groups = groupByDate(q.data.photos);
   const todayKey = q.data.todayKey;
+  const uris = q.data.uris;
 
   return (
     <Screen>
@@ -101,7 +112,9 @@ function Photos() {
       <Card>
         {/* Gizlilik notu: ne yapıldığı ve ne YAPILMADIĞI. */}
         <Text variant="caption" color="muted">{t('photos.privacyNote')}</Text>
-        {Platform.OS === 'ios' ? (
+        {Platform.OS === 'web' ? (
+          <Text variant="caption" color="faint">{t('photos.webNote')}</Text>
+        ) : Platform.OS === 'ios' ? (
           <Text variant="caption" color="faint">{t('photos.iosScreenshotNote')}</Text>
         ) : flagSecure ? (
           <Row><Badge tone="primary" label={t('photos.androidSecureActive')} /></Row>
@@ -120,7 +133,7 @@ function Photos() {
         />
       ) : null}
 
-      {compare.length === 2 ? <CompareView photos={compare} onClose={() => setCompare([])} /> : null}
+      {compare.length === 2 ? <CompareView photos={compare} uris={uris} onClose={() => setCompare([])} /> : null}
 
       {groups.length === 0 && !adding ? (
         <Card><Text color="muted">{t('photos.empty')}</Text></Card>
@@ -136,6 +149,7 @@ function Photos() {
               <PhotoTile
                 key={p.id}
                 photo={p}
+                uri={uris[p.id]}
                 selected={compare.some((cmp) => cmp.id === p.id)}
                 onOpen={() => setViewing(p)}
                 onToggleCompare={() => setCompare((list) =>
@@ -151,6 +165,7 @@ function Photos() {
       {viewing ? (
         <Viewer
           photo={viewing}
+          uri={uris[viewing.id]}
           onClose={() => setViewing(null)}
           onDelete={() => { setDeleting(viewing); setViewing(null); }}
         />
@@ -176,13 +191,14 @@ function Photos() {
 }
 
 function PhotoTile(p: {
-  photo: PhotoRow; selected: boolean; onOpen: () => void; onToggleCompare: () => void;
+  photo: PhotoRow; uri: string | undefined; selected: boolean; onOpen: () => void; onToggleCompare: () => void;
 }) {
   const c = usePalette();
-  const [missing, setMissing] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  if (missing) {
-    // Orphan satır: dosya yok. SATIR OTOMATİK SİLİNMEZ; kullanıcı karar verir.
+  if (!p.uri || loadFailed) {
+    // Orphan satır: dosya yok (URI çözülemedi ya da yüklenemedi).
+    // SATIR OTOMATİK SİLİNMEZ; kullanıcı karar verir.
     return (
       <Card style={{ width: 150 }}>
         <Text variant="caption" color="danger">{t('photos.fileMissing')}</Text>
@@ -195,8 +211,8 @@ function PhotoTile(p: {
   return (
     <View style={{ width: 150, gap: space.xs }}>
       <Image
-        source={{ uri: photoUri(p.photo) }}
-        onError={() => setMissing(true)}
+        source={{ uri: p.uri }}
+        onError={() => setLoadFailed(true)}
         accessibilityLabel={POSE_LABEL[p.photo.pose]}
         style={{
           width: 150, height: 200, borderRadius: radius.md, backgroundColor: c.surfaceAlt,
@@ -215,15 +231,19 @@ function PhotoTile(p: {
   );
 }
 
-function Viewer(p: { photo: PhotoRow; onClose: () => void; onDelete: () => void }) {
+function Viewer(p: { photo: PhotoRow; uri: string | undefined; onClose: () => void; onDelete: () => void }) {
   const c = usePalette();
   return (
     <Card>
-      <Image
-        source={{ uri: photoUri(p.photo) }}
-        style={{ width: '100%', height: 420, borderRadius: radius.md, backgroundColor: c.surfaceAlt }}
-        resizeMode="contain"
-      />
+      {p.uri ? (
+        <Image
+          source={{ uri: p.uri }}
+          style={{ width: '100%', height: 420, borderRadius: radius.md, backgroundColor: c.surfaceAlt }}
+          resizeMode="contain"
+        />
+      ) : (
+        <Text color="danger">{t('photos.fileMissing')}</Text>
+      )}
       <Row wrap>
         <Badge label={POSE_LABEL[p.photo.pose]} />
         <Badge label={`${(p.photo.bytes / 1024).toFixed(0)} KB`} />
@@ -237,18 +257,22 @@ function Viewer(p: { photo: PhotoRow; onClose: () => void; onDelete: () => void 
   );
 }
 
-function CompareView({ photos, onClose }: { photos: PhotoRow[]; onClose: () => void }) {
+function CompareView({ photos, uris, onClose }: { photos: PhotoRow[]; uris: PhotoUris; onClose: () => void }) {
   const c = usePalette();
   return (
     <Card>
       <Row gap={space.sm} style={{ alignItems: 'flex-start' }}>
         {photos.map((p) => (
           <View key={p.id} style={{ flex: 1, gap: space.xs }}>
-            <Image
-              source={{ uri: photoUri(p) }}
-              style={{ width: '100%', height: 280, borderRadius: radius.md, backgroundColor: c.surfaceAlt }}
-              resizeMode="contain"
-            />
+            {uris[p.id] ? (
+              <Image
+                source={{ uri: uris[p.id] }}
+                style={{ width: '100%', height: 280, borderRadius: radius.md, backgroundColor: c.surfaceAlt }}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text variant="caption" color="danger">{t('photos.fileMissing')}</Text>
+            )}
             <Text variant="caption" color="muted">{dateTr(p.local_date_key)}</Text>
             <Badge label={POSE_LABEL[p.pose]} />
           </View>
@@ -259,10 +283,31 @@ function CompareView({ photos, onClose }: { photos: PhotoRow[]; onClose: () => v
   );
 }
 
+interface Picked { uri: string; width?: number; height?: number; fileName?: string; mimeType?: string }
+
+const EXT_BY_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
+  'image/heic': 'heic', 'image/heif': 'heif', 'image/avif': 'avif',
+};
+
+/**
+ * Dosya uzantısı: dosya adı → URI'nin son parçası → MIME → 'jpg'.
+ * Yerelde URI file:// yoludur ve uzantı taşır; web'de seçici blob: URI verir,
+ * uzantı yoktur ve MIME belirler.
+ */
+function extensionOf(picked: Picked): string {
+  const lastSegment = picked.uri.split(/[?#]/)[0]?.split('/').pop() ?? '';
+  const ext = /\.([A-Za-z0-9]+)$/.exec(picked.fileName ?? '')?.[1]
+    ?? /\.([A-Za-z0-9]+)$/.exec(lastSegment)?.[1]
+    ?? (picked.mimeType ? EXT_BY_MIME[picked.mimeType.toLowerCase()] : undefined)
+    ?? 'jpg';
+  return ext.toLowerCase();
+}
+
 /** Ekleme akışı: kaynak → poz → kaydet (B.14 adım 1–3). */
 function AddPhoto(p: { todayKey: string; onDone: () => void; onCancel: () => void }) {
   const [pose, setPose] = useState<Pose>('front');
-  const [picked, setPicked] = useState<{ uri: string; width?: number; height?: number } | null>(null);
+  const [picked, setPicked] = useState<Picked | null>(null);
 
   const pick = useCommand(async (_s, source: 'camera' | 'library') => {
     const Picker = await import('expo-image-picker');
@@ -280,14 +325,16 @@ function AddPhoto(p: { todayKey: string; onDone: () => void; onCancel: () => voi
       uri: a.uri,
       ...(a.width ? { width: a.width } : {}),
       ...(a.height ? { height: a.height } : {}),
+      ...(a.fileName ? { fileName: a.fileName } : {}),
+      ...(a.mimeType ? { mimeType: a.mimeType } : {}),
     });
   });
 
   const save = useCommand(async (s) => {
     if (!picked) return;
-    const file = new File(picked.uri);
-    const bytes = await file.bytes();
-    const extension = file.extension.replace(/^\./, '') || 'jpg';
+    // Seçilen dosya yalnızca OKUNUR (R116.2); web'de blob: URI fetch ile okunur.
+    const bytes = await readPickedBytes(picked.uri);
+    const extension = extensionOf(picked);
 
     await s.db.withTransaction((tx) => savePhoto(tx, s.clock, env(newId), {
       bytes,
@@ -302,8 +349,11 @@ function AddPhoto(p: { todayKey: string; onDone: () => void; onCancel: () => voi
      * Kamera ve picker GEÇİCİ kopyaları temizlenir. Galerideki ORİJİNAL
      * dosyaya dokunulmaz (R116.2): ImagePicker iOS/Android'de seçilen
      * görselin cache kopyasını verir, orijinalin kendisini değil.
+     * Web'de seçici blob: URI verir; silinecek dosya yoktur, sekmeyle gider.
      */
-    try { if (file.exists) file.delete(); } catch { /* zaten gitmiş olabilir */ }
+    if (Platform.OS !== 'web') {
+      try { await new PlatformBlobStore().remove(picked.uri); } catch { /* zaten gitmiş olabilir */ }
+    }
   });
 
   return (
@@ -312,10 +362,18 @@ function AddPhoto(p: { todayKey: string; onDone: () => void; onCancel: () => voi
 
       {!picked ? (
         <Row wrap>
-          <Button label={t('photos.source.camera')} busy={pick.busy}
-            onPress={() => void pick.run('camera')} />
-          <Button label={t('photos.source.library')} busy={pick.busy}
-            onPress={() => void pick.run('library')} />
+          {Platform.OS === 'web' ? (
+            // Web: tarayıcının dosya seçicisi; "Galeri" ve "Kamera" ayrımı yoktur.
+            <Button label={t('photos.source.file')} busy={pick.busy}
+              onPress={() => void pick.run('library')} />
+          ) : (
+            <>
+              <Button label={t('photos.source.camera')} busy={pick.busy}
+                onPress={() => void pick.run('camera')} />
+              <Button label={t('photos.source.library')} busy={pick.busy}
+                onPress={() => void pick.run('library')} />
+            </>
+          )}
           <Button label={t('common.cancel')} kind="ghost" onPress={p.onCancel} />
         </Row>
       ) : (

@@ -1,0 +1,102 @@
+# V90 Web — GitHub Pages'e yayın (ADR-013, docs/v90/02-architecture.md §12.2).
+#
+# `expo export --platform web` → dist-web/ ; ardından scripts/web-postexport.mjs
+# 404.html (SPA yedeği), manifest.webmanifest ve sw.js (çevrimdışı kabuk)
+# ekler. Alt yol: depo herkese açık olduğu için Pages adresi
+# https://<kullanıcı>.github.io/kredi-karti-takip/ — V90_WEB_BASE_URL
+# app.config.ts üzerinden EXPO_BASE_URL'e dönüşür.
+#
+# Web'de SQLCipher yoktur; veritabanı sql.js ile bellekte çalışır ve görüntüsü
+# WebCrypto (AES-GCM-256) ile şifreli olarak IndexedDB'de durur. Bu, SQLCipher
+# olarak ANLATILMAZ (R93.4). Bulut senkronu yoktur (R116.3), analytics yoktur (R118).
+name: V90 Web (GitHub Pages)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/90-day-challenge-architecture-gtyw5v
+      - main
+    paths:
+      - 'v90/**'
+      - '.github/workflows/v90-web.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Pages dağıtımları sıraya girer; yarım kalan dağıtım olmasın diye iptal edilmez.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v90
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: v90/package-lock.json
+
+      # postinstall: sql-wasm.wasm → public/ (export çıktısının köküne kopyalanır).
+      - name: Bağımlılıklar
+        run: npm ci
+
+      - name: Web export + post-export (404.html, manifest, sw.js)
+        env:
+          V90_WEB_BASE_URL: /kredi-karti-takip
+          EXPO_NO_TELEMETRY: '1'
+        run: npm run export:web
+
+      - name: Çıktı özeti
+        run: |
+          ls -la dist-web
+          test -f dist-web/404.html
+          test -f dist-web/sw.js
+          test -f dist-web/manifest.webmanifest
+          ls dist-web/sql-wasm*.wasm
+
+      # enablement: Pages daha önce açılmadıysa ilk çalıştırmada açar.
+      - name: Pages yapılandırması
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Pages artifact'i
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: v90/dist-web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Pages'e dağıt
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Yayın adresi
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          {
+            echo "## V90 Web"
+            echo
+            echo "- Yayın adresi: $PAGE_URL"
+            echo
+            echo "Tarayıcıda çalışır; \"Ana ekrana ekle\" ile uygulama gibi açılır. Veri yalnızca bu tarayıcıda, şifreli görüntü olarak durur."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$PAGE_URL"

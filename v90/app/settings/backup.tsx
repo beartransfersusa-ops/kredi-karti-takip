@@ -1,14 +1,17 @@
-// Yedekleme — docs/v90/06-ux-flows.md B.7 (dışa aktar), B.8 (içe aktar, geri al).
+// Yedekleme — docs/v90/06-ux-flows.md B.7 (dışa aktar), B.8 (içe aktar, geri al), B.20 (web).
 //
 // İçe aktarmanın "mevcut verin değişmedi" garantisi (R95.7) bu ekrandan değil,
 // `BackupImporter`'ın SIRALAMASINDAN gelir: doğrulama ve tüm yazmalar ayrı bir
 // staging veritabanında yapılır; canlı dosyaya yalnızca en sonda, tek bir
 // yeniden adlandırmayla dokunulur ve o adım da başarısız olursa geri alınır.
+//
+// Dosya teslimi, dosya seçimi ve "Geri al" kaydı platforma aittir
+// (src/platform/exportFile.ts, pickedFile.ts, restorePoint.ts): yerelde
+// sandbox + paylaşım sayfası, web'de tarayıcı indirmesi + IndexedDB.
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import Constants from 'expo-constants';
-import { Directory, File, Paths } from 'expo-file-system';
 import { BackupImportError } from '../../src/core/backup/errors.ts';
 import { settings } from '../../src/core/db/repositories.ts';
 import {
@@ -19,6 +22,9 @@ import type { BackupEnv } from '../../src/features/backup/backupService.ts';
 import { dateTr } from '../../src/features/format.ts';
 import { expoSha256, expoSha256Bytes } from '../../src/platform/hash.ts';
 import { PlatformBlobStore, photosDir } from '../../src/platform/blobs.ts';
+import { deliverExport } from '../../src/platform/exportFile.ts';
+import { readPickedBytes } from '../../src/platform/pickedFile.ts';
+import { readRestorePoint, writeRestorePoint } from '../../src/platform/restorePoint.ts';
 import { useAppContext, useCommand, useDbQuery, useServices } from '../../src/ui/AppProvider.tsx';
 import {
   Badge, Button, Card, Divider, ErrorBar, Row, Screen, Skeleton, Text,
@@ -28,8 +34,6 @@ import { ErrorBoundary } from '../../src/ui/components/ErrorBoundary.tsx';
 import { space } from '../../src/ui/theme.ts';
 import { t } from '../../src/ui/i18n/index.ts';
 import type { Services } from '../../src/bootstrap/container.ts';
-
-const RESTORE_POINT_FILE = 'v90.restore-point.json';
 
 export default function BackupRoute() {
   return <ErrorBoundary onHome={() => router.replace('/')}><Backup /></ErrorBoundary>;
@@ -65,18 +69,14 @@ function Backup() {
     reminder: (await settings.get<boolean>(tx, REMINDER_KEY)) ?? true,
     hasActive: (await s.session.findActive()) !== null,
     todayKey: s.clock.todayKey(),
-    restorePoint: readRestorePoint(),
+    // "Geri al" kaydı DB dışındadır (import DB'nin kendisini değiştirir); platform okur.
+    restorePoint: await readRestorePoint(),
     nowUtc: s.clock.nowUtc(),
   })), []));
 
   // ── Dışa aktar (B.7)
   const exportBackup = useCommand(async (s) => {
     const { zip, fileName, manifest } = await makeExporter(backupEnv(s)).export();
-    // ZIP önce uygulama sandbox'ına yazılır; paylaşım iptali veri kaybı değildir.
-    const out = new File(Paths.cache, fileName);
-    if (out.exists) out.delete();
-    out.create();
-    out.write(zip);
 
     const now = s.clock.nowUtc().toISOString();
     await s.db.withTransaction(async (tx) => {
@@ -84,12 +84,13 @@ function Backup() {
       await settings.set(tx, LAST_EXPORT_BYTES_KEY, zip.byteLength, now);
     });
 
-    const Sharing = await import('expo-sharing');
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(out.uri, { mimeType: 'application/zip', dialogTitle: fileName });
-    }
+    // Teslim platforma göre: yerelde sandbox'a yaz + paylaşım sayfası (paylaşım
+    // iptali veri kaybı değildir), web'de tarayıcı indirmesi (B.20).
+    const delivery = await deliverExport(zip, fileName, 'application/zip');
     const photos = manifest.photos?.count ?? 0;
-    setResult(`${fileName} · ${formatBytes(zip.byteLength)} · ${photos} fotoğraf`);
+    setResult(delivery === 'downloaded'
+      ? t('settings.backup.export.downloaded', { name: fileName, size: formatBytes(zip.byteLength) })
+      : `${fileName} · ${formatBytes(zip.byteLength)} · ${photos} fotoğraf`);
   });
 
   // ── İçe aktar (B.8)
@@ -98,14 +99,15 @@ function Backup() {
     const picked = await Picker.getDocumentAsync({ type: 'application/zip', copyToCacheDirectory: true });
     if (picked.canceled || !picked.assets?.[0]) return;      // iptal durum değiştirmez
     const asset = picked.assets[0];
-    setPending({ zip: await new File(asset.uri).bytes(), name: asset.name });
+    // Seçilen ORİJİNAL dosyaya dokunulmaz; yalnızca okunur (R116.2).
+    setPending({ zip: await readPickedBytes(asset.uri), name: asset.name });
     setConfirming(true);
   });
 
   const runImport = useCommand(async (s) => {
     if (!pending) return;
     const report = await makeImporter(backupEnv(s)).import(pending.zip);
-    writeRestorePoint({ importedAtUtc: s.clock.nowUtc().toISOString(), report: report.tables });
+    await writeRestorePoint({ importedAtUtc: s.clock.nowUtc().toISOString(), report: report.tables });
     setResult(`${Object.values(report.tables).reduce((a, b) => a + b, 0)} satır · ${report.photos} fotoğraf geri yüklendi`);
     setPending(null);
     setConfirming(false);
@@ -150,6 +152,10 @@ function Backup() {
         <Button label={t('settings.backup.export.button')} kind="primary" busy={exportBackup.busy}
           onPress={() => void exportBackup.run()} />
       </Card>
+      {Platform.OS === 'web' ? (
+        // Web: yedek indirme klasörüne gider; tarayıcı depoyu silerse tek kaynak odur (B.20).
+        <Text variant="caption" color="muted">{t('settings.backup.web.hint')}</Text>
+      ) : null}
 
       {/* ── İçe aktar */}
       <Card>
@@ -219,26 +225,4 @@ function Backup() {
       <View style={{ height: space.xxl }} />
     </Screen>
   );
-}
-
-/**
- * "Geri al" penceresi DB'nin İÇİNDE tutulamaz: import DB dosyasının kendisini
- * değiştirir, yazılan kayıt kaybolurdu. Bu yüzden yanına bir sidecar dosya
- * yazılır (06 açık nokta: "import zamanı DB dışında saklanmalı").
- */
-function readRestorePoint(): { importedAtUtc: string } | null {
-  try {
-    const f = new File(new Directory(Paths.document), RESTORE_POINT_FILE);
-    if (!f.exists) return null;
-    return JSON.parse(f.textSync()) as { importedAtUtc: string };
-  } catch { return null; }
-}
-
-function writeRestorePoint(value: { importedAtUtc: string; report: Record<string, number> }): void {
-  try {
-    const f = new File(new Directory(Paths.document), RESTORE_POINT_FILE);
-    if (f.exists) f.delete();
-    f.create();
-    f.write(JSON.stringify(value));
-  } catch { /* kayıt tutulamazsa yalnızca "Geri al" kartı görünmez */ }
 }

@@ -1,10 +1,10 @@
-// App lock ve gizlilik perdesi — docs/v90/06-ux-flows.md B.17, B.18 (§94).
+// App lock ve gizlilik perdesi — docs/v90/06-ux-flows.md B.17, B.18, B.20 (§94).
 //
 // DÜRÜSTLÜK NOTU (R94.6, R116.5): buradaki perde app switcher anlık
 // görüntüsünü örter. Bu, EKRAN GÖRÜNTÜSÜ ENGELLEME DEĞİLDİR ve kullanıcıya
-// öyle sunulmaz — iOS bunu güvenilir biçimde desteklemez.
+// öyle sunulmaz — iOS bunu güvenilir biçimde desteklemez, web hiç desteklemez.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, View } from 'react-native';
+import { AppState, Platform, View } from 'react-native';
 import { Button, Screen, Text } from './components/primitives.tsx';
 import { usePalette, space } from './theme.ts';
 import { t, tr } from './i18n/index.ts';
@@ -25,6 +25,17 @@ async function readLockConfig(read: <T>(key: string) => Promise<T | undefined>):
 type LockState = 'unknown' | 'unlocked' | 'locked' | 'failed' | 'noCredential';
 
 export function AppLockGate(p: { children: React.ReactNode }) {
+  /*
+   * Web'de biyometri / cihaz parolası API'si yoktur; kilit SUNULMAZ ve vaat
+   * edilmez (R94.6, 06 B.20). Yedekten gelen 'appLock.enabled' web'de yok
+   * sayılır; Güvenlik ekranı kilidin web'de olmadığını açıkça yazar.
+   * Perde (PrivacyShield) web'de de çalışır: AppState sekme görünürlüğüne eşlenir.
+   */
+  if (Platform.OS === 'web') return <>{p.children}</>;
+  return <NativeLockGate>{p.children}</NativeLockGate>;
+}
+
+function NativeLockGate(p: { children: React.ReactNode }) {
   const services = useServices();
   const [config, setConfig] = useState<LockConfig | null>(null);
   const [state, setState] = useState<LockState>('unknown');
@@ -104,6 +115,8 @@ function LockScreen(p: { state: LockState; busy: boolean; onUnlock: () => void }
 /**
  * Uygulama arka plana geçerken tüm içeriği örter (R94.5).
  * DB/ağ okuması yapmaz; `ErrorBoundary` dışında da render edilebilir.
+ * Web'de react-native-web AppState'i `document.visibilityState`'e eşler:
+ * sekme arka plana geçince perde iner, öne gelince kalkar (06 B.20).
  */
 export function PrivacyShield(p: { children: React.ReactNode }) {
   const [hidden, setHidden] = useState(false);

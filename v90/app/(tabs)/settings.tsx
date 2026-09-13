@@ -1,21 +1,32 @@
-// Ayarlar — docs/v90/06-ux-flows.md B.0 bölüm haritası.
+// Ayarlar — docs/v90/06-ux-flows.md B.0 bölüm haritası, B.20 (web kartı).
 import { useCallback } from 'react';
 import { router } from 'expo-router';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-import { useDbQuery } from '../../src/ui/AppProvider.tsx';
+import { useDbQuery, usePlatformInfo } from '../../src/ui/AppProvider.tsx';
 import { readEquipmentProfile, readTrainingProfile } from '../../src/features/profile/profileQuery.ts';
 import { settings } from '../../src/core/db/repositories.ts';
 import { LAST_EXPORT_BYTES_KEY, LAST_EXPORT_KEY, formatBytes } from '../../src/features/backup/backupService.ts';
 import { dateTr } from '../../src/features/format.ts';
+import type { PersistState } from '../../src/platform/storage.ts';
 import { Badge, Button, Card, Divider, Row, Screen, Text } from '../../src/ui/components/primitives.tsx';
 import { ErrorBoundary } from '../../src/ui/components/ErrorBoundary.tsx';
 import { t } from '../../src/ui/i18n/index.ts';
+import type { TrKey } from '../../src/ui/i18n/index.ts';
+
+/** Kalıcı depolama durumu → metin (06 B.20 durum tablosu). */
+const PERSIST_KEY = {
+  granted: 'settings.web.persist.granted',
+  denied: 'settings.web.persist.denied',
+  unsupported: 'settings.web.persist.unsupported',
+} as const satisfies Record<PersistState, TrKey>;
 
 export default function SettingsRoute() {
   return <ErrorBoundary onHome={() => router.replace('/')}><SettingsHub /></ErrorBoundary>;
 }
 
 function SettingsHub() {
+  const { persist } = usePlatformInfo();
   const q = useDbQuery(useCallback((s) => s.db.withTransaction(async (tx) => ({
     equipment: await readEquipmentProfile(tx),
     training: await readTrainingProfile(tx),
@@ -61,6 +72,21 @@ function SettingsHub() {
         </Text>
         <Button label="Aç" onPress={() => router.push('/settings/backup')} />
       </Card>
+
+      {Platform.OS === 'web' ? (
+        <Card>
+          <Text variant="heading">{t('settings.web.title')}</Text>
+          {/* Ne olduğu yazılır: görüntü düzeyinde AES-GCM, SQLCipher DEĞİL; anahtar
+              çıkarılamaz (R93.4, R93.5). "Güvenli" gibi genel iddia yok. */}
+          <Text variant="caption" color="muted">{t('settings.web.encryption')}</Text>
+          {/* Kalıcı depolama verilmediyse tarayıcı yer açmak için siteyi
+              silebilir; anahtar da gider. Uyarı rengiyle, ama açılış engellenmez. */}
+          <Text variant="caption" color={persist === 'granted' ? 'muted' : 'warning'}>
+            {t(PERSIST_KEY[persist])}
+          </Text>
+          <Text variant="caption" color="muted">{t('settings.web.limits')}</Text>
+        </Card>
+      ) : null}
 
       <Card>
         <Text variant="heading">Program</Text>

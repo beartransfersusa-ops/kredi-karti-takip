@@ -636,3 +636,21 @@
 - **AT-17 – çevrimdışı thumbnail (ÇÖZÜLDÜ; 02 §14: ilk yüklemede önbellek, yoksa yerel ikon; `cues[]` her zaman çalışır):** R114.4 thumbnail'ın "çalışmaya devam etmesini" isterken 02 §14 thumbnail'ı `i.ytimg.com`'dan canlı çeker; önbellekleme/paketleme stratejisi yok, çevrimdışı thumbnail görünmez.
 - **AT-19 – Android FLAG_SECURE tetikleyicisi (ÇÖZÜLDÜ; 02 §13.1 artık `settings['privacy.androidFlagSecure']` koşuluna bağlı):** 02 §13.1 `PhotosScreen`/`LabsScreen`'in Android'de `preventScreenCaptureAsync()` çağırdığını koşulsuz anlatır; 03 `settings` yorumunda `'privacy.androidFlagSecure'` anahtarı vardır (R116.5 "opsiyonel privacy mode"). Ayarın bu çağrıyı kapılayıp kapılamadığı netleştirilmeli.
 - **AT-20 – Day 90 raporu bileşeni (ÇÖZÜLDÜ; `ChallengeReportService` 02 §3'e ve kurallar `04` §9.4'e eklendi):** 02 modül haritasında ve §17'de rapor için servis/ekran tanımlı değil; "final değer" kuralı (Day 90 tarihine kadar son kayıt mı, rapor açıldığı andaki son kayıt mı), kilo baseline'ının tanımı (tekil ilk tartı mı, ilk 7 gün ortalaması mı) ve `programs.status → 'completed'` / `completed_at_utc` geçişini kimin tetiklediği yazılı değil. Bu belge: final = `local_date_key ≤ dayKeyFor(90)` son kayıt; kilo baseline/final = 7 günlük ortalama; tamamlanma geçişi `ChallengeCalendar` gün değişiminde.
+
+---
+
+## Web kapsamı (ADR-013)
+
+Web (tarayıcı) sürümü aynı domain kodunu, şemayı ve yedek formatını kullanır (02 §12.2 web hedefi, 06 B.20). Aşağıdaki not hangi senaryonun web'de **nasıl** koştuğunu, hangisinin kapsam dışı olduğunu söyler. R124.1 sayacı yerel (iOS/Android) sürüm içindir; web bu sayacı ne artırır ne düşürür.
+
+| Senaryo | Web'de | Not |
+|---|---|---|
+| AT-01, AT-02, AT-04–AT-12, AT-20 | Uygulanır (aynı) | Saf domain / DB senaryoları; sql.js yolunda `test/sqlJs.test.ts` bootstrap'ı aynı motorları ve seed'i koşturur. |
+| AT-03 | Uygulanır (kısmen) | Sayaç `rest_started_at_utc + rest_duration_seconds` formülünden türer ve doğru devam eder; **bildirim yok** (`PlatformNotificationScheduler` (`notifications.web.ts`) `null` döner, R91.5). "Ekran kilidi" adımı yerine sekme arka plan/ön plan geçişi. |
+| AT-13 | Uygulanır | Saat dilimi `Intl` üzerinden tarayıcıdan gelir; cihaz yerine tarayıcı/işletim sistemi ayarı değiştirilir. |
+| AT-14, AT-15, AT-16 | Uygulanır | Aynı ZIP; export tarayıcı indirmesi (`deliverExport`), import dosya seçici (`readPickedBytes`); staging/pre-import görüntüleri şifreli görüntü deposunda (`PlatformBlobStore` `.web.ts`); "Geri al" kaydı IndexedDB `meta` (`restorePoint.web.ts`). Node'da sql.js + `EncryptedImageStore` ile koşar. |
+| AT-17 | Uygulanır (aynı) | Video fallback aynı bileşen (`VideoFallback`); ipuçları ve "Kaynağa git" aynı; bağlantı yeni sekmede açılır. Player bağlı olmadığı sürece davranış platformdan bağımsızdır. |
+| AT-18 | Uygulanır (service worker) | Çevrimdışı açılış export sonrası üretilen `sw.js` kabuğuyla (`registerServiceWorker`, 02 §2.2); veri zaten yerel (IndexedDB). Manuel: uygulama bir kez açıldıktan sonra ağ kapatılıp sayfa yenilenir → kabuk önbellekten açılır, antrenman loglanır, yedek indirilir. `__DEV__`'de kayıt yoktur; production export ile denenir. |
+| AT-19 | **Kapsam dışı (N/A)** | Web'de biyometrik kilit yoktur; `AppLockGate` geçer, Güvenlik ekranı bunu yazar (`settings.appLock.webUnavailable`). Yalnızca gizlilik perdesi (R94.5, sekme görünürlüğü) doğrulanır; ekran görüntüsü engeli vaat edilmez (R94.6). |
+
+Web'e özgü ek denetimler (kabul sayacına dahil değil; ADR-013 Doğrulama): ikinci sekme `DbOpenError` ile durur; site verisi temizlenince onboarding + indirilmiş ZIP'ten geri yükleme; kalıcı depolama durumu (`requestPersistentStorage`) Ayarlar'da görünür; `scripts/check-bundle.mjs web` (SQLCipher/`PRAGMA key` izi yok, `AES-GCM`/`V90E`/`v90.web.dbkey` izi var); web'de alınan ZIP'in Android uygulamasında içe aktarılması ve tersi.

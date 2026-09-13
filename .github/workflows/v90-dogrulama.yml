@@ -1,47 +1,75 @@
+# V90 doğrulama — her push'ta docs/v90 ile üretilmiş dosyalar arasındaki kayma,
+# seed tutarlılığı, iki tsconfig, testler ve iki platformun bundle güvenlik
+# denetimi (R93.7; web için ADR-013). Adımlar ayrı ayrı yazıldı ki kırıldığında
+# NEDEN kırıldığı belli olsun.
+#
+# Bağımlılıklar `npm ci` ile kurulur: package-lock.json ile package.json
+# uyumsuzsa burada durur ("npm install" ile lockfile sessizce değişmez).
 name: V90 doğrulama
 
 on:
   push:
-    paths: ['docs/v90/**', 'v90/**', '.github/workflows/v90-dogrulama.yml']
+    paths:
+      - 'v90/**'
+      - 'docs/v90/**'
+      - '.github/workflows/v90-*.yml'
   pull_request:
-    paths: ['docs/v90/**', 'v90/**']
+    paths:
+      - 'v90/**'
+      - 'docs/v90/**'
+      - '.github/workflows/v90-*.yml'
   workflow_dispatch:
+
+concurrency:
+  group: v90-dogrulama-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   dogrula:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v90
     steps:
-      - uses: actions/checkout@v4
+      - name: Depoyu çek
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Node kur
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: v90/package-lock.json
 
-      - uses: actions/setup-python@v5
+      - name: Python kur
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      # postinstall: sql-wasm.wasm → public/ (scripts/copy-web-assets.mjs).
+      - name: Bağımlılıklar
+        run: npm ci
+
       # Belge ile üretilmiş dosyalar arasında kayma var mı?
       # (Belge güncellenip `npm run gen` çalıştırılmadıysa burada durur.)
-      - name: Kayma denetimi
-        working-directory: v90
+      - name: Kayma denetimi (belge ↔ üretilmiş dosyalar)
         run: npm run verify:drift
 
       # Seed: enum uyumu, referans bütünlüğü, §27/§106 hacim pariteleri,
       # başlangıç profili ve gerçek SQLite şemasına yüklenebilirlik.
       - name: Seed doğrulaması
-        working-directory: v90
         run: npm run verify:seed
 
-      - name: Bağımlılıklar (yalnızca tip denetimi için)
-        working-directory: v90
-        run: npm ci || npm install
+      - name: Tip denetimi (çekirdek + uygulama)
+        run: npm run typecheck && npm run typecheck:app
 
-      - name: Tip denetimi
-        working-directory: v90
-        run: npm run typecheck
-
-      # Domain motorları ve MigrationRunner: belgedeki test vektörleri.
-      - name: Testler
-        working-directory: v90
+      # Domain motorları, MigrationRunner, sql.js sürücüsü: belgedeki test vektörleri.
+      - name: Testler (gerçek SQLite + SQLCipher + sql.js)
         run: npm test
+
+      # ios: şifresiz/Node yolu ve web motoru bundle'da yok, SQLCipher izi var.
+      # web: expo-sqlite/SQLCipher izi yok (R93.4), sql.js + AES-GCM izi var.
+      - name: Bundle güvenlik denetimi (R93.7, ios + web)
+        env:
+          EXPO_NO_TELEMETRY: '1'
+        run: npm run verify:bundle

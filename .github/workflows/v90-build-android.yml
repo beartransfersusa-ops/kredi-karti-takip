@@ -1,27 +1,133 @@
-# Android APK — elle tetiklenir. EAS Build kullanır; EXPO_TOKEN gizli anahtarı
-# gerekir (Expo hesabı → Access tokens). Çıktı: EAS panelinde indirilebilir APK.
+# V90 Android APK — GitHub Actions üzerinde yerel derleme; EAS hesabı GEREKMEZ.
+#
+#   expo prebuild → android/ projesi (SQLCipher config plugin burada devreye
+#   girer: gradle.properties'e expo.sqlite.useSQLCipher=true yazılır, R93.4)
+#   gradle assembleRelease → app-release.apk
+#
+# İmza: Expo şablonu release yapısını da DEBUG keystore ile imzalar
+# (android/app/build.gradle: release { signingConfig signingConfigs.debug }).
+# Bu APK telefona "bilinmeyen kaynak" olarak yüklenebilir (sideload); Play
+# Store'a GÖNDERİLEMEZ ve keystore herkese açık olduğu için güncelleme
+# zinciri güvence vermez — mağaza için kendi keystore'un gerekir.
+#
+# Çıktı: workflow artifact'i + "v90-android" etiketli GitHub Release'te
+# v90.apk (her push'ta üzerine yazılır) ve v90-<sha>.apk (kalıcı).
 # Expo Go KULLANILMAZ: SQLCipher native modüldür (R93.4).
-name: v90-build-android
+name: V90 Android APK
 
 on:
   workflow_dispatch:
-    inputs:
-      profile:
-        description: 'EAS profili'
-        type: choice
-        options: [preview, development, production]
-        default: preview
+  push:
+    branches:
+      - claude/90-day-challenge-architecture-gtyw5v
+      - main
+    paths:
+      - 'v90/**'
+      - '!v90/**.md'
+      - '.github/workflows/v90-build-android.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v90-android-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  apk:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: v90 } }
+    defaults:
+      run:
+        working-directory: v90
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm, cache-dependency-path: v90/package-lock.json }
-      - uses: expo/expo-github-action@v8
-        with: { eas-version: latest, token: ${{ secrets.EXPO_TOKEN }} }
-      - run: npm ci
-      - name: EAS build (Android, ${{ inputs.profile }})
-        run: eas build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Java kur (Temurin 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Node kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: v90/package-lock.json
+
+      # Gradle önbelleği (bağımlılıklar + wrapper); derleme süresini kısaltır.
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+
+      # Android SDK ubuntu-latest'te hazırdır; yalnızca lisanslar kabul edilir.
+      - name: Android SDK lisansları
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      # android/ gitignore'dadır; her derlemede sıfırdan üretilir.
+      - name: Native proje (expo prebuild)
+        run: npx expo prebuild --platform android --no-install
+
+      - name: SQLCipher gerçekten açık mı? (R93.4)
+        run: grep -q '^expo.sqlite.useSQLCipher=true$' android/gradle.properties
+
+      - name: Gradle assembleRelease
+        working-directory: v90/android
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g
+        run: ./gradlew :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: APK'yı adlandır
+        id: apk
+        run: |
+          SHA="${GITHUB_SHA::7}"
+          SRC=android/app/build/outputs/apk/release/app-release.apk
+          test -f "$SRC"
+          cp "$SRC" "v90-$SHA.apk"
+          cp "$SRC" v90.apk
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          ls -la v90.apk "v90-$SHA.apk"
+
+      - name: Artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: v90-android-apk
+          path: |
+            v90/v90.apk
+            v90/v90-${{ steps.apk.outputs.sha }}.apk
+          if-no-files-found: error
+
+      # Kalıcı indirme adresi: Release "v90-android" (ön sürüm). Yoksa açılır,
+      # varsa dosyalar --clobber ile üzerine yazılır.
+      - name: GitHub Release'e yükle (v90-android)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.apk.outputs.sha }}
+        run: |
+          if ! gh release view v90-android > /dev/null 2>&1; then
+            gh release create v90-android --prerelease \
+              --title "V90 Android APK (geliştirme derlemesi)" \
+              --notes "Her push'ta yeniden üretilir. Debug keystore ile imzalıdır: yalnızca sideload, Play Store için değil. SQLCipher derlemeye dahildir (R93.4)."
+          fi
+          gh release upload v90-android v90.apk "v90-$SHA.apk" --clobber
+
+      - name: İndirme adresi
+        env:
+          SHA: ${{ steps.apk.outputs.sha }}
+        run: |
+          URL="https://github.com/${{ github.repository }}/releases/download/v90-android/v90.apk"
+          {
+            echo "## V90 Android APK"
+            echo
+            echo "- Son derleme: $URL"
+            echo "- Bu commit: https://github.com/${{ github.repository }}/releases/download/v90-android/v90-$SHA.apk"
+            echo
+            echo "Debug keystore ile imzalı: telefonda \"bilinmeyen kaynaklara izin ver\" ile kurulur; Play Store için değildir."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL"

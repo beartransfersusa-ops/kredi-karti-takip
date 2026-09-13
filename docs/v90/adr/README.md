@@ -14,5 +14,6 @@
 | [010](ADR-010.md) | Öneriler açıklanabilir, kullanıcı kararlıdır, otomatik uygulanmaz | §104, §105, §121–§123 |
 | [011](ADR-011.md) | Hacimde yalnızca direct set; secondary ayrı tahmin; unilateral çift sayılmaz | §102, §106 |
 | [012](ADR-012.md) | Gizlilik varsayılanları: analytics yok, app-private fotoğraflar | §94, §116, §118 |
+| [013](ADR-013.md) | Web hedefi: sql.js bellek içi motor, AES-GCM görüntü şifrelemesi, GitHub Pages | §93, §94, §95, §116; 02 §2.2, §12.2 |
 
 Yeni karar eklerken: sıradaki numarayı kullan, şablonu (Bağlam / Karar / Alternatifler / Sonuçlar / Doğrulama) izle, bu tabloya satır ekle ve etkilenen gereksinim kimliklerini yaz.
