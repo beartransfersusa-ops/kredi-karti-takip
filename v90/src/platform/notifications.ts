@@ -6,7 +6,7 @@
 // sessizce atlanır ve sayaç yine doğru çalışır (R91.5).
 import type { NotificationScheduler } from '../domain/workout/RestTimerService.ts';
 
-export class ExpoNotificationScheduler implements NotificationScheduler {
+export class PlatformNotificationScheduler implements NotificationScheduler {
   #permission: 'unknown' | 'granted' | 'denied' = 'unknown';
 
   async schedule(atUtc: string, bodyTr: string): Promise<string | null> {

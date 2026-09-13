@@ -1,4 +1,5 @@
-// FileStore'un Expo karşılığı — migration yedeği ve import/export için.
+// FileStore'un YEREL (iOS/Android) karşılığı — migration yedeği ve import/export için.
+// Web karşılığı: files.web.ts (aynı dışa aktarım adları; Metro platforma göre seçer).
 //
 // expo-file-system yolları `file://` URI'dir; port ise düz yol taşır.
 // Dönüşüm burada yapılır, çağıranlar farkı görmez.
@@ -7,7 +8,7 @@ import type { FileStore } from '../core/db/types.ts';
 
 const toFile = (path: string) => new File(path.startsWith('file://') ? path : `file://${path}`);
 
-export class ExpoFileStore implements FileStore {
+export class PlatformFileStore implements FileStore {
   async exists(path: string): Promise<boolean> {
     try { return toFile(path).exists; } catch { return false; }
   }

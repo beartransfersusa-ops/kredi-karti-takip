@@ -18,7 +18,7 @@ import {
 import type { BackupEnv } from '../../src/features/backup/backupService.ts';
 import { dateTr } from '../../src/features/format.ts';
 import { expoSha256, expoSha256Bytes } from '../../src/platform/hash.ts';
-import { ExpoBlobStore, photosDir } from '../../src/platform/blobs.ts';
+import { PlatformBlobStore, photosDir } from '../../src/platform/blobs.ts';
 import { useAppContext, useCommand, useDbQuery, useServices } from '../../src/ui/AppProvider.tsx';
 import {
   Badge, Button, Card, Divider, ErrorBar, Row, Screen, Skeleton, Text,
@@ -41,7 +41,7 @@ function backupEnv(s: Services): BackupEnv {
     clock: s.clock,
     hash: expoSha256,
     hashBytes: expoSha256Bytes,
-    blobs: new ExpoBlobStore(),
+    blobs: new PlatformBlobStore(),
     dbPath: s.dbPath,
     photosDir: photosDir(),
     appVersion: Constants.expoConfig?.version ?? '0.0.0',

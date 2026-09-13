@@ -11,11 +11,12 @@ import { bootstrap, BootstrapError } from '../bootstrap/container.ts';
 import type { Services } from '../bootstrap/container.ts';
 import { expoSha256 } from '../platform/hash.ts';
 import { DeviceClock } from '../platform/clock.ts';
-import { ExpoFileStore, databasePath } from '../platform/files.ts';
-import { ExpoBlobStore, photosDir } from '../platform/blobs.ts';
+import { PlatformFileStore, databasePath } from '../platform/files.ts';
+import { PlatformBlobStore, photosDir } from '../platform/blobs.ts';
 import { expoSha256Bytes } from '../platform/hash.ts';
 import { newId } from '../platform/id.ts';
-import { ExpoNotificationScheduler } from '../platform/notifications.ts';
+import { PlatformNotificationScheduler } from '../platform/notifications.ts';
+import { makeProvider } from '../platform/db.ts';
 import { buildInfo } from '../platform/build.ts';
 import { SEED_BUNDLE } from '../platform/seedBundle.ts';
 
@@ -60,15 +61,17 @@ export function AppProvider(p: {
     setState({ phase: 'loading' });
     bootstrap({
       clock: new DeviceClock(),
-      files: new ExpoFileStore(),
+      files: new PlatformFileStore(),
       hash: expoSha256,
       seed: SEED_BUNDLE,
       build: buildInfo(),
-      notifications: new ExpoNotificationScheduler(),
+      notifications: new PlatformNotificationScheduler(),
       dbPath: databasePath(),
+      // Sağlayıcı platformdan gelir: yerelde SQLCipher, web'de sql.js + AES-GCM görüntü.
+      makeProvider,
       // Açılışta yarıda kalmış fotoğraf silmeleri tamamlanır (R116.4).
       photos: {
-        blobs: new ExpoBlobStore(),
+        blobs: new PlatformBlobStore(),
         photosDir: photosDir(),
         hashBytes: expoSha256Bytes,
         newId,

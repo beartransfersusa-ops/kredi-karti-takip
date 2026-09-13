@@ -11,7 +11,6 @@
 
 import type { Clock } from '../core/clock/dateKey.ts';
 import { CatalogCache } from '../core/db/catalog.ts';
-import { EncryptedSqliteProvider } from '../core/db/EncryptedSqliteProvider.ts';
 import { MigrationRunner } from '../core/db/MigrationRunner.ts';
 import { installSeed } from '../core/db/seed.ts';
 import type { SeedBundle, SeedResult } from '../core/db/seed.ts';
@@ -67,13 +66,15 @@ export interface BootstrapOptions {
    */
   photos?: PhotoEnv;
   /**
-   * Verilmezse `dbPath` üzerinden ŞİFRELİ sağlayıcı kurulur. Testler kendi
-   * sağlayıcılarını enjekte eder; uygulama bundle'ında şifresiz sağlayıcıya
-   * giden hiçbir yol YOKTUR — `node:sqlite` buraya hiç import edilmez (R93.7).
+   * Testler kendi sağlayıcılarını enjekte eder. Uygulama ise `makeProvider`
+   * verir (src/platform/db.ts): yerelde SQLCipher, web'de sql.js + şifreli
+   * görüntü. Bu dosya hiçbir sağlayıcıyı import ETMEZ: bundle'a hangi
+   * sürücünün gireceğine platform dosyası karar verir (R93.7; `node:sqlite`
+   * buraya hiç gelmez).
    */
   provider?: DatabaseProvider;
   dbPath?: string;
-  /** Staging/canlı sağlayıcı üreticisi; testler kendi sürücülerini verir. */
+  /** Canlı ve staging (yedek içe aktarma) sağlayıcı üreticisi. */
   makeProvider?: (path: string) => DatabaseProvider;
   log?: (m: string) => void;
 }
@@ -173,9 +174,10 @@ function defaultProvider(o: BootstrapOptions): DatabaseProvider {
 /**
  * Staging veritabanı da CANLI DB ile aynı türde olmalıdır: şifreli kurulumda
  * staging de şifrelidir ve aynı anahtarı kullanır, aksi halde dosya değişimi
- * sonrası DB açılamazdı.
+ * sonrası DB açılamazdı. Bu yüzden ikisi de aynı üreticiden çıkar.
  */
 function makeProvider(o: BootstrapOptions, path: string): DatabaseProvider {
   if (o.makeProvider) return o.makeProvider(path);
-  return new EncryptedSqliteProvider({ path, fileExists: (p) => o.files.exists(p) });
+  throw new BootstrapError('build',
+    'sağlayıcı üreticisi verilmedi: uygulama src/platform/db.ts üzerinden vermelidir (R93.7)');
 }

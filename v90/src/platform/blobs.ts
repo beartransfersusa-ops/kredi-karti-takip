@@ -1,4 +1,5 @@
-// BlobStore'un Expo karşılığı — fotoğraf dizinleri ve import/export dosyaları.
+// BlobStore'un YEREL (iOS/Android) karşılığı — fotoğraf dizinleri ve import/export dosyaları.
+// Web karşılığı: blobs.web.ts (aynı dışa aktarım adları; Metro platforma göre seçer).
 //
 // `src/core/backup/BlobStore.ts` portunun RN tarafı. Node gerçekleştirmesi
 // (`BlobStore.node.ts`) yalnızca testlerde kullanılır ve bundle'a girmez.
@@ -9,7 +10,7 @@ const uri = (p: string) => (p.startsWith('file://') ? p : `file://${p}`);
 const file = (p: string) => new File(uri(p));
 const dir = (p: string) => new Directory(uri(p));
 
-export class ExpoBlobStore implements BlobStore {
+export class PlatformBlobStore implements BlobStore {
   async list(path: string): Promise<string[]> {
     const d = dir(path);
     if (!d.exists) return [];

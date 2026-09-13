@@ -11,7 +11,7 @@ import { Image, Platform, View } from 'react-native';
 import { File } from 'expo-file-system';
 import { newId } from '../../src/platform/id.ts';
 import { expoSha256Bytes } from '../../src/platform/hash.ts';
-import { ExpoBlobStore, photosDir } from '../../src/platform/blobs.ts';
+import { PlatformBlobStore, photosDir } from '../../src/platform/blobs.ts';
 import { settings } from '../../src/core/db/repositories.ts';
 import {
   POSES, finishDeletion, groupByDate, listPhotos, markForDeletion, savePhoto,
@@ -38,7 +38,7 @@ const POSE_LABEL: Record<Pose, string> = {
 };
 
 const env = (newIdFn: () => string): PhotoEnv => ({
-  blobs: new ExpoBlobStore(),
+  blobs: new PlatformBlobStore(),
   photosDir: photosDir(),
   hashBytes: expoSha256Bytes,
   newId: newIdFn,
