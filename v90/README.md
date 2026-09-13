@@ -10,7 +10,7 @@ Bu dizin, [`../docs/v90/`](../docs/v90/) altındaki specification'dan **üretile
 | Yol | Ne | Kaynak |
 |-----|-----|--------|
 | `src/core/db/migrations/001_initial.sql` | Tam şema (45 tablo, 2 görünüm, 21 indeks) | `docs/v90/03-data-model.md` §1 |
-| `src/ui/i18n/tr.generated.ts` | 530 Türkçe UI metni | `docs/v90/06-ux-flows.md` metin tabloları |
+| `src/ui/i18n/tr.generated.ts` | 531 Türkçe UI metni | `docs/v90/06-ux-flows.md` metin tabloları |
 | `data/equipment-presets.json` | 3 ekipman preset'i | `docs/v90/02-architecture.md` §11.4 |
 | `data/exercises.json` | 32 hareketlik katalog + 14 alternatif ilişkisi | Bölüm I §35, §36 |
 | `data/programs/v90.json` | 5 antrenman şablonu, 30 şablon hareketi | Bölüm I §21–§26 |
@@ -63,7 +63,7 @@ dört kontrol birden kırılır.
 `src/features`+`test`) ve uygulama (React Native, `app`+`src/ui`+`src/platform`).
 Ayrı olmalarının sebebi ikisinin FARKLI platform tiplerine sahip olması.
 
-**4. Testler** — 297 test, gerçek SQLite (ve web için sql.js) üzerinde.
+**4. Testler** — 315 test, gerçek SQLite (ve web için sql.js) üzerinde.
 
 **5. Bundle denetimi** (`verify:bundle`) — iki platform (ios + web) gerçekten
 derleniyor mu, şifresiz yol ya da öteki platformun motoru bundle'a sızmış mı?
@@ -135,7 +135,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 297 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 315 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -263,16 +263,30 @@ deployment → Source: Deploy from a branch → gh-pages / (root)**.
 
 Web'de ne farklı (ADR-013, 06 B.20):
 
-- **SQLCipher yok.** Veritabanı sql.js ile bellekte çalışır; her commit'ten
-  sonra görüntüsü AES-GCM-256 ile şifrelenip IndexedDB'ye yazılır. Anahtar
-  çıkarılamaz bir WebCrypto `CryptoKey`'dir; JS baytlarını göremez. Bu
+- **SQLCipher yok.** Veritabanı sql.js ile bellekte çalışır; yazma içeren her
+  commit'ten sonra görüntüsü AES-GCM-256 ile şifrelenip IndexedDB'ye yazılır.
+  Fotoğraflar ve geri alma kaydı da aynı anahtarla şifrelidir. Anahtar
+  `extractable: false` bir WebCrypto `CryptoKey`'dir; JS baytlarını göremez. Bu
   "SQLCipher" değildir ve ekranda öyle anlatılmaz (R93.4).
+- **Anahtar diskte tarayıcı profili kadar korunur:** `extractable: false`
+  yalnızca JS API'sini kapatır, tarayıcı anahtarı kendi profil dosyalarına
+  yazar; dinlenirken koruma cihaz kilidi ve disk şifrelemesidir.
+- **Paylaşılan kaynak:** GitHub Pages'te hesabın tüm proje siteleri
+  `beartransfersusa-ops.github.io` kaynağını paylaşır ve IndexedDB kaynak
+  başınadır — bu hesap altında yalnızca kendi kodun yayınlanmalı (ya da özel
+  alan adı kullanılmalı).
 - Tarayıcı site verisini silerse (yer sıkışması, "site verilerini temizle")
   görüntü ve anahtar birlikte gider: **veri gider.** Uygulama açılışta kalıcı
-  depolama izni ister ve sonucu Ayarlar'da gösterir; düzenli yedek al.
-- Biyometrik kilit, bildirim ve ekran görüntüsü engelleme yok; fotoğraflar
-  tarayıcı deposunda. Aynı anda **tek sekme** (ikincisi "Veritabanı açılamadı" der).
-- Yedek ZIP'i indirme klasörüne iner; formatı Android ile aynıdır.
+  depolama izni ister (açılışı beklemez) ve sonucu Ayarlar'da gösterir; düzenli
+  yedek al. **Safari** 7 gün kullanılmayan sitenin verisini silebilir; iPhone'da
+  "Ana ekrana ekle" ile kullan.
+- Biyometrik kilit, bildirim ve ekran görüntüsü engelleme yok. Aynı anda
+  **tek sekme** (ikincisi "Veritabanı açılamadı" der).
+- Yedek ZIP'i indirme klasörüne iner; formatı Android ile aynıdır. Ekran
+  "İndirme başlatıldı" der: tarayıcıdan indirme istendi demektir, kaydedildiği
+  kesinleştirilemez. iOS'ta ana ekrana eklenmiş uygulama ZIP'i indirmek yerine
+  bir görünümde açabilir — yedek almak için Safari sekmesinde aç.
+- Yeni web sürümü açık sekmeler kapanınca etkinleşir (ikinci açılış).
 
 **Web'de başla, telefona taşı:** web'de Ayarlar → Yedekleme → Dışa aktar (ZIP
 iner) → Android uygulamasında Ayarlar → Yedekleme → İçe aktar. Tersi de aynı.
@@ -345,7 +359,7 @@ başlığında ve İlerleme ekranında hacim önerisi olarak görünür.
 ### UI metni de üretilir
 
 `scripts/extract-i18n.py`, `06-ux-flows.md` içindeki "Türkçe metinler"
-tablolarından 530 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
+tablolarından 531 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
 Üretilen `TrParams` tipi yer tutucuları **derleme zamanında** denetler:
 
 ```ts

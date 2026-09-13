@@ -8,6 +8,7 @@
 //
 // Yerel karşılığı db.ts'tir (expo-sqlite + SQLCipher). Metro platforma göre
 // birini seçer; web bundle'ında expo-sqlite, yerelde sql.js YOKTUR.
+import { DbOpenError } from '../core/db/errors.ts';
 import { makeSqlJsProvider } from '../core/db/SqlJsProvider.ts';
 import type { DatabaseProvider } from '../core/db/types.ts';
 import { imageStore } from './web/stores.ts';
@@ -29,6 +30,13 @@ export function makeProvider(path: string): DatabaseProvider {
     get path() { return inner.path; },
     get isEncrypted() { return inner.isEncrypted; },
     async open() {
+      // WebCrypto yalnızca güvenli bağlamda (https / localhost) vardır. Yoksa
+      // AÇILIŞTA DbOpenError ekranı (06 B.16.1; ADR-013 "güvensiz bağlam")
+      // — ilk COMMIT'te MigrationFailed olarak değil. Anahtar üretilmez,
+      // görüntü düz yazılmaz (R93.7).
+      if (!globalThis.crypto?.subtle) {
+        throw new DbOpenError('WebCrypto yok: uygulama güvenli bağlamda (https ya da localhost) açılmalı');
+      }
       // İki sekme aynı görüntüyü ezmesin: kilit alınamazsa DbOpenError (tabLock.ts).
       await acquireTabLock();
       return inner.open();

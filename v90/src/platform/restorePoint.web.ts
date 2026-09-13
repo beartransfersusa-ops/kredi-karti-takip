@@ -1,4 +1,5 @@
-// "Geri al" penceresi kaydı — WEB: IndexedDB "meta" deposunda UTF-8 JSON.
+// "Geri al" penceresi kaydı — WEB: IndexedDB "meta" deposunda UTF-8 JSON; değer
+// `meta()` (stores.ts → EncryptedKvStore) üzerinden aynı anahtarla AES-GCM şifreli yazılır.
 //
 // DB'nin İÇİNDE tutulamaz: yedek içe aktarma DB görüntüsünün kendisini
 // değiştirir, yazılan kayıt kaybolurdu (02 §12.3 adım 7). "meta" deposu

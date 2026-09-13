@@ -8,7 +8,9 @@
 //   • tarayıcı gerçekleştirmesi (platform/web/idb.ts) yalnızca dört işlemi bilir.
 //
 // Anahtarlar düz string'dir ('photos/abc.jpg'); dizin kavramı yoktur, önek
-// aramasıyla (`keys('photos/')`) taklit edilir.
+// aramasıyla (`keys('photos/')`) taklit edilir; boş dizin için PrefixBlobStore
+// `"<dir>/"` anahtarına 0 baytlık işaret koyar (boş değer geçerlidir).
+// Tarayıcıda değerler EncryptedKvStore ile şifrelenir (R93.1); anahtar adları düz kalır.
 
 export interface KvStore {
   /** Anahtar yoksa null (boş dizi DEĞİL). */

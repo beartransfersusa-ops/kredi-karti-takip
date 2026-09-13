@@ -2,9 +2,10 @@
 //
 // Tek veritabanı ("v90", sürüm 1), dört nesne deposu:
 //   images  şifreli DB görüntüleri (EncryptedImageStore → IdbImageStore)
-//   blobs   fotoğraflar ve içe/dışa aktarma dosyaları (PrefixBlobStore)
+//   blobs   fotoğraflar ve içe/dışa aktarma dosyaları (PrefixBlobStore; değerler
+//           EncryptedKvStore ile şifreli, anahtar adları düz)
 //   keys    AES-GCM CryptoKey (IdbKeyProvider) — çıkarılamaz nesne
-//   meta    küçük kayıtlar (geri alma penceresi vb.)
+//   meta    küçük kayıtlar (geri alma penceresi vb.; değerler şifreli)
 //
 // Dayanıklılık: her işlem kendi transaction'ını açar ve isteğin `success`
 // olayına değil, transaction'ın `complete` olayına kadar bekler. `success`

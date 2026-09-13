@@ -4,8 +4,10 @@
 // sonrası görüntü depoya yazılır ve depo AES-GCM ile sarmalanır. Bu dosya
 // üç şeyi doğrular: (1) sürücü portu gerçekten SQLite gibi davranıyor,
 // (2) kalıcılık COMMIT'e bağlı — geri alınan hiçbir şey depoya düşmüyor,
-// (3) şifreli depo düz metin sızdırmıyor ve yanlış anahtar açıkça reddediliyor.
-// Sonunda uygulama bileşimi (bootstrap) aynı depoyla uçtan uca koşar.
+// (3) şifreli depo düz metin sızdırmıyor ve yanlış anahtar açıkça reddediliyor,
+// (4) kirli bayrak: salt okuyan transaction depoya dokunmuyor; (5) son iyi kopya:
+// depo yazamazsa bellek depodan önde kalmıyor. Sonunda uygulama bileşimi
+// (bootstrap) aynı depoyla uçtan uca koşar.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -23,7 +25,7 @@ import type { ImageStore } from '../src/core/db/imageStore.ts';
 import { MigrationRunner, backupPathFor } from '../src/core/db/MigrationRunner.ts';
 import { MIGRATIONS } from '../src/core/db/migrations/index.ts';
 import { makeSqlJsProvider } from '../src/core/db/SqlJsProvider.ts';
-import { sqlJsDriver } from '../src/core/db/drivers/sqlJs.ts';
+import { isReadOnlySql, sqlJsDriver } from '../src/core/db/drivers/sqlJs.ts';
 import { nodeSha256 } from '../src/core/db/hash.node.ts';
 import type { SeedBundle } from '../src/core/db/seed.ts';
 import type { Migration } from '../src/core/db/types.ts';
@@ -466,4 +468,128 @@ test('uçtan uca · onboarding → dashboard → kapat → aynı depodan yeniden
     assert.equal(again.card.kind, 'next');
     assert.deepEqual(again.bicepsKpi, { state: 'known', valueCm: 38.6 });
   } finally { await second.s.close(); }
+});
+
+// ───────────────────────────────────────────── (i) kirli bayrak ve son iyi kopya
+
+/** `save` sayar ve istenirse sıradaki N yazımı reddeder (kota doldu simülasyonu). */
+class CountingImageStore extends InMemoryImageStore {
+  saves = 0;
+  failNext = 0;
+  override async save(name: string, bytes: Uint8Array): Promise<void> {
+    if (this.failNext > 0) { this.failNext--; throw new Error('kota doldu (simülasyon)'); }
+    this.saves++;
+    await super.save(name, bytes);
+  }
+}
+
+test('isReadOnlySql · sınıflandırma tutucudur: emin olunmayan her şey kirli', () => {
+  for (const sql of [
+    'SELECT 1', '  select 1;', 'EXPLAIN SELECT 1', 'BEGIN IMMEDIATE', 'COMMIT', 'END', 'ROLLBACK',
+    'SAVEPOINT a', 'RELEASE a', 'VALUES (1)', 'PRAGMA foreign_keys', 'PRAGMA table_info(t)',
+    '-- yorum\nSELECT 1', '/* blok */ SELECT 1', '', '   ', '-- yalnız yorum',
+  ]) assert.equal(isReadOnlySql(sql), true, JSON.stringify(sql));
+  for (const sql of [
+    'INSERT INTO t VALUES (1)', 'UPDATE t SET x = 1', 'DELETE FROM t', 'CREATE TABLE t (x)', 'DROP TABLE t',
+    'WITH c AS (SELECT 1) INSERT INTO t SELECT * FROM c', 'PRAGMA user_version = 3', 'PRAGMA foreign_keys = ON',
+    'SELECT 1; INSERT INTO t VALUES (1)', "SELECT ';'", 'ATTACH x AS y', '(SELECT 1)', '/* açık yorum SELECT 1',
+  ]) assert.equal(isReadOnlySql(sql), false, JSON.stringify(sql));
+});
+
+test('F2 · salt okuyan transaction depoya dokunmaz; yazan transaction tek persist eder', async () => {
+  const store = new CountingImageStore();
+  const db = await open(store);
+  try {
+    await db.withTransaction((tx) => tx.execScript('CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)'));
+    assert.equal(store.saves, 1, 'yazan transaction bir kez persist eder');
+
+    await db.withTransaction(async (tx) => {                 // dashboard/liste ekranı gibi: yalnızca okuma
+      await tx.all('SELECT * FROM notes');
+      await tx.get('PRAGMA user_version');
+      await tx.exec('SELECT count(*) FROM notes');
+      await tx.execScript('-- yorum\n  /* blok */ SELECT 1');
+      await tx.execScript('EXPLAIN SELECT 1');
+    });
+    assert.equal(store.saves, 1, 'salt okuyan COMMIT persist etmedi');
+
+    await db.execScript('PRAGMA foreign_keys');               // tx dışı okumalar da
+    await db.exec('SELECT 1');
+    await db.get('SELECT 1');
+    await db.all('SELECT 1');
+    assert.equal(store.saves, 1);
+
+    await db.withTransaction((tx) => tx.exec('INSERT INTO notes (body) VALUES (?)', ['x']));
+    assert.equal(store.saves, 2, 'yazan transaction persist etti');
+    await db.exec('PRAGMA user_version = 7');                 // `=` içeren PRAGMA dosyayı değiştirir
+    assert.equal(store.saves, 3);
+
+    await assert.rejects(db.withTransaction(async (tx) => {  // geri alınan yazma: COMMIT yok, persist yok
+      await tx.exec('INSERT INTO notes (body) VALUES (?)', ['y']);
+      throw new Error('vazgeçildi');
+    }), /vazgeçildi/);
+    assert.equal(store.saves, 3);
+    assert.equal((await db.get<{ n: number }>('SELECT count(*) AS n FROM notes'))!.n, 1);
+  } finally { await db.close(); }
+});
+
+test('F3 · depo yazamazsa bellek depoyla hizalanır: satır görünmez, aynı yazma yeniden denenebilir', async () => {
+  const store = new CountingImageStore();
+  const db = await open(store);
+  try {
+    await db.withTransaction((tx) => tx.execScript('CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT UNIQUE)'));
+    assert.equal(store.saves, 1);
+
+    store.failNext = 1;
+    await assert.rejects(db.withTransaction((tx) => tx.exec('INSERT INTO t (v) VALUES (?)', ['a'])),
+      (e: unknown) => e instanceof DbWriteError && /kota doldu/.test(e.message));
+    assert.equal(await db.get('SELECT v FROM t WHERE v = ?', ['a']), undefined, 'kaydedilemeyen satır bellekte de yok');
+    assert.equal((await db.get<{ foreign_keys: number }>('PRAGMA foreign_keys'))?.foreign_keys, 1,
+      'yapışan PRAGMA yeniden açılışta da açık');
+
+    await db.withTransaction((tx) => tx.exec('INSERT INTO t (v) VALUES (?)', ['a']));   // UNIQUE'e takılmaz
+    assert.deepEqual(await db.all('SELECT v FROM t'), [{ v: 'a' }]);
+    assert.equal(store.saves, 2);
+
+    store.failNext = 1;                                       // tx dışı yazma da aynı
+    await assert.rejects(db.exec('INSERT INTO t (v) VALUES (?)', ['b']), DbWriteError);
+    assert.deepEqual(await db.all('SELECT v FROM t ORDER BY v'), [{ v: 'a' }]);
+    await db.exec('INSERT INTO t (v) VALUES (?)', ['b']);
+    assert.deepEqual(await db.all('SELECT v FROM t ORDER BY v'), [{ v: 'a' }, { v: 'b' }]);
+    assert.equal(store.saves, 3);
+  } finally { await db.close(); }
+
+  const again = await open(store);
+  try {
+    assert.deepEqual(await again.all('SELECT v FROM t ORDER BY v'), [{ v: 'a' }, { v: 'b' }], 'depo ile bellek aynı');
+  } finally { await again.close(); }
+});
+
+test('F3 · taze DB\'de ilk persist başarısızsa bellek boşa döner; migration yeniden denenebilir', async () => {
+  const store = new CountingImageStore();
+  store.failNext = 1;
+  const db = await open(store);
+  try {
+    await assert.rejects(db.withTransaction((tx) => tx.execScript('CREATE TABLE t (x); PRAGMA user_version = 1')), DbWriteError);
+    assert.equal((await db.get<{ n: number }>('SELECT count(*) AS n FROM sqlite_master'))!.n, 0, 'bellek boş');
+    assert.equal((await db.get<{ user_version: number }>('PRAGMA user_version'))!.user_version, 0);
+    assert.equal(await store.exists(PATH), false, 'depoda görüntü yok');
+    await db.withTransaction((tx) => tx.execScript('CREATE TABLE t (x); PRAGMA user_version = 1'));
+    assert.equal(await store.exists(PATH), true);
+    assert.equal((await db.get<{ user_version: number }>('PRAGMA user_version'))!.user_version, 1);
+  } finally { await db.close(); }
+
+  // Gerçek MigrationRunner: ilk migration'ın persist'i düşer → MigrationFailedError; ikinci koşu temiz başlar.
+  const fresh = new CountingImageStore();
+  fresh.failNext = 1;
+  const deps = () => ({
+    provider: makeSqlJsProvider({ path: PATH, store: fresh }), files: new ImageFileStore(fresh),
+    hash: nodeSha256, clock: new FakeClock(NOW),
+  });
+  await assert.rejects(new MigrationRunner(deps()).run(), MigrationFailedError);
+  assert.equal(await fresh.exists(PATH), false, 'yarım görüntü yok');
+  const r = await new MigrationRunner(deps()).run();
+  try {
+    assert.deepEqual(r.applied, [1]);
+    assert.equal(await fresh.exists(PATH), true);
+  } finally { await r.db.close(); }
 });

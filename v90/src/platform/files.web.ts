@@ -3,7 +3,7 @@
 //
 // Web'de dosya yolu yoktur: FileStore görüntü deposu (IndexedDB + AES-GCM,
 // 02 §12.2 web hedefi, ADR-013) üzerinde çalışır. `copy` = load + save, yani
-// migration yedeği (`v90.sqlite.v3.bak`) de canlı görüntüyle aynı anahtarla
+// migration yedeği (`v90.bak.v3.sqlite`, backupPathFor) de canlı görüntüyle aynı anahtarla
 // şifreli durur. Depo db.web.ts ile PAYLAŞILIR (stores.ts): sağlayıcı neyi
 // yazıyorsa MigrationRunner onu yedekler.
 import { ImageFileStore } from '../core/db/ImageFileStore.ts';

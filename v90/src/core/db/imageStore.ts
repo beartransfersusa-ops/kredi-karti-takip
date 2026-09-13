@@ -7,7 +7,7 @@
 //   • şifreleme bir SARMALAYICI olarak araya girer (EncryptedImageStore):
 //     düz depo bayt görür ama asla düz veritabanı görmez.
 //
-// Adlar dosya yolu DEĞİL, depo anahtarıdır ('v90.sqlite', 'v90.sqlite.v3.bak'…).
+// Adlar dosya yolu DEĞİL, depo anahtarıdır ('v90.sqlite', 'v90.bak.v3.sqlite' — backupPathFor…).
 // FileStore/MigrationRunner yedek kopyaları da aynı depoya aynı adlandırmayla
 // yazar; bu yüzden `copy` semantiği load+save'dir.
 

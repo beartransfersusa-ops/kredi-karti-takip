@@ -10,35 +10,45 @@
 // Anahtar kaybı = veri kaybı: kullanıcı site verisini temizlerse anahtar da
 // gider ve şifreli görüntü kalıcı olarak açılamaz. Bu yüzden yedek hatırlatılır
 // (02 §12.2) ve kalıcı depolama izni istenir (storage.web.ts).
+//
+// ÖNBELLEK YOKTUR — bilerek. Çözülen anahtar bu nesnede tutulsaydı, site
+// verisi temizlendiğinde ya da bağlantı düştüğünde (idb.ts versionchange/close
+// bağlantıyı bırakır) depodaki anahtar giderken bellekteki kalır; sonraki
+// görüntü ESKİ anahtarla şifrelenir ve yeniden yüklemede depoda olmayan bir
+// anahtarı ister → kalıcı DbOpenError. Her çağrı anahtarı IndexedDB'den okur;
+// bu tek bir `get`tir ve persist yalnızca gerçekten yazan transaction'larda
+// çağrılır (sqlJs.ts kirli bayrağı). Yalnızca ÜRETİM anı tekilleştirilir.
 import type { CryptoKeyLike, ImageKeyProvider } from '../../core/db/imageStore.ts';
 import { idbAdd, idbDelete, idbGet } from './idb.ts';
 
 export const WEB_DB_KEY_ID = 'v90.web.dbkey';
 
 export class IdbKeyProvider implements ImageKeyProvider {
-  #inFlight: Promise<CryptoKeyLike> | null = null;
+  /** Eşzamanlı ilk çağrılar tek üretimi paylaşır; sonuçlanınca (başarı ya da hata) temizlenir. */
+  #creating: Promise<CryptoKeyLike> | null = null;
 
-  /** İlk çağrıda üretir, sonra hep aynısını döndürür. Eşzamanlı çağrılar tek isteği paylaşır. */
-  getOrCreateKey(): Promise<CryptoKeyLike> {
-    if (!this.#inFlight) {
-      this.#inFlight = this.#load().catch((e: unknown) => { this.#inFlight = null; throw e; });
+  /** Depodan okur; yoksa üretip `add` ile yazar. Sonuç önbelleğe ALINMAZ (üstteki gerekçe). */
+  async getOrCreateKey(): Promise<CryptoKeyLike> {
+    const existing = await idbGet<CryptoKey>('keys', WEB_DB_KEY_ID);
+    if (existing) return existing;
+    if (!this.#creating) {
+      this.#creating = this.#create().finally(() => { this.#creating = null; });
     }
-    return this.#inFlight;
+    return this.#creating;
   }
 
   /** "Tüm verimi sil" akışı: anahtar gidince şifreli görüntü kalıcı olarak açılamaz. */
   async destroy(): Promise<void> {
-    this.#inFlight = null;
+    // Süren bir üretim varsa önce bitsin ki silme onun `add`'inden sonra gelsin.
+    if (this.#creating) await this.#creating.catch(() => { /* üretim başarısızsa silecek şey yok */ });
     await idbDelete('keys', WEB_DB_KEY_ID);
   }
 
-  async #load(): Promise<CryptoKeyLike> {
-    const existing = await idbGet<CryptoKey>('keys', WEB_DB_KEY_ID);
-    if (existing) return existing;
-
+  async #create(): Promise<CryptoKeyLike> {
     if (typeof crypto === 'undefined' || !crypto.subtle) {
-      // WebCrypto yalnızca güvenli bağlamda (https / localhost) vardır.
-      throw new Error('WebCrypto yok: uygulama güvenli bağlamda (https) açılmalı');
+      // WebCrypto yalnızca güvenli bağlamda vardır; db.web.ts bunu açılışta
+      // DbOpenError olarak yakalar, burası son savunmadır.
+      throw new Error('WebCrypto yok: uygulama güvenli bağlamda (https ya da localhost) açılmalı');
     }
     const fresh = await crypto.subtle.generateKey(
       { name: 'AES-GCM', length: 256 },

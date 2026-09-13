@@ -10,6 +10,18 @@
 //   (c) index.html <head> ekleri   → manifest, theme-color, apple-touch-icon
 //   (d) sw.js                      → dist'teki HER dosyayı önbelleğe alan service worker
 //
+// sw.js güncelleme politikası (06 B.20, ADR-013 Karar 7):
+//   • Precache istekleri HTTP önbelleğini ATLAR (`cache: 'reload'`). GitHub Pages
+//     `Cache-Control: max-age=600` gönderir; 10 dakika içinde ikinci bir dağıtımda
+//     tarayıcı önbelleğinden gelen ESKİ index.html, artık var olmayan hash'li
+//     bundle'lara işaret eder ve uygulama bir sonraki SW güncellemesine kadar
+//     açılamazdı.
+//   • `skipWaiting` / `clients.claim` YOKTUR. Yeni sürüm, uygulamanın açık olduğu
+//     tüm sekmeler kapanınca etkinleşir (ikinci açılış); eski önbellek ancak o
+//     zaman silinir. Aksi hâlde açık eski kabuk, tembel yüklenen parçalarını
+//     (ImagePicker / LocalAuthentication / ScreenCapture chunk'ları) yenileme
+//     yapana kadar kaybederdi.
+//
 // Alt yol: V90_WEB_BASE_URL (örn. /kredi-karti-takip). app.config.ts aynı
 // değişkeni experiments.baseUrl'a yazar; iki taraf aynı kökü kullanmalıdır.
 // Sıfır bağımlılık, Node 22 ESM.
@@ -99,6 +111,12 @@ const sw = `// V90 service worker — scripts/web-postexport.mjs tarafından ür
 // garantisi buradan gelir (02 §2.2). Çapraz kaynak (örn. YouTube küçük
 // resimleri) ASLA önbelleğe alınmaz: uygulama verisi ve üçüncü taraf
 // içerik ayrı kalır.
+//
+// Güncelleme politikası: yeni sürüm, açık sekmeler kapanınca etkinleşir
+// (ikinci açılış). skipWaiting / clients.claim çağrılmaz; açık eski kabuk
+// tembel parçalarını kaybetmez, eski önbellek ancak etkinleşince silinir.
+// Precache istekleri HTTP önbelleğini atlar (cache: 'reload'): Pages'in
+// 10 dakikalık max-age'i eski index.html'i kabuğa sokamaz.
 const CACHE = ${JSON.stringify(CACHE)};
 const SHELL = ${JSON.stringify(shell)};
 const PRECACHE = ${JSON.stringify(urls, null, 2)};
@@ -107,23 +125,25 @@ self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     try {
-      await cache.addAll(PRECACHE);
+      // cache.addAll değil: her istek HTTP önbelleğini atlayarak ağdan gelir.
+      // Biri bile başarısız olursa Promise.all reddeder ve kurulum iptal olur.
+      await Promise.all(PRECACHE.map((url) => cache.add(new Request(url, { cache: 'reload' }))));
     } catch (err) {
       // Tek bir dosya bile inmezse kurulum iptal: yarım kabuk, hiç kabuk olmamasından kötüdür.
       console.error('[v90 sw] precache başarısız:', err);
       throw err;
     }
-    await self.skipWaiting();
   })());
 });
 
 self.addEventListener('activate', (event) => {
+  // Tarayıcı varsayılanı: eski worker'ın denetlediği son sekme kapanınca
+  // buraya gelinir; eski v90-* önbellekleri ancak o zaman silinir.
   event.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(names
       .filter((n) => n.startsWith('v90-') && n !== CACHE)
       .map((n) => caches.delete(n)));
-    await self.clients.claim();
   })());
 });
 

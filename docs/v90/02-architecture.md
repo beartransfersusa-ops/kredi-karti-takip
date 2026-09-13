@@ -50,7 +50,7 @@ Tasarım ilkeleri (gereksinimlerden türetilmiştir):
 |--------|-------|---------------|
 | Uygulama | **React Native + Expo SDK (≥ 52)**, TypeScript `strict` | Bölüm I §7 ürün kararıyla uyumlu. |
 | Yönlendirme | Expo Router | Dosya tabanlı; deep link'ler (bildirimden aktif antrenmana dönüş). |
-| Veritabanı | **`expo-sqlite`** + **SQLCipher** (`useSQLCipher: true` config plugin) | R93.2. SQLCipher Expo Go'da çalışmaz → **Expo Development Build** zorunludur (R93.4). |
+| Veritabanı | **`expo-sqlite`** + **SQLCipher** (`useSQLCipher: true` config plugin) | R93.2. SQLCipher Expo Go'da çalışmaz → yerel platformlarda **Expo Development Build** zorunludur (R93.4); web hedefi için bkz. Web satırı / ADR-013. |
 | Anahtar saklama | `expo-secure-store` (Keychain / Keystore) | R93.6 |
 | Biyometri | `expo-local-authentication` | R94 |
 | Bildirim | `expo-notifications` (yalnızca yerel bildirim) | R91.5 |
@@ -79,7 +79,7 @@ Tasarım ilkeleri (gereksinimlerden türetilmiştir):
 
 Uygulamanın hiçbir core workout özelliği ağ gerektirmez. Ağ yalnızca: video oynatma (fallback'li), opsiyonel harici besin araması (v1'de yok). `NetInfo` yalnızca video bileşenine bilgi verir; başka hiçbir yol ağı beklemez.
 
-**Web kabuğu (ADR-013).** Tarayıcıda "çevrimdışı" iki şeydir: veri zaten yereldir (IndexedDB), uygulamanın kendisi ise export sonrası üretilen bir service worker (`scripts/web-postexport.mjs` → `sw.js`) ile önbellek-öncelikli sunulur — dist'teki her dosya precache listesindedir, her gezinti kabuğa (`index.html`) düşer, çapraz kaynak istekleri (YouTube küçük resmi) asla önbelleğe alınmaz. `registerServiceWorker()` (`src/platform/serviceWorker.web.ts`) uygulama hazır olduktan sonra bir kez çağrılır; `__DEV__`'de kaydedilmez (Metro sıcak yenilemesiyle çakışır); kayıt başarısızlığı uygulamayı düşürmez, yalnızca sonraki çevrimdışı açılış garantisi yoktur. Önbellek adı içerik listesinden türediği için yeni export eski kabuğu `activate` aşamasında siler.
+**Web kabuğu (ADR-013).** Tarayıcıda "çevrimdışı" iki şeydir: veri zaten yereldir (IndexedDB), uygulamanın kendisi ise export sonrası üretilen bir service worker (`scripts/web-postexport.mjs` → `sw.js`) ile önbellek-öncelikli sunulur — dist'teki her dosya precache listesindedir, her gezinti kabuğa (`index.html`) düşer, çapraz kaynak istekleri (YouTube küçük resmi) asla önbelleğe alınmaz. `registerServiceWorker()` (`src/platform/serviceWorker.web.ts`) uygulama hazır olduktan sonra bir kez çağrılır; `__DEV__`'de kaydedilmez (Metro sıcak yenilemesiyle çakışır); kayıt başarısızlığı uygulamayı düşürmez, yalnızca sonraki çevrimdışı açılış garantisi yoktur. Önbellek adı içerik listesinden türediği için yeni export eski kabuğu `activate` aşamasında siler. **Güncelleme politikası:** `sw.js` `skipWaiting`/`clients.claim` çağırmaz — yeni sürüm, uygulamanın açık olduğu tüm sekmeler kapanınca etkinleşir (ikinci açılış) ve eski önbellek ancak o zaman silinir; böylece açık eski kabuk tembel yüklenen parçalarını (ImagePicker vb. chunk'ları) kaybetmez. Precache istekleri HTTP önbelleğini atlar (`cache.add(new Request(url, { cache: 'reload' }))`): GitHub Pages'in 10 dakikalık `max-age`'i, art arda iki dağıtımda eski `index.html`'i (artık var olmayan hash'li bundle'lara işaret eden) kabuğa sokamaz.
 
 ---
 
@@ -658,6 +658,12 @@ ImageKeyProvider { getOrCreateKey(): CryptoKey (extractable: false); destroy() }
   transaction dışı her yazmadan) sonra `conn.persist()` çağırır; `sqlJsDriver`
   `db.export()` ile görüntünün **tamamını** çıkarıp `store.save('v90.sqlite', bytes)`
   ile yazar. Dosya tabanlı sürücülerde `persist` yoktur (SQLite zaten yazdı).
+  **Dirty-tracking:** sürücü yazma görmediyse (salt okuma transaction'ı)
+  `persist()` görüntüyü dışa aktarmaz ve depoya yazmaz. **Rollback-to-last-good:**
+  depo yazımı başarısız olursa sürücü belleği son kaydedilen görüntüye sıfırlar
+  ve `DbWriteError` fırlatır ("Kaydedilemedi" çubuğu); bellek ile depo
+  ayrışmaz, aynı `commandId` ile yeniden denemek güvenlidir. Migration yedeği
+  aynı depoda `v90.bak.v<n>.sqlite` adıyla durur (`backupPathFor`).
   Kaybolabilecek tek şey commit edilmemiş transaction'dır — SQLite'ta da
   kaybolurdu; depo yazımı bitmeden kapanan sekmede son commit de gidebilir,
   bu yüzden "kesin" güvence verilmez (R123). `export()` bağlantıyı kapatıp
@@ -675,15 +681,36 @@ ImageKeyProvider { getOrCreateKey(): CryptoKey (extractable: false); destroy() }
   görüntü → `DbOpenError`; hata metnine anahtar da görüntü de sızmaz (R93.5).
 - **Anahtar** (`IdbKeyProvider`): `crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])`
   — `extractable: false`; `CryptoKey` nesnesi IndexedDB `"keys"` deposunda
-  `"v90.web.dbkey"` altında saklanır. JS tarafı anahtarın baytlarını **hiçbir
-  zaman** görmez: kaynakta, normal depolamada, log'da, yedekte anahtar yoktur
-  (R93.5/R93.6'nın tarayıcı karşılığı). Kayıt `add` ile yapılır (`put` değil):
-  iki sekme yarışırsa ikincisi ilkinin anahtarını okur. Aynı kaynaktaki (origin)
-  her script anahtarı *kullanabilir*; bu, native'de Keychain'in uygulama
-  sürecine verdiği güvenle aynı sınırdır. Anahtar kaybı (site verisi
-  temizlendi) = veri kaybı → kalıcı depolama izni (`requestPersistentStorage`,
-  `src/platform/storage.web.ts`) bootstrap'tan önce istenir, sonuç Ayarlar'da
-  gösterilir, yedek hatırlatılır.
+  `"v90.web.dbkey"` altında saklanır. JS tarafı anahtarın baytlarını görmez:
+  kaynakta, log'da, yedekte anahtar yoktur (R93.5/R93.6'nın tarayıcı
+  karşılığı). `IdbKeyProvider` anahtarı bellekte **önbelleklemez**: her
+  şifreleme/çözme depodan okur; depo silinmişse artık var olmayan bir anahtarla
+  yazmaya devam edilmez. **Dürüstlük:** `extractable: false` yalnızca JS
+  API'sini kapatır; tarayıcı anahtar malzemesini kendi profil dosyalarına
+  serileştirir. Dinlenirken koruma = OS kullanıcı hesabı / disk şifreleme
+  (şifresiz tarayıcı profiliyle aynı sınıf); UI metni bunu söyler, "asla diskte
+  düz durmaz" denmez (R93.4, R123; ADR-013 Karar 4). Kayıt `add` ile yapılır
+  (`put` değil): iki sekme yarışırsa ikincisi ilkinin anahtarını okur. Aynı
+  kaynaktaki (origin) her script anahtarı *kullanabilir*; bu, native'de
+  Keychain'in uygulama sürecine verdiği güvenle aynı sınırdır — GitHub Pages'te
+  kaynak hesabın tüm proje siteleriyle paylaşılır (ADR-013 Karar 4, 06 B.20).
+  `db.web.ts` açılışta `crypto.subtle` yoksa (güvensiz bağlam) `DbOpenError`
+  ile durur; anahtar üretilmez. Anahtar kaybı (site verisi temizlendi, Safari
+  ITP 7 gün kuralı) = veri kaybı → kalıcı depolama izni
+  (`requestPersistentStorage`, `src/platform/storage.web.ts`) bootstrap ile
+  eşzamanlı istenir (beklenmez; Firefox izin penceresi açılışı bloklamasın),
+  sonuç Ayarlar'da gösterilir, yedek hatırlatılır.
+- **Fotoğraflar ve meta da şifreli** (`EncryptedKvStore`): IndexedDB `"blobs"`
+  (fotoğraflar, içe/dışa aktarma dosyaları) ve `"meta"` (geri alma kaydı)
+  depolarının **değerleri** DB görüntüsüyle aynı `CryptoKey` ile AES-GCM
+  şifrelenir; anahtar adları (`photos/<file_name>`) düz kalır.
+- **Yönlendirme ve dizin işareti.** `RoutedBlobStore` (`src/core/backup/RoutedBlobStore.ts`)
+  dizinsiz `*.sqlite` adlarını (`v90.sqlite`, `v90.import.sqlite`,
+  `v90.pre-import.sqlite`) şifreli görüntü deposuna, kalanı `PrefixBlobStore`'a
+  yönlendirir; `PlatformBlobStore` (`blobs.web.ts`) onu kurar, çekirdekte olduğu
+  için Node testinde de aynı kod koşar. `PrefixBlobStore.ensureDir` gizli bir
+  dizin işareti anahtarı (`<dir>/`) yazar ki sıfır fotoğraflı yedeğin
+  `photos.import → photos` değişimi de başarılı olsun (`test/webBackup.test.ts`).
 - **`isEncrypted` nereden gelir:** `sqlJsDriver.encryptsAtRest = store.isEncrypted`
   → `SqliteDatabaseProvider.isEncrypted`. Yalnızca gerçekten şifreleyen
   sarmalayıcı `true` der; düz `IdbImageStore` `false` der ve yalan söylemez.
@@ -697,8 +724,8 @@ ImageKeyProvider { getOrCreateKey(): CryptoKey (extractable: false); destroy() }
   yoksa kilit atlanır.
 - **Bu SQLCipher DEĞİLDİR (R93.4).** SQLite düz bellekte (wasm yığını)
   çalışır; şifreli olan yalnızca dinlenirken depoya yazılan görüntüdür. UI
-  metinleri "AES-GCM ile şifreli görüntü, çıkarılamaz anahtar" der; web için
-  hiçbir metinde "SQLCipher" geçmez (06 B.20 kopya kuralı). `scripts/check-bundle.mjs web`
+  metinleri "AES-GCM ile şifreli; anahtar JS'e kapalı, diskte tarayıcı profili
+  kadar korunur" der; web için hiçbir metinde "SQLCipher" geçmez (06 B.20 kopya kuralı). `scripts/check-bundle.mjs web`
   web bundle'ında `expo-sqlite`/`ExpoSecureStore` izini yasaklar ve
   `AES-GCM`/`V90E`/`v90.web.dbkey` izini ister; `ios` yönü `sqlJsDriver`/
   `EncryptedImageStore` izini yasaklar. Migration yedeği (`.bak`) ve import
@@ -727,7 +754,7 @@ photos/<photoId>.<ext>
 7. Başarıda `pre-import` kopyaları 7 gün saklanır ("Geri al"). Geri alma penceresi DB dışında, `photos.pre-import/../restore-point.json` sidecar dosyasında tutulur (`{ importedAtUtc, fromSchemaVersion }`) — DB'nin kendisi değiştiği için içeride tutulamaz.
 8. **Guard:** aktif antrenman oturumu (`workout_sessions.status='active'`) varken import başlatılmaz; kullanıcıdan önce oturumu bitirmesi/iptal etmesi istenir.
 
-**Web (ADR-013).** Format ve adımlar aynıdır; yalnızca teslim ve depo değişir. **Export:** ZIP `deliverExport` (`src/platform/exportFile.web.ts`) ile `Blob` + `blob:` URL üzerinden **tarayıcı indirmesi** olarak verilir (`'downloaded'`); sunucuya hiçbir şey gitmez, ZIP şifresizdir ve ekran bunu söyler (`settings.backup.web.hint`). **Import:** tarayıcı **dosya seçici**; `readPickedBytes` (`pickedFile.web.ts`) `blob:`/`data:` URI'yi `fetch` ile okur, seçilen dosyaya dokunulmaz (R116.2). Staging → canlı değişimi (adım 6) `PlatformBlobStore` (`blobs.web.ts`) üzerinden yapılır: `.sqlite` sonlu düz adlar şifreli görüntü deposuna yönlendirilir, böylece `v90.import.sqlite` / `v90.pre-import.sqlite` aynı depoda aynı anahtarla durur; fotoğraflar IndexedDB `"blobs"` deposundadır (`PrefixBlobStore` üzerinden `IdbKvStore`). "Geri al" kaydı (adım 7) sidecar dosya yerine IndexedDB `"meta"` deposundadır (`restorePoint.web.ts`: `readRestorePoint`/`writeRestorePoint`) — DB görüntüsünün içinde tutulamaz, import görüntüyü değiştirir. Web'de alınan ZIP Android uygulamasında içe aktarılır ve tersi (aynı `manifest.json`/`data.json`/`photos/`).
+**Web (ADR-013).** Format ve adımlar aynıdır; yalnızca teslim ve depo değişir. **Export:** ZIP `deliverExport` (`src/platform/exportFile.web.ts`) ile `Blob` + `blob:` URL üzerinden **tarayıcı indirmesi** olarak verilir (`'downloaded'`); sunucuya hiçbir şey gitmez, ZIP şifresizdir ve ekran bunu söyler (`settings.backup.web.hint`). **Import:** tarayıcı **dosya seçici**; `readPickedBytes` (`pickedFile.web.ts`) `blob:`/`data:` URI'yi `fetch` ile okur, seçilen dosyaya dokunulmaz (R116.2). Staging → canlı değişimi (adım 6) `PlatformBlobStore` (`blobs.web.ts` → `RoutedBlobStore`) üzerinden yapılır: `.sqlite` sonlu düz adlar şifreli görüntü deposuna yönlendirilir, böylece `v90.import.sqlite` / `v90.pre-import.sqlite` aynı depoda aynı anahtarla durur; fotoğraflar IndexedDB `"blobs"` deposundadır (`PrefixBlobStore` → `EncryptedKvStore` → `IdbKvStore`: değerler aynı anahtarla AES-GCM şifreli, anahtar adları düz; boş dizin `"<dizin>/"` işaretiyle temsil edilir, fotoğrafsız yedek de içe aktarılır). "Geri al" kaydı (adım 7) sidecar dosya yerine IndexedDB `"meta"` deposundadır (`restorePoint.web.ts`: `readRestorePoint`/`writeRestorePoint`) — DB görüntüsünün içinde tutulamaz, import görüntüyü değiştirir. Web'de alınan ZIP Android uygulamasında içe aktarılır ve tersi (aynı `manifest.json`/`data.json`/`photos/`).
 
 İçe aktarma modu: **"Değiştir"** (varsayılan; mevcut veri yedekle değiştirilir) ve **"Birleştir"** (v1'de yok; UI'da gösterilmez).
 
@@ -793,7 +820,7 @@ Kök `ErrorBoundary` her zaman render edilebilir minimal bir ekran gösterir (hi
 |--------|------|--------|
 | Unit (domain) | Jest, `FakeClock`, in-memory repo | Progression, plateau, guardrails, PR, increments, effectiveLoad, calendar/sequence, adherence, trend, recipe math, measurement quality |
 | Integration (DB) | Jest + Node SQLite (SQLCipher) aynı SQL/migration dosyaları | Migration zinciri, autosave transaction'ları, tek aktif oturum kısıtı, backup export/import round-trip, orphan sweeper |
-| Integration (DB, web yolu) | `node --test` + sql.js (wasm) + `InMemoryImageStore`/`EncryptedImageStore` — `test/sqlJs.test.ts`; `test/webPlatform.test.ts` (`PrefixBlobStore`, sekme kilidi) | sql.js sürücüsü SQLite gibi davranır; kalıcılık yalnızca COMMIT'e bağlı; şifreli depo düz metin sızdırmaz, yanlış anahtar reddedilir; bootstrap uçtan uca aynı depoyla (ADR-013) |
+| Integration (DB, web yolu) | `node --test` + sql.js (wasm) + `InMemoryImageStore`/`EncryptedImageStore` — `test/sqlJs.test.ts` (kirli-izleme, depo hatasında son iyi görüntüye dönüş); `test/webPlatform.test.ts` (`PrefixBlobStore` dizin işareti, `EncryptedKvStore`, `RoutedBlobStore`, sekme kilidi); `test/webBackup.test.ts` (web yığınında export/import: sıfır fotoğraf, fotoğraflı, bozuk ZIP) | sql.js sürücüsü SQLite gibi davranır; kalıcılık yalnızca COMMIT'e bağlı; şifreli depo düz metin sızdırmaz, yanlış anahtar reddedilir; bootstrap uçtan uca aynı depoyla (ADR-013) |
 | Component | RNTL | Missed workout kartı, resume kartı, NumericStepper, recommendation kartı, CTA "Başlangıç kol ölçümünü ekle." |
 | E2E | Maestro (dev build, iOS + Android) | AT-01, AT-02, AT-03, AT-13, AT-17, AT-18, AT-19 ve akışlar |
 | Manuel | Checklist (`05-acceptance-tests.md`) | Gerçek cihazda ekran kilidi, restart, timezone değişimi, biyometri |

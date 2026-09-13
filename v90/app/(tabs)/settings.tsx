@@ -51,7 +51,12 @@ function SettingsHub() {
       <Card>
         <Text variant="heading">{t('settings.appLock.title')}</Text>
         <Row wrap>
-          <Badge tone={d?.appLock ? 'primary' : 'neutral'} label={d?.appLock ? 'Açık' : 'Kapalı'} />
+          {/* Web'de kilit hiç uygulanmaz (AppLockGate geçer, 06 B.20); yedekten
+              gelen 'appLock.enabled' için "Açık" göstermek tutulmayan bir söz
+              olurdu (R94.6). Nötr rozet: "Web'de yok". Yerel davranış aynı. */}
+          {Platform.OS === 'web'
+            ? <Badge tone="neutral" label={t('settings.appLock.webBadge')} />
+            : <Badge tone={d?.appLock ? 'primary' : 'neutral'} label={d?.appLock ? 'Açık' : 'Kapalı'} />}
           {/* Şifreleme durumu dürüstçe gösterilir; "güvenli" diye genel bir
               iddia yerine ne olduğu yazılır (R94.6). */}
           <Badge tone={d?.isEncrypted ? 'primary' : 'warning'}
@@ -76,8 +81,9 @@ function SettingsHub() {
       {Platform.OS === 'web' ? (
         <Card>
           <Text variant="heading">{t('settings.web.title')}</Text>
-          {/* Ne olduğu yazılır: görüntü düzeyinde AES-GCM, SQLCipher DEĞİL; anahtar
-              çıkarılamaz (R93.4, R93.5). "Güvenli" gibi genel iddia yok. */}
+          {/* Ne olduğu yazılır: görüntü ve fotoğraflar AES-GCM ile, SQLCipher DEĞİL;
+              anahtar JS'e kapalı, diskte tarayıcı profili kadar korunur (R93.4,
+              R93.5; ADR-013 Karar 4). "Güvenli" gibi genel iddia yok. */}
           <Text variant="caption" color="muted">{t('settings.web.encryption')}</Text>
           {/* Kalıcı depolama verilmediyse tarayıcı yer açmak için siteyi
               silebilir; anahtar da gider. Uyarı rengiyle, ama açılış engellenmez. */}

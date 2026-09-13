@@ -76,14 +76,19 @@ export function AppProvider(p: {
   const run = useCallback(() => {
     const mine = ++attempt.current;
     setState({ phase: 'loading' });
+    // Web: kalıcı depolama izni bootstrap ile EŞZAMANLI istenir, beklenmez
+    // (06 B.20 adım 1). Firefox bunun için izin penceresi açar ve promise
+    // ancak kullanıcı yanıtlayınca çözülür; beklenseydi uygulama yükleme
+    // ekranında kalırdı. Sonuç yalnızca Ayarlar'da gösterilir; gelene kadar
+    // 'unsupported' kalır, reddedilse de açılış sürer — kullanıcıya "düzenli
+    // yedek al" denir, açılış engellenmez.
+    if (Platform.OS === 'web') {
+      requestPersistentStorage().then(
+        (persist) => { if (mine === attempt.current) setPlatformInfo({ persist }); },
+        () => { /* storage.web.ts fırlatmaz; fırlatsa da açılışı etkilemez */ },
+      );
+    }
     (async () => {
-      // Web: kalıcı depolama izni bootstrap'tan ÖNCE istenir (06 B.20 adım 1).
-      // Sonuç yalnızca Ayarlar'da gösterilir; reddedilse de açılış sürer —
-      // kullanıcıya "düzenli yedek al" denir, açılış engellenmez.
-      if (Platform.OS === 'web') {
-        const persist = await requestPersistentStorage();
-        if (mine === attempt.current) setPlatformInfo({ persist });
-      }
       return bootstrap({
         clock: new DeviceClock(),
         files: new PlatformFileStore(),

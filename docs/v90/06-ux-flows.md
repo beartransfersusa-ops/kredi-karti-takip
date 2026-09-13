@@ -1102,17 +1102,19 @@ Dayanıklılık: `journal_mode=WAL`, `synchronous=FULL`; yarım kalan `completeS
 | `settings.privacy.noCloud` | Tüm veri yalnızca bu cihazda saklanır. |
 | `settings.privacy.webNote` | Web'de ekran görüntüsü engellenemez; sekme arka plana geçince içerik perdelenir. |
 | `settings.appLock.webUnavailable` | Web'de uygulama kilidi yok; tarayıcı biyometrik doğrulama sunmaz. Sekme arka plana geçince içerik perdelenir. |
+| `settings.appLock.webBadge` | Web'de yok |
 | `settings.web.title` | Web sürümü |
-| `settings.web.encryption` | Veritabanı bu tarayıcıda AES-GCM ile şifreli saklanır; anahtar tarayıcının WebCrypto deposundadır ve dışa aktarılamaz. |
+| `settings.web.encryption` | Veritabanı görüntüsü ve fotoğraflar bu tarayıcıda AES-GCM ile şifreli saklanır. Anahtar tarayıcının WebCrypto deposundadır: JS'e kapalıdır, diskte ise tarayıcı profili kadar korunur — cihaz kilidi ve disk şifreleme önemli. |
 | `settings.web.persist.granted` | Kalıcı depolama: verildi |
 | `settings.web.persist.denied` | Kalıcı depolama: verilmedi — tarayıcı yer açmak için silebilir; düzenli yedek al |
 | `settings.web.persist.unsupported` | Kalıcı depolama: bu tarayıcıda sorulamıyor; düzenli yedek al |
-| `settings.web.limits` | Biyometrik kilit ve bildirim web'de yok; fotoğraflar tarayıcı deposunda tutulur. |
+| `settings.web.limits` | Biyometrik kilit ve bildirim web'de yok. Safari 7 gün kullanılmayan site verisini silebilir; iPhone'da "Ana ekrana ekle" ile kullan ve düzenli yedek al. |
 
 **Servis / DB etkileri**
 
 - `AppLockService` (`enabled`, `graceSeconds`, `lastUnlockedAtUtc` bellekte), `PrivacyShield`, `expo-local-authentication`, `expo-screen-capture` (yalnızca Android).
 - `settings` anahtarları: `'appLock.enabled'`, `'appLock.graceSeconds'`, `'privacy.androidFlagSecure'`; her değişiklik `settings_history`'ye yazılır.
+- Ayarlar ana ekranındaki (B.0) kilit rozeti web'de Açık/Kapalı yerine nötr `settings.appLock.webBadge` ("Web'de yok") gösterir: yedekten gelen `'appLock.enabled'` web'de uygulanmaz, "Açık" tutulmayan bir söz olurdu (R94.6, B.20).
 - `settings.cloudSync` alanı `false`; UI'da "yakında" dahil hiçbir cloud ifadesi yoktur (R116.3).
 
 **Gereksinimler:** R94.1–R94.6, R116.5, R116.3, AT-19.
@@ -1168,7 +1170,7 @@ Dayanıklılık: `journal_mode=WAL`, `synchronous=FULL`; yarım kalan `completeS
 | `settings.backup.reminder.toggle` | Ayda bir yedek hatırlat |
 | `settings.backup.reminder.card` | Son yedeğin üzerinden bir aydan uzun süre geçti. Yedek almak ister misin? |
 | `settings.backup.keyLossWarning` | Cihaz sıfırlanırsa veritabanı anahtarı kaybolur ve veriler açılamaz. Düzenli yedek al. |
-| `settings.backup.export.downloaded` | {name} indirildi · {size} |
+| `settings.backup.export.downloaded` | İndirme başlatıldı: {name} · {size} |
 | `settings.backup.web.hint` | Web'de yedek tarayıcının indirme klasörüne kaydedilir. Tarayıcı verisi silinirse kayıtlar yalnızca bu dosyadan geri gelir; düzenli yedek al. |
 
 **Servis / DB etkileri**
@@ -1996,17 +1998,26 @@ Aktif antrenman ekranında boundary tetiklenirse veri kaybı yoktur (her şey za
 | Konu | Web davranışı | Yerel karşılığı |
 |---|---|---|
 | Veritabanı | sql.js (SQLite → wasm) bellekte çalışır; **her commit sonrası** tüm görüntü AES-GCM-256 ile şifrelenip IndexedDB'ye yazılır | SQLCipher dosyası |
-| Anahtar | `extractable: false` WebCrypto `CryptoKey`, IndexedDB'de (`v90.web.dbkey`); dışa aktarılamaz; kaynakta ve düz depoda parola yoktur (R93.5) | SecureStore / Keychain |
+| Anahtar | `extractable: false` WebCrypto `CryptoKey`, IndexedDB'de (`v90.web.dbkey`); JS baytlarını okuyamaz; kaynakta, log'da ve yedekte anahtar yoktur (R93.5). `IdbKeyProvider` anahtarı bellekte önbelleklemez: her şifreleme/çözme depodan okur; depo silinmişse eski anahtarla yazmaya devam edilmez | SecureStore / Keychain |
+| Anahtar dinlenirken (dürüstlük) | `extractable: false` yalnızca **JS API'sini** kapatır; tarayıcı `CryptoKey` malzemesini kendi profil dosyalarına serileştirir. Dinlenirken koruma = OS kullanıcı hesabı / disk şifreleme — şifresiz tarayıcı profiliyle aynı sınıf. Metin bunu söyler ("diskte tarayıcı profili kadar korunur"); "asla diskte düz durmaz" **denmez** (R93.4, R123) | Keychain / Keystore (donanım destekli) |
+| Paylaşılan kaynak (origin) | GitHub Pages'te hesabın **tüm proje siteleri** `https://beartransfersusa-ops.github.io` kaynağını paylaşır; IndexedDB kaynak başınadır. Aynı hesabın **başka** bir proje sitesinden gelen same-origin script bu depoyu okuyabilir ve anahtarı çözdürebilir. Azaltım: hesap altında yalnızca kendi kodunu yayınla (tek diğer kiracı kullanıcının kendi depolarıdır) ya da özel alan adı kullan | Uygulama sandbox'ı |
 | Şifreleme iddiası | `isEncrypted = true`, çünkü depo gerçekten şifreler; bu SQLCipher **değildir** ve öyle yazılmaz (R93.4, R93.7) | SQLCipher |
 | İkinci sekme | Web Locks `v90.db` kilidi sekme ömrü boyunca tutulur; ikinci sekme `DbOpenError` ile durur, veri bozulmaz. Web Locks yoksa kilit atlanır | — |
 | Uygulama kilidi | **Yok.** `AppLockGate` web'de çocukları doğrudan render eder; yedekten gelen `'appLock.enabled'` yok sayılır; Güvenlik ekranı bunu açıkça yazar | B.6, B.17 |
 | Gizlilik perdesi | Var: `AppState` sekme görünürlüğüne eşlenir; sekme arka plana geçince perde iner (B.18). Ekran görüntüsü **engellenemez** ve vaat edilmez (R94.6) | B.18 |
-| Yedek dışa aktar | Tarayıcı indirmesi (`blob:` URL); ZIP şifresizdir (02 §12.2); sunucuya hiçbir şey gitmez | Paylaşım sayfası (B.7) |
-| Yedek içe aktar | Tarayıcı dosya seçici; seçilen dosya yalnızca okunur (R116.2); "Geri al" kaydı IndexedDB `meta` deposunda, DB görüntüsünden ayrı | Sidecar JSON (B.8) |
-| Fotoğraflar | Tarayıcı deposunda (IndexedDB); görüntüleme için `blob:` URL sekme belleğinde üretilir, listeden düşenler serbest bırakılır; sunucuya gitmez (R116.3) | `documentDirectory/photos/` (B.14) |
+| Yedek dışa aktar | Tarayıcı indirmesi (`blob:` URL); ZIP şifresizdir (02 §12.2); sunucuya hiçbir şey gitmez. Ekran **"İndirme başlatıldı"** der, "indirildi" değil: `deliverExport` tarayıcının dosyayı gerçekten kaydettiğini bilemez | Paylaşım sayfası (B.7) |
+| iOS ana ekran (standalone) indirme | Ana ekrana eklenmiş uygulamada `blob:` indirme dosya yerine yeni bir görünümde açılabilir ve kaydedilmeyebilir; yedek almak için Safari sekmesinde aç (Yedekleme ekranı web ipucu) | Paylaşım sayfası |
+| Yedek içe aktar | Tarayıcı dosya seçici; seçilen dosya yalnızca okunur (R116.2); "Geri al" kaydı IndexedDB `meta` deposunda, DB görüntüsünden ayrı. Bozuk ZIP mevcut görüntüye dokunmaz (R95.7; `test/webBackup.test.ts`) | Sidecar JSON (B.8) |
+| Sıfır fotoğraflı içe aktarma | `PrefixBlobStore.ensureDir` gizli bir dizin işareti anahtarı (`<dir>/`) yazar; boş `photos.import/` de "var" sayılır ve değişim (02 §12.3 adım 6) fotoğrafsız yedekte de başarılıdır | Dosya sistemi dizini |
+| Fotoğraflar | Tarayıcı deposunda (IndexedDB `blobs`); değerler DB görüntüsüyle **aynı anahtarla** AES-GCM şifrelidir (`EncryptedKvStore`; anahtar adları `photos/<file>` düz kalır), `meta` kayıtları da öyle. Görüntüleme için `blob:` URL sekme belleğinde üretilir, listeden düşenler serbest bırakılır; sunucuya gitmez (R116.3) | `documentDirectory/photos/` (B.14) |
 | Bildirim | Yok; rest timer ekranda çalışır | expo-notifications |
 | Çevrimdışı kabuk | Export sonrası üretilen `sw.js`, uygulama hazır olduktan sonra **bir kez** kaydedilir; kayıt başarısızlığı uygulamayı düşürmez (02 §2.2) | — |
-| Kalıcı depolama | İlk açılışta, bootstrap'tan **önce** `navigator.storage.persist()` istenir; sonuç yalnızca Ayarlar'da gösterilir, açılış engellenmez | Sandbox zaten kalıcı |
+| Service worker güncellemesi | `sw.js` `skipWaiting`/`clients.claim` çağırmaz: yeni sürüm ancak uygulamanın açık olduğu tüm sekmeler kapanınca etkinleşir (**ikinci açılış**); eski önbellek ancak o zaman silinir, açık eski kabuk tembel parçalarını (ImagePicker vb.) kaybetmez. Precache istekleri HTTP önbelleğini atlar (`cache: 'reload'`): Pages'in 10 dakikalık `max-age`'i eski `index.html`'i kabuğa sokamaz | Mağaza güncellemesi |
+| Kalıcı depolama | İlk açılışta `navigator.storage.persist()` bootstrap ile **eşzamanlı** istenir, beklenmez (Firefox izin penceresi açar; beklenseydi yükleme ekranı takılırdı); sonuç gelene kadar "sorulamıyor" görünür, yalnızca Ayarlar'da gösterilir, açılış engellenmez | Sandbox zaten kalıcı |
+| Safari 7 gün kuralı | ITP: 7 gün etkileşim olmayan sitenin script depolaması (IndexedDB dahil) silinebilir → görüntü ve anahtar birlikte gider. Azaltım: iPhone'da "Ana ekrana ekle" (standalone) ile kullan ve düzenli yedek al; metin bunu söyler | — |
+| Salt okuma transaction | Dirty-tracking: yazma içermeyen transaction'lar görüntüyü dışa aktarmaz ve depoya yazmaz; ekran açmak IndexedDB'ye tam görüntü yazdırmaz | — |
+| Depo yazımı başarısız | Persist başarısız olursa bellek **son kaydedilen görüntüye sıfırlanır** (rollback-to-last-good) ve `DbWriteError` gösterilir; bellek ile depo ayrışmaz, yeniden deneme güvenlidir | SQLite dosya hatası |
+| WebCrypto denetimi | `db.web.ts` açılışta `crypto.subtle` yoksa (güvensiz bağlam, http) `DbOpenError` ile durur; anahtar üretilmez, hiçbir şey düz yazılmaz | — |
 | Barındırma | GitHub Pages, `/kredi-karti-takip` alt yolu; SPA (`404.html` = `index.html`) | Mağaza / APK |
 | Analitik ve bulut | Yok (R118); cloud sync yok, "yakında" yok (R116.3) | Aynı |
 
@@ -2020,26 +2031,28 @@ Aktif antrenman ekranında boundary tetiklenirse veri kaybı yoktur (her şey za
 | İkinci sekme | Web Locks kilidi alınamadı | `DbOpenError` ekranı (B.16.1); Ayrıntılar'da "uygulama başka bir sekmede açık — önce onu kapat". Diğer sekme kapatılıp **Yeniden dene** → yeni kilit isteği (başarısızlık önbelleğe alınmaz). |
 | Depo silindi | Tarayıcı site verisini temizledi (görüntü ve anahtar gitti) | Uygulama **ilk açılış** gibi başlar (onboarding); eski veri geri getirilemez, anahtar da silinmiştir. Tek yol: Ayarlar > Yedekleme > **Yedekten geri yükle** (indirilmiş ZIP). Yedekleme ekranındaki web ipucu bunu önceden söyler. |
 | Görüntü çözülemedi | Görüntü var, anahtarla açılamıyor (bozuk görüntü ya da anahtar uyuşmazlığı) | `DbOpenError` ekranı (B.16.1): **Yeniden dene** · **Yedekten geri yükle**. |
+| Depo yazılamadı | `COMMIT` sonrası persist başarısız (IndexedDB hatası, kota) | "Kaydedilemedi" çubuğu (`error.dbWrite`, B.16.4); bellek son kaydedilen görüntüye sıfırlanır, ekran yeniden okur; **yeniden deneme çalışır** (aynı `commandId` güvenlidir). |
+| Güvensiz bağlam | `crypto.subtle` yok (http) | `DbOpenError` ekranı (B.16.1); Ayrıntılar'da "uygulama güvenli bağlamda (https) açılmalı". Anahtar üretilmez. |
 | Çevrimdışı | Ağ yok, `sw.js` kayıtlı | Kabuk önbellekten açılır; veri zaten yereldir. Kayıt yoksa yalnızca çevrimiçi açılır. |
 | Geliştirme | `__DEV__` | Service worker kaydedilmez (Metro sıcak yenilemesiyle çakışır). |
 
 **Akış (açılış)**
 
-1. `AppProvider`: `requestPersistentStorage()` → sonuç `platformInfo.persist` (bootstrap engellenmez).
-2. `bootstrap` → `makeProvider` (web): sekme kilidi → anahtar (yoksa üretilir; iki sekme yarışırsa ikincisi ilkinin anahtarını okur) → görüntü yüklenip çözülür → sql.js açılır → migration → seed.
-3. Hazır → `registerServiceWorker()` bir kez.
-4. Her `COMMIT` → görüntü dışa aktarılır → şifrelenir → IndexedDB'ye yazılır. Yazma bitmeden sekme kapanırsa son transaction kaybolabilir; kullanıcıya "kesin" güvence verilmez (R123).
+1. `AppProvider`: `requestPersistentStorage()` bootstrap ile eşzamanlı başlar ve **beklenmez**; sonuç geldiğinde `platformInfo.persist` güncellenir (bootstrap engellenmez, yükleme ekranı izin penceresine takılmaz).
+2. `bootstrap` → `makeProvider` (web): WebCrypto denetimi (yoksa `DbOpenError`) → sekme kilidi → anahtar (yoksa üretilir; iki sekme yarışırsa ikincisi ilkinin anahtarını okur; bellekte önbelleklenmez) → görüntü yüklenip çözülür → sql.js açılır → migration (yedek görüntüsü `v90.bak.v<n>.sqlite`, aynı depoda) → seed.
+3. Hazır → `registerServiceWorker()` bir kez. Yeni `sw.js` varsa arka planda iner; **açık sekmeler kapanınca** etkinleşir.
+4. Yazma içeren her `COMMIT` → görüntü dışa aktarılır → şifrelenir → IndexedDB'ye yazılır (salt okuma transaction'ları yazdırmaz). Yazma başarısız olursa bellek son kaydedilen görüntüye sıfırlanır ve "Kaydedilemedi" gösterilir. Yazma bitmeden sekme kapanırsa son transaction kaybolabilir; kullanıcıya "kesin" güvence verilmez (R123).
 
-**Kopya kuralı (R93.4, R94.6, R123):** web metinlerinde "kesin", "güvenli" gibi mutlak iddialar ve web için "SQLCipher" iddiası YOK; ne yapıldığı yazılır (AES-GCM görüntü şifreleme, çıkarılamaz anahtar). Ekran görüntüsü engelleme, biyometrik kilit ve bildirim web'de vaat edilmez; eksik olan açıkça yazılır. Cloud sync, "yakında" (R116.3) ve analitik (R118) hiçbir web metninde geçmez.
+**Kopya kuralı (R93.4, R94.6, R123):** web metinlerinde "kesin", "güvenli" gibi mutlak iddialar ve web için "SQLCipher" iddiası YOK; ne yapıldığı yazılır (AES-GCM görüntü ve fotoğraf şifreleme; anahtar JS'e kapalı, diskte tarayıcı profili kadar korunur — "asla diskte düz durmaz" denmez). Ekran görüntüsü engelleme, biyometrik kilit ve bildirim web'de vaat edilmez; eksik olan açıkça yazılır. Cloud sync, "yakında" (R116.3) ve analitik (R118) hiçbir web metninde geçmez.
 
-**Türkçe metinler** — yalnızca web ile gelen ve başka tabloda tanımlı olmayan anahtarlar. `settings.web.*`, `settings.appLock.webUnavailable` ve `settings.privacy.webNote` B.6 tablosunda; `settings.backup.export.downloaded` ve `settings.backup.web.hint` B.7 tablosunda tanımlıdır (bir anahtar tek tabloda, tek metinle geçer).
+**Türkçe metinler** — yalnızca web ile gelen ve başka tabloda tanımlı olmayan anahtarlar. `settings.web.*`, `settings.appLock.webUnavailable`, `settings.appLock.webBadge` ve `settings.privacy.webNote` B.6 tablosunda; `settings.backup.export.downloaded` ve `settings.backup.web.hint` B.7 tablosunda tanımlıdır (bir anahtar tek tabloda, tek metinle geçer).
 
 | Anahtar | Metin |
 |---|---|
 | `photos.webNote` | Web'de ekran görüntüsü engellenemez. Fotoğraflar bu tarayıcının deposunda tutulur; sunucuya gönderilmez. |
 | `photos.source.file` | Dosya seç |
 
-**Servis / DB etkileri:** `src/platform/*.web.ts` (`db`, `files`, `blobs`, `exportFile`, `pickedFile`, `restorePoint`, `photoUri`, `storage`, `serviceWorker`, `notifications`, `build`), `src/platform/web/` (`idb`, `imageStore`, `keyProvider`, `stores`, `tabLock`), `SqlJsProvider`, `EncryptedImageStore`; `AppProvider.platformInfo`. DB şeması değişmez.
+**Servis / DB etkileri:** `src/platform/*.web.ts` (`db`, `files`, `blobs`, `exportFile`, `pickedFile`, `restorePoint`, `photoUri`, `storage`, `serviceWorker`, `notifications`, `build`), `src/platform/web/` (`idb`, `imageStore`, `keyProvider`, `stores`, `tabLock`), `SqlJsProvider`, `EncryptedImageStore`, `EncryptedKvStore` (blobs/meta), `RoutedBlobStore` (`*.sqlite` adlarını görüntü deposuna yönlendirir), `PrefixBlobStore` (dizin işareti); `AppProvider.platformInfo`. Testler: `test/webBackup.test.ts` (web yığınında export/import: sıfır fotoğraf, fotoğraflı, bozuk ZIP), `test/sqlJs.test.ts`, `test/webPlatform.test.ts`. DB şeması değişmez.
 
 **Gereksinimler:** R93.4, R93.5, R93.7, R94.5, R94.6, R116.2, R116.3, R116.5, R118, R123, 02 §2.2, 02 §12.2, ADR-013.
 

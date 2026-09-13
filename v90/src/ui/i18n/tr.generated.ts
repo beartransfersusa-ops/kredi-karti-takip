@@ -2,7 +2,7 @@
 // Kaynak: docs/v90/06-ux-flows.md "Türkçe metinler" tabloları.
 // Yeniden üretmek için: npm run gen:i18n
 //
-// 530 anahtar. Metin değişecekse ÖNCE belge güncellenir;
+// 531 anahtar. Metin değişecekse ÖNCE belge güncellenir;
 // aksi halde `npm run verify:drift` CI'da kırılır.
 
 export const tr = {
@@ -451,10 +451,11 @@ export const tr = {
   'settings.appLock.title': 'Face ID / Touch ID / Biometric Lock',
   'settings.appLock.toggle': 'Uygulama kilidi',
   'settings.appLock.unavailable': 'Bu cihazda biyometrik doğrulama yok ya da kayıtlı değil. Cihaz ayarlarından Face ID / parmak izi ekleyip tekrar dene.',
+  'settings.appLock.webBadge': 'Web\'de yok',
   'settings.appLock.webUnavailable': 'Web\'de uygulama kilidi yok; tarayıcı biyometrik doğrulama sunmaz. Sekme arka plana geçince içerik perdelenir.',
   'settings.backup.export.activeSessionNote': 'Devam eden antrenmanın da yedeğe dahil edilir.',
   'settings.backup.export.button': 'Yedeği dışa aktar',
-  'settings.backup.export.downloaded': '{name} indirildi · {size}',
+  'settings.backup.export.downloaded': 'İndirme başlatıldı: {name} · {size}',
   'settings.backup.export.failed': 'Yedek oluşturulamadı. Boş alanı kontrol et.',
   'settings.backup.export.last': 'Son yedek: {date} · {size}',
   'settings.backup.export.missingPhotos': '{n} fotoğraf dosyası bulunamadı ve yedeğe eklenmedi.',
@@ -516,8 +517,8 @@ export const tr = {
   'settings.privacy.sensitiveScreens': 'Progress Photos ve Labs ekranları gizlilik hassas görünümdür; uygulama arka plana geçince içerik perdeyle kapatılır.',
   'settings.privacy.title': 'Gizlilik',
   'settings.privacy.webNote': 'Web\'de ekran görüntüsü engellenemez; sekme arka plana geçince içerik perdelenir.',
-  'settings.web.encryption': 'Veritabanı bu tarayıcıda AES-GCM ile şifreli saklanır; anahtar tarayıcının WebCrypto deposundadır ve dışa aktarılamaz.',
-  'settings.web.limits': 'Biyometrik kilit ve bildirim web\'de yok; fotoğraflar tarayıcı deposunda tutulur.',
+  'settings.web.encryption': 'Veritabanı görüntüsü ve fotoğraflar bu tarayıcıda AES-GCM ile şifreli saklanır. Anahtar tarayıcının WebCrypto deposundadır: JS\'e kapalıdır, diskte ise tarayıcı profili kadar korunur — cihaz kilidi ve disk şifreleme önemli.',
+  'settings.web.limits': 'Biyometrik kilit ve bildirim web\'de yok. Safari 7 gün kullanılmayan site verisini silebilir; iPhone\'da "Ana ekrana ekle" ile kullan ve düzenli yedek al.',
   'settings.web.persist.denied': 'Kalıcı depolama: verilmedi — tarayıcı yer açmak için silebilir; düzenli yedek al',
   'settings.web.persist.granted': 'Kalıcı depolama: verildi',
   'settings.web.persist.unsupported': 'Kalıcı depolama: bu tarayıcıda sorulamıyor; düzenli yedek al',
@@ -987,6 +988,7 @@ export type TrParams = {
   'settings.appLock.title': undefined;
   'settings.appLock.toggle': undefined;
   'settings.appLock.unavailable': undefined;
+  'settings.appLock.webBadge': undefined;
   'settings.appLock.webUnavailable': undefined;
   'settings.backup.export.activeSessionNote': undefined;
   'settings.backup.export.button': undefined;
