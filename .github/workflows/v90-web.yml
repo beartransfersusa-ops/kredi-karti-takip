@@ -2,9 +2,16 @@
 #
 # `expo export --platform web` → dist-web/ ; ardından scripts/web-postexport.mjs
 # 404.html (SPA yedeği), manifest.webmanifest ve sw.js (çevrimdışı kabuk)
-# ekler. Alt yol: depo herkese açık olduğu için Pages adresi
-# https://<kullanıcı>.github.io/kredi-karti-takip/ — V90_WEB_BASE_URL
-# app.config.ts üzerinden EXPO_BASE_URL'e dönüşür.
+# ekler. Çıktı `gh-pages` dalına yazılır; Pages bu dalı yayınlar. Alt yol:
+# depo herkese açık olduğu için adres https://<kullanıcı>.github.io/kredi-karti-takip/
+# — V90_WEB_BASE_URL app.config.ts üzerinden EXPO_BASE_URL'e dönüşür.
+#
+# Neden dal, "GitHub Actions" kaynağı değil: `actions/configure-pages`'in
+# `enablement: true` adımı GITHUB_TOKEN ile Pages sitesini AÇAMADI ("Resource
+# not accessible by integration"; ilk çalıştırma, 2026-09-13). `gh-pages`
+# dalına yazmak yalnızca `contents: write` ister; herkese açık depoda Pages bu
+# dal için kendiliğinden açılır. Açılmazsa tek seferlik elle adım: Settings →
+# Pages → Source "Deploy from a branch" → gh-pages / (root).
 #
 # Web'de SQLCipher yoktur; veritabanı sql.js ile bellekte çalışır ve görüntüsü
 # WebCrypto (AES-GCM-256) ile şifreli olarak IndexedDB'de durur. Bu, SQLCipher
@@ -19,20 +26,19 @@ on:
       - main
     paths:
       - 'v90/**'
+      - '!v90/**.md'
       - '.github/workflows/v90-web.yml'
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Pages dağıtımları sıraya girer; yarım kalan dağıtım olmasın diye iptal edilmez.
+# Dağıtımlar sıraya girer; yarım kalan dağıtım olmasın diye iptal edilmez.
 concurrency:
-  group: pages
+  group: v90-web-pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -48,7 +54,7 @@ jobs:
           cache: npm
           cache-dependency-path: v90/package-lock.json
 
-      # postinstall: sql-wasm.wasm → public/ (export çıktısının köküne kopyalanır).
+      # postinstall: sql-wasm*.wasm → public/ (export çıktısının köküne kopyalanır).
       - name: Bağımlılıklar
         run: npm ci
 
@@ -66,37 +72,29 @@ jobs:
           test -f dist-web/manifest.webmanifest
           ls dist-web/sql-wasm*.wasm
 
-      # enablement: Pages daha önce açılmadıysa ilk çalıştırmada açar.
-      - name: Pages yapılandırması
-        uses: actions/configure-pages@v5
+      # gh-pages dalı tek commit olarak yeniden yazılır (force_orphan): eski
+      # bundle'lar dalda birikmez. .nojekyll otomatik eklenir (enable_jekyll:
+      # false varsayılan) — Jekyll `_expo/` gibi alt çizgili dizinleri yoksayardı.
+      - name: gh-pages dalına yaz
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          enablement: true
-
-      - name: Pages artifact'i
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: v90/dist-web
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Pages'e dağıt
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./v90/dist-web
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: 'V90 web: ${{ github.sha }}'
 
       - name: Yayın adresi
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          URL="https://${OWNER}.github.io/${REPO}/"
           {
             echo "## V90 Web"
             echo
-            echo "- Yayın adresi: $PAGE_URL"
+            echo "- Yayın adresi: $URL"
+            echo "- Kaynak dal: gh-pages (Pages bu daldan yayınlar; ilk seferde açılmadıysa Settings → Pages → Deploy from a branch → gh-pages)"
             echo
             echo "Tarayıcıda çalışır; \"Ana ekrana ekle\" ile uygulama gibi açılır. Veri yalnızca bu tarayıcıda, şifreli görüntü olarak durur."
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "$PAGE_URL"
+          echo "$URL"

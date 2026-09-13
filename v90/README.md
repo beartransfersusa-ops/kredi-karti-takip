@@ -256,9 +256,10 @@ yayınlanır:
 - **Adres:** <https://beartransfersusa-ops.github.io/kredi-karti-takip/>
 
 Android Chrome'da "Ana ekrana ekle" ile uygulama gibi açılır; ilk açılıştan sonra
-çevrimdışı da açılır (service worker, 02 §2.2). İlk yayında Pages otomatik
-açılamazsa: **Settings → Pages → Source: GitHub Actions**, sonra iş akışını
-yeniden çalıştır.
+çevrimdışı da açılır (service worker, 02 §2.2). İş akışı çıktıyı `gh-pages`
+dalına yazar; Pages bu daldan yayınlar. İlk yayında adres 404 veriyorsa (Pages
+kendiliğinden açılmadıysa) tek seferlik: **Settings → Pages → Build and
+deployment → Source: Deploy from a branch → gh-pages / (root)**.
 
 Web'de ne farklı (ADR-013, 06 B.20):
 
