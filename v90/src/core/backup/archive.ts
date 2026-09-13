@@ -1,6 +1,9 @@
-// Arşiv portu ve Node (zlib) uygulaması — docs/v90/02-architecture.md §2, §12.3.
-// Production'da react-native-zip-archive aynı portu uygular; domain kodu
-// hangisinin çalıştığını bilmez.
+// ZIP arşivleyici — docs/v90/02-architecture.md §2, §12.3.
+//
+// Elle yazıldı (harici ZIP kütüphanesi yok); yalnızca sıkıştırma `fflate`'e
+// devredilir. Bu sayede tek gerçekleştirme hem Node testlerinde hem cihazda
+// koşar ve "testte geçen, cihazda derlenmeyen" ayrımı oluşmaz.
+import { deflateSync, inflateSync } from 'fflate';
 
 export interface ArchiveEntry { path: string; data: Uint8Array }
 
@@ -32,10 +35,18 @@ export function crc32(buf: Uint8Array): number {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-/** Node'da zlib ile; RN'de native arşivleyici bu sınıfın yerine geçer. */
-export class NodeArchiver implements Archiver {
+/**
+ * Tek arşivleyici, iki ortam.
+ *
+ * Sıkıştırma `fflate` ile yapılır (02 §12.3'te adı geçen alternatif): saf
+ * JavaScript olduğu için hem Node testlerinde hem React Native'de AYNI kod
+ * koşar. `node:zlib` kullanılsaydı bundle derlenmezdi; iki ayrı gerçekleştirme
+ * tutmak ise "testte geçen, cihazda geçmeyen ZIP" riski doğururdu.
+ *
+ * Doğruluğu Python'ın `zipfile` modülüyle çift yönlü test edilir.
+ */
+export class ZipArchiver implements Archiver {
   async write(entries: readonly ArchiveEntry[]): Promise<Uint8Array> {
-    const { deflateRawSync } = await import('node:zlib');
     const chunks: Uint8Array[] = [];
     const central: Uint8Array[] = [];
     let offset = 0;
@@ -43,7 +54,9 @@ export class NodeArchiver implements Archiver {
     for (const e of entries) {
       const name = new TextEncoder().encode(e.path);
       const crc = crc32(e.data);
-      const deflated = deflateRawSync(e.data);
+      // fflate'in `deflateSync`'i HAM deflate üretir (zlib başlığı yok) —
+      // ZIP method 8'in istediği tam olarak budur.
+      const deflated = deflateSync(e.data);
       const useDeflate = deflated.length < e.data.length;
       const body = useDeflate ? new Uint8Array(deflated) : e.data;
       const method = useDeflate ? METHOD_DEFLATE : METHOD_STORE;
@@ -93,7 +106,6 @@ export class NodeArchiver implements Archiver {
   }
 
   async read(zip: Uint8Array): Promise<ArchiveEntry[]> {
-    const { inflateRawSync } = await import('node:zlib');
     const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
 
     let eocd = -1;
@@ -124,7 +136,7 @@ export class NodeArchiver implements Archiver {
       const start = localOff + 30 + lNameLen + lExtraLen;
       const body = zip.subarray(start, start + compSize);
 
-      const data = method === METHOD_DEFLATE ? new Uint8Array(inflateRawSync(body))
+      const data = method === METHOD_DEFLATE ? inflateSync(body)
         : method === METHOD_STORE ? new Uint8Array(body)
           : (() => { throw new ArchiveError(`desteklenmeyen sıkıştırma: ${method}`); })();
       if (data.length !== rawSize) throw new ArchiveError(`boyut uyuşmuyor: ${path}`);

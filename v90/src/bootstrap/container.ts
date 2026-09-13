@@ -37,6 +37,16 @@ export interface Services {
   restTimers: RestTimerService;
   seed: SeedResult;
   isEncrypted: boolean;
+  /** Canlı veritabanı dosyasının yolu (yedekleme dosya değişimi için). */
+  dbPath: string;
+  /**
+   * Yedek içe aktarma için (02 §12.3): verilen yolda AYRI bir DB açıp
+   * migration'ları çalıştırır. Staging burada oluşturulur; canlı dosyaya
+   * yalnızca en sonda, tek bir yeniden adlandırmayla dokunulur.
+   */
+  openMigrated: (path: string) => Promise<Db>;
+  closeLive: () => Promise<void>;
+  reopenLive: () => Promise<Db>;
   close: () => Promise<void>;
 }
 
@@ -54,6 +64,8 @@ export interface BootstrapOptions {
    */
   provider?: DatabaseProvider;
   dbPath?: string;
+  /** Staging/canlı sağlayıcı üreticisi; testler kendi sürücülerini verir. */
+  makeProvider?: (path: string) => DatabaseProvider;
   log?: (m: string) => void;
 }
 
@@ -81,12 +93,13 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
 
   // 2–3 — aç ve migrate et. MigrationRunner ikisini birlikte yapar; yedeği
   // migration'dan ÖNCE alır, hata hâlinde geri yükler (R92.6).
+  const runMigrated = (p: DatabaseProvider) => new MigrationRunner({
+    provider: p, files: o.files, clock: o.clock, hash: o.hash,
+  }).run().then((r) => r.db);
+
   let db: Db;
   try {
-    const result = await new MigrationRunner({
-      provider, files: o.files, clock: o.clock, hash: o.hash,
-    }).run();
-    db = result.db;
+    db = await runMigrated(provider);
   } catch (e) {
     if (e instanceof InsufficientSpaceError) throw new BootstrapError('diskSpace', e.message, e);
     if (e instanceof MigrationFailedError) throw new BootstrapError('migrate', e.message, e);
@@ -105,7 +118,8 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
   // 5 — servisler.
   const scheduler = new Scheduler({
     clock: o.clock,
-    preferredWorkoutDays: () => db.withTransaction((tx) => preferredWorkoutDays(tx)),
+    // Açık transaction içinde okunur; yeni transaction AÇILMAZ (02 §3).
+    preferredWorkoutDays: (tx) => preferredWorkoutDays(tx),
   });
   const restTimers = new RestTimerService({ clock: o.clock, ...(o.notifications ? { notifications: o.notifications } : {}) });
   const catalog = new CatalogCache(db);
@@ -114,10 +128,15 @@ export async function bootstrap(o: BootstrapOptions): Promise<Services> {
   });
 
   return {
-    db, clock: o.clock, files: o.files, catalog, scheduler, restTimers, session,
+    get db() { return db; },
+    clock: o.clock, files: o.files, catalog, scheduler, restTimers, session,
     pauseService: new PauseService({ clock: o.clock, scheduler }),
     seed: seedResult,
     isEncrypted: provider.isEncrypted,
+    dbPath: provider.path,
+    openMigrated: (path) => runMigrated(makeProvider(o, path)),
+    closeLive: () => db.close(),
+    reopenLive: async () => { db = await runMigrated(provider); return db; },
     close: () => db.close(),
   };
 }
@@ -127,5 +146,15 @@ function defaultProvider(o: BootstrapOptions): DatabaseProvider {
     throw new BootstrapError('build',
       'dbPath verilmedi ve şifresiz sağlayıcıya düşülmez (R93.7)');
   }
-  return new EncryptedSqliteProvider({ path: o.dbPath, fileExists: (p) => o.files.exists(p) });
+  return makeProvider(o, o.dbPath);
+}
+
+/**
+ * Staging veritabanı da CANLI DB ile aynı türde olmalıdır: şifreli kurulumda
+ * staging de şifrelidir ve aynı anahtarı kullanır, aksi halde dosya değişimi
+ * sonrası DB açılamazdı.
+ */
+function makeProvider(o: BootstrapOptions, path: string): DatabaseProvider {
+  if (o.makeProvider) return o.makeProvider(path);
+  return new EncryptedSqliteProvider({ path, fileExists: (p) => o.files.exists(p) });
 }

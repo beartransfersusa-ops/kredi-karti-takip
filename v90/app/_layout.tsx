@@ -63,6 +63,7 @@ function Shell() {
         <Stack.Screen name="settings/equipment" options={{ title: t('settings.equipment.title') }} />
         <Stack.Screen name="settings/lock" options={{ title: 'Güvenlik' }} />
         <Stack.Screen name="measurements/new" options={{ title: 'Ölçüm ekle' }} />
+        <Stack.Screen name="nutrition/add" options={{ title: t('nutrition.addFood') }} />
       </Stack>
     </>
   );

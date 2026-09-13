@@ -26,6 +26,11 @@ interface AppContextValue {
   /** Herhangi bir yazma sonrası artar; açık sorgular yeniden okur. */
   revision: number;
   invalidate: () => void;
+  /**
+   * Bootstrap'ı baştan çalıştırır. Yedek içe aktarma DB DOSYASINI değiştirir,
+   * bu yüzden tazeleme yetmez: tüm servisler yeniden kurulmalıdır (B.8 adım 6).
+   */
+  restart: () => void;
 }
 
 const Ctx = createContext<AppContextValue | null>(null);
@@ -74,9 +79,14 @@ export function AppProvider(p: {
 
   const value = useMemo<AppContextValue | null>(
     () => (state.phase === 'ready'
-      ? { services: state.services, revision, invalidate: () => setRevision((v) => v + 1) }
+      ? {
+        services: state.services,
+        revision,
+        invalidate: () => setRevision((v) => v + 1),
+        restart: run,
+      }
       : null),
-    [state, revision],
+    [state, revision, run],
   );
 
   if (state.phase === 'loading') return <>{p.renderLoading()}</>;

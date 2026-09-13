@@ -172,7 +172,19 @@ export class ActiveSessionService {
         local_date_key: session.calendar_date_key,        // I4: yazma anı değil, oturum günü
         time_zone: this.#clock.timeZone(), note: cmd.note ?? null,
       });
-      await sessionExercises.patch(tx, se.id, { status: 'inProgress', draft_load_json: null, draft_reps: null, draft_rir: null }, iso);
+      // Hareket, planlanan working set sayısına ULAŞTIĞI ANDA 'done' olur
+      // (06 A.3): ekran kartı daraltıp odağı sıradaki harekete taşıyabilsin.
+      // Sayım DISTINCT set_index üzerinden yapılır — unilateral sol/sağ setleri
+      // tek set sayılır (R102.4). Isınma setleri sayılmaz.
+      const workingDone = setType === 'warmup'
+        ? 0
+        : (await tx.get<{ n: number }>(
+          `SELECT COUNT(DISTINCT set_index) n FROM set_logs
+           WHERE session_exercise_id = ? AND set_type = 'working' AND discarded = 0`, [se.id]))?.n ?? 0;
+      await sessionExercises.patch(tx, se.id, {
+        status: workingDone >= se.planned_working_sets ? 'done' : 'inProgress',
+        draft_load_json: null, draft_reps: null, draft_rir: null,
+      }, iso);
 
       const prs = await this.#detectPrs(tx, {
         setLogId, sessionId: session.id, exercise, side, raw, reps: cmd.reps,

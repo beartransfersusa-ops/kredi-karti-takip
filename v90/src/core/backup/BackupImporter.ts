@@ -250,9 +250,9 @@ export class BackupImporter {
     };
   }
 
+  /** Dosya silme de port üzerinden: çekirdekte platforma özgü kod yok. */
   async #removeFile(path: string): Promise<void> {
-    const { rm } = await import('node:fs/promises');
-    await rm(path, { force: true }).catch(() => {});
+    await this.#d.env.blobs.remove(path).catch(() => {});
   }
 }
 

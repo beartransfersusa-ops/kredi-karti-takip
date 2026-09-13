@@ -12,14 +12,14 @@ import { NodeSqliteProvider } from '../src/core/db/NodeSqliteProvider.ts';
 import { NodeFileStore } from '../src/core/db/NodeFileStore.ts';
 import { nodeSha256, nodeSha256Bytes } from '../src/core/db/hash.node.ts';
 import type { Db } from '../src/core/db/types.ts';
-import { NodeArchiver, utf8, fromUtf8 } from '../src/core/backup/archive.ts';
-import { NodeBlobStore } from '../src/core/backup/BlobStore.ts';
+import { ZipArchiver, utf8, fromUtf8 } from '../src/core/backup/archive.ts';
+import { NodeBlobStore } from '../src/core/backup/BlobStore.node.ts';
 import { BackupExporter } from '../src/core/backup/BackupExporter.ts';
 import { BackupImporter } from '../src/core/backup/BackupImporter.ts';
 import { BackupImportError } from '../src/core/backup/errors.ts';
 import { EXCLUDED_TABLES, userTables } from '../src/core/backup/TableRegistry.ts';
 
-const archiver = new NodeArchiver();
+const archiver = new ZipArchiver();
 const blobs = new NodeBlobStore();
 
 interface Env {

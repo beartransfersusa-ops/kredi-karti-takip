@@ -40,14 +40,19 @@ export interface MissedWorkout {
 export interface SchedulerDeps {
   clock: Clock;
   newId?: IdGenerator;
-  /** Tercih edilen antrenman günleri (0=Pazar … 6=Cumartesi); boş = her gün. */
-  preferredWorkoutDays?: () => Promise<number[]>;
+  /**
+   * Tercih edilen antrenman günleri (0=Pazar … 6=Cumartesi); boş = her gün.
+   * AÇIK transaction içinde okunur: Scheduler her zaman
+   * bir transaction'ın içinde çalışır ve iç içe transaction desteklenmez
+   * (02 §3). Bu yüzden imza `tx` alır.
+   */
+  preferredWorkoutDays?: (tx: Tx) => Promise<number[]>;
 }
 
 export class Scheduler {
   readonly #clock: Clock;
   readonly #newId: IdGenerator;
-  readonly #prefs: () => Promise<number[]>;
+  readonly #prefs: (tx: Tx) => Promise<number[]>;
 
   constructor(deps: SchedulerDeps) {
     this.#clock = deps.clock;
@@ -71,7 +76,7 @@ export class Scheduler {
 
     const today = this.#clock.todayKey();
     const base = maxKey(maxKey(today, p.start_date_key), earliest ?? today);
-    const plannedDateKey = await this.#firstPreferredDayOnOrAfter(base);
+    const plannedDateKey = await this.#firstPreferredDayOnOrAfter(tx, base);
     const now = this.#clock.nowUtc().toISOString();
     const id = this.#newId();
     await scheduled.insert(tx, {
@@ -172,7 +177,7 @@ export class Scheduler {
     const today = this.#clock.todayKey();
     const chosen = input.plannedDateKey && input.plannedDateKey > today
       ? input.plannedDateKey
-      : await this.#firstPreferredDayOnOrAfter(addDays(today, 1));
+      : await this.#firstPreferredDayOnOrAfter(tx, addDays(today, 1));
 
     await scheduled.patch(tx, sw.id, { partial_decision: 'continueLater', resolved_at_utc: now }, now);
     const continuationId = this.#newId();
@@ -250,8 +255,8 @@ export class Scheduler {
     return maxKey(this.#clock.todayKey(), addDays(sessionCalendarDateKey, 1));
   }
 
-  async #firstPreferredDayOnOrAfter(key: DateKey): Promise<DateKey> {
-    const prefs = await this.#prefs();
+  async #firstPreferredDayOnOrAfter(tx: Tx, key: DateKey): Promise<DateKey> {
+    const prefs = await this.#prefs(tx);
     if (prefs.length === 0) return key;
     for (let i = 0; i < 7; i++) {
       const candidate = addDays(key, i);

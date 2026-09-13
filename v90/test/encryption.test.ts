@@ -33,7 +33,7 @@ import { InMemorySecureStore } from '../src/core/db/keys/SecureStore.ts';
 import type { SecureStore } from '../src/core/db/keys/SecureStore.ts';
 import { InsecureBuildError, assertEncryptedProviderInProduction, warnIfUnencrypted } from '../src/core/db/buildGuard.ts';
 
-import { NodeArchiver, fromUtf8 } from '../src/core/backup/archive.ts';
+import { ZipArchiver, fromUtf8 } from '../src/core/backup/archive.ts';
 import { BackupExporter } from '../src/core/backup/BackupExporter.ts';
 
 const SECRET = 'kan-degeri-88-hemoglobin';
@@ -193,7 +193,7 @@ test('R118.2 · anahtar dışa aktarılan yedeğin içinde yok', async () => {
 
     const { zip } = await new BackupExporter({
       db, clock, hash: nodeSha256, hashBytes: nodeSha256Bytes,
-      archiver: new NodeArchiver(), appVersion: '0.1.0',
+      archiver: new ZipArchiver(), appVersion: '0.1.0',
     }).export();
     await db.close();
 
@@ -203,7 +203,7 @@ test('R118.2 · anahtar dışa aktarılan yedeğin içinde yok', async () => {
     assert.ok(!raw.includes(Buffer.from(key, 'hex')), 'anahtar yedeğe ham bayt olarak sızmış');
 
     // Sıkıştırılmış içeriği de aç: anahtar deflate'in arkasına saklanmış olabilir.
-    const entries = await new NodeArchiver().read(zip);
+    const entries = await new ZipArchiver().read(zip);
     assert.ok(entries.length > 0);
     for (const e of entries) {
       assert.ok(!Buffer.from(e.data).includes(Buffer.from(key, 'utf8')), `anahtar ${e.path} içinde`);

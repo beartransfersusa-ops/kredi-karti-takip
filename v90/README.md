@@ -1,8 +1,7 @@
 # V90 – Uygulama artefaktları
 
 Bu dizin, [`../docs/v90/`](../docs/v90/) altındaki specification'dan **üretilen** ve
-**doğrulanan** artefaktları içerir. Uygulama kodu henüz yazılmadı; burada bulunanlar
-uygulamanın temelini oluşturan şema ve seed verisidir.
+**doğrulanan** artefaktları, çekirdek domain kodunu ve Expo uygulamasını içerir.
 
 > Bu dizin, deponun kök dizinindeki kredi kartı takip uygulamasından bağımsızdır.
 
@@ -11,6 +10,8 @@ uygulamanın temelini oluşturan şema ve seed verisidir.
 | Yol | Ne | Kaynak |
 |-----|-----|--------|
 | `src/core/db/migrations/001_initial.sql` | Tam şema (45 tablo, 2 görünüm, 21 indeks) | `docs/v90/03-data-model.md` §1 |
+| `src/ui/i18n/tr.generated.ts` | 495 Türkçe UI metni | `docs/v90/06-ux-flows.md` metin tabloları |
+| `data/equipment-presets.json` | 3 ekipman preset'i | `docs/v90/02-architecture.md` §11.4 |
 | `data/exercises.json` | 32 hareketlik katalog + 14 alternatif ilişkisi | Bölüm I §35, §36 |
 | `data/programs/v90.json` | 5 antrenman şablonu, 30 şablon hareketi | Bölüm I §21–§26 |
 | `data/muscle-volume-targets.json` | 16 kas için baseline ve tavan | Bölüm I §28 |
@@ -23,8 +24,8 @@ Yukarıdaki dosyaların tamamı **specification'dan üretilir**. Bir değer değ
 
 ```bash
 cd v90
-npm run gen        # migration + seed'i belgeden yeniden üret
-npm run verify     # kayma denetimi + seed doğrulaması
+npm run gen        # migration + seed + i18n'i belgeden yeniden üret
+npm run verify     # kayma + seed + tip + test + bundle denetimi
 ```
 
 Bu, belge ile veri arasında sessiz kopukluk oluşmasını yapısal olarak engeller:
@@ -32,7 +33,7 @@ belge tek doğruluk kaynağıdır, dosyalar onun türevidir.
 
 ## Doğrulama neyi garanti eder
 
-`npm run verify` iki aşamalıdır.
+`npm run verify` beş aşamalıdır: **kayma → seed → tip (×2) → test → bundle**.
 
 **1. Kayma denetimi** (`verify:drift`) — üreticileri yeniden çalıştırıp çıktıyı commit
 edilmiş dosyalarla karşılaştırır. Belge değişip üretim çalıştırılmadıysa CI kırılır.
@@ -58,6 +59,15 @@ D1/D2/D3 kritik olanlardır: programın set dağılımı ile specification'daki 
 tabloları arasındaki her sapmayı yakalarlar. Bir şablonda tek bir set değişse
 dört kontrol birden kırılır.
 
+**3. Tip denetimi** — iki ayrı tsconfig: çekirdek (Node, `src/core`+`src/domain`+
+`src/features`+`test`) ve uygulama (React Native, `app`+`src/ui`+`src/platform`).
+Ayrı olmalarının sebebi ikisinin FARKLI platform tiplerine sahip olması.
+
+**4. Testler** — 221 test, gerçek SQLite üzerinde.
+
+**5. Bundle denetimi** (`verify:bundle`) — uygulama gerçekten derleniyor mu ve
+şifresiz yol bundle'a sızmış mı? Ayrıntı için aşağı bkz.
+
 ## Gereksinimler
 
 Node ≥ 22.5 (`node:sqlite` ve yerel TypeScript type-stripping için) ve Python 3.11+.
@@ -66,11 +76,16 @@ Node ≥ 22.5 (`node:sqlite` ve yerel TypeScript type-stripping için) ve Python
 
 | Paket | Nerede | Niçin |
 |-------|--------|-------|
+| `expo`, `react`, `react-native`, `expo-router` | runtime | Uygulama |
+| `expo-sqlite` (SQLCipher), `expo-secure-store`, `expo-crypto` | runtime | Şifreli DB ve anahtar (§93) |
+| `expo-local-authentication`, `expo-notifications`, `expo-file-system` | runtime | Kilit, dinlenme bildirimi, yedek dosyaları |
 | `zod` | runtime | Yedek manifest/veri şeması doğrulaması (02 §12.3) |
-| `typescript`, `@types/node` | dev | `tsc --noEmit` |
+| `fflate` | runtime | ZIP sıkıştırma; Node ve RN'de aynı kod (02 §12.3) |
+| `typescript`, `@types/node`, `@types/react` | dev | `tsc --noEmit` (iki tsconfig) |
 | `@journeyapps/sqlcipher` | dev | Şifreli yolu **CI'da gerçekten** koşturmak (aşağı bkz.) |
 
-`@journeyapps/sqlcipher` yalnızca testlerde kullanılır; uygulamaya girmez.
+`@journeyapps/sqlcipher` yalnızca testlerde kullanılır; `npm run verify:bundle`
+onun uygulamaya girmediğini her çalıştırmada doğrular.
 
 ## Kod
 
@@ -96,6 +111,12 @@ Node ≥ 22.5 (`node:sqlite` ve yerel TypeScript type-stripping için) ve Python
 | `src/core/db/EncryptedSqliteProvider.ts` | Production yolu: SQLCipher + Keychain/Keystore | ADR-002, §93 |
 | `src/core/db/keys/` | `SecureStore` portu, `DbKeyManager` (256-bit, hex) | 02 §12.2 |
 | `src/core/db/buildGuard.ts` | Production'da şifresiz DB ve Expo Go yasağı | §93.4, §93.7 |
+| `src/core/db/seed.ts` | Idempotent katalog/şablon kurulumu | 03 §1 |
+| `src/bootstrap/container.ts` | Build koruması → DB → migration → seed → servisler | 02 §2, §12 |
+| `src/platform/` | Expo adaptörleri: saat, dosya, bildirim, hash, id, blob | 02 §2 |
+| `src/features/` | Saf görünüm modelleri (kart önceliği, yük alanı, tam/kısmi) | 06 A.1, A.3, A.4 |
+| `src/ui/` | Tasarım belirteçleri, bileşenler, i18n, AppProvider, kilit | 06 A.0, B.0 |
+| `app/` | expo-router rotaları (18 ekran) | 06 rota haritası |
 
 Motorlar (progression, plateau, PR, hacim, analitik, tarif, ölçüm) **saf
 TypeScript**tir: React'e, Expo'ya ve DB'ye bağımlı değildir. Servisler
@@ -113,7 +134,7 @@ DB bu riski test etmez; testler migrate edilmiş gerçek şema ve gerçek seed
 
 ### Testler belgeden türetilir
 
-`test/` altındaki 171 test, `04-domain-engines.md` içindeki **test vektörü
+`test/` altındaki 221 test, `04-domain-engines.md` içindeki **test vektörü
 tablolarının** ve `05-acceptance-tests.md` senaryolarının doğrudan
 karşılığıdır; her test adı kaynağını taşır (`TV-4.01`, `A1`, `G11`, `T8`,
 `AT-03` …). Bu sayede bir kural değiştiğinde hangi vektörün kırıldığı anında
@@ -194,18 +215,114 @@ kaybı**, bu yüzden düzenli yedek hatırlatması bir özellik değil zorunlulu
 `types/expo-modules.d.ts` geçicidir: Expo uygulaması eklendiğinde gerçek
 paketler kurulur ve o dosya silinir.
 
+## Uygulama
+
+```bash
+npm run prebuild          # native proje üret (SQLCipher plugin'i burada devreye girer)
+npm run ios               # ya da: npm run android
+npm start                 # Development Build ile Metro
+```
+
+**Expo Go çalışmaz ve çalıştırılmamalıdır**: SQLCipher native bir modüldür.
+Development Build zorunluluğu bilinçlidir (R93.4) — şifreleme, migration ve WAL
+davranışı ilk günden gerçek koşullarda test edilsin diye.
+
+### Ekranlar
+
+| Rota | Ne | Belge |
+|------|-----|-------|
+| `(tabs)/index` | Dashboard: 4 kart önceliği, kaçırılan kararı, kol KPI | A.1, A.2, A.5 |
+| `workout/active` | Set girişi, unilateral, dinlenme çubuğu, hareket atlama | A.3 |
+| `workout/finish` | Tam/kısmi kuralı, kısmi karar, antrenman tarihi | A.4 |
+| `workout/substitute` | Alternatif hareket (ekipman + ağrı filtreli) | A.3 |
+| `program/settings` | Dondur/devam ettir, takvim modu önizlemeli | A.9 |
+| `program/reschedule` | Ay görünümü takvim, dondurma aralıkları kapalı | A.10 |
+| `insights/plateau/[id]` | 7 adımlı checklist, öneriler (otomatik uygulama YOK) | A.8 |
+| `onboarding/index` | 4 adım; kaldığı yerden devam eder | B.1–B.4 |
+| `settings/equipment` | Preset + etki önizlemesi ("{n} hareket yapılamıyor") | B.5 |
+| `settings/lock` | Biyometrik kilit, grace süresi, gizlilik | B.6 |
+| `settings/backup` | Dışa aktar / içe aktar / geri al | B.7, B.8 |
+| `measurements/new` | 1–3 örnek, eşik aşımında üçüncüsü önerilir | B.9 |
+| `(tabs)/progress` | Kilo trendi, omuz/bel oranı, haftalık hacim, adherence | B.10, B.11 |
+| `(tabs)/nutrition` | Gün günlüğü, Copy Yesterday | B.12 |
+
+### UI metni de üretilir
+
+`scripts/extract-i18n.py`, `06-ux-flows.md` içindeki "Türkçe metinler"
+tablolarından 495 anahtarlık sözlüğü üretir ve kayma denetimine dahildir.
+Üretilen `TrParams` tipi yer tutucuları **derleme zamanında** denetler:
+
+```ts
+t('home.day')              // hata: {X} eksik
+t('home.day', { X: 12 })   // "Day 12 / 90"
+```
+
+Bu tip denetimi belgede üç birleşik satır (`active.side.left` / `.right` gibi)
+ve iki eksik anahtar buldu; **kod değil belge** düzeltildi.
+
+### Bundle gerçekten derleniyor — ve denetleniyor
+
+`npm run verify:bundle` önce `expo export` ile bundle üretir, sonra
+`scripts/check-bundle.mjs` ile ADR-002 Karar 3'ün istediği denetimi yapar:
+
+| Bulunmamalı | Neden |
+|---|---|
+| `node:sqlite`, `NodeSqliteProvider`, `nodeSqliteDriver` | şifresiz sağlayıcı production'a giremez (R93.7) |
+| `@journeyapps/sqlcipher` | yalnızca test sürücüsü |
+| `node:crypto`, `node:fs` | Node'a özgü kod cihazda çalışmaz |
+
+| Bulunmalı | Neden |
+|---|---|
+| `expo-sqlite`, `PRAGMA key`, `v90.dbkey`, `WHEN_UNLOCKED_THIS_DEVICE_ONLY` | denetim boş koşmasın |
+
+Bu denetim ilk çalıştırmada **üç gerçek hata** buldu: `container.ts`
+`NodeSqliteProvider`'ı statik import ediyordu (yani `node:sqlite` bundle'a
+giriyordu), ZIP yazıcısı `node:zlib` kullanıyordu ve `BackupImporter` dosya
+silmek için `node:fs` çağırıyordu. Üçü de düzeltildi:
+
+- şifresiz sağlayıcıya giden yol tamamen kaldırıldı (`dbPath` yoksa hata),
+- sıkıştırma `fflate`'e taşındı — saf JS olduğu için Node ve RN'de **aynı kod**
+  koşar; ZIP doğruluğu hâlâ Python `zipfile` ile çift yönlü test ediliyor,
+- dosya silme `BlobStore` portuna eklendi; `node:fs` gerçekleştirmesi
+  `BlobStore.node.ts`'e ayrıldı.
+
+Aynı ayrım hash için de yapıldı: `hash.node.ts` (test) ↔ `platform/hash.ts`
+(expo-crypto). Böylece bundle'da sıfır Node kodu var.
+
+> Not: bytecode adımı atlanıyor (`--no-bytecode`). Paketteki `hermes-compiler`
+> 0.14 `#private` alanları desteklemiyor, ama React Native 0.83'ün **kendi**
+> kodu da bunları taşıyor — cihazdaki Hermes destekliyor, sorun eski
+> hermesc'te.
+
+### Uçtan uca test
+
+`test/appFlow.test.ts` ekranların çağırdığı yolun tamamını gerçek SQLite
+üzerinde koşturur: bootstrap → seed → onboarding → program → dashboard →
+antrenman → bitirme → adherence. Bu test iki gerçek hata buldu:
+
+1. `Scheduler`'ın tercih günleri okuması kendi transaction'ını açıyordu; oysa
+   Scheduler daima açık bir transaction içinde çağrılır → iç içe transaction.
+   İmza `tx` alacak şekilde düzeltildi.
+2. `completeSet`, hareketi planlanan set sayısına ulaşınca `done` yapmıyordu;
+   `done` yalnızca bitirme anında yazılıyordu. `04-domain-engines.md` §2 zaten
+   doğru davranışı tanımlıyordu (`n >= planned_working_sets ? 'done' : …`) —
+   **kod belgeden sapmıştı**, belge değil.
+
 ## Sırada ne var
 
-1. Expo uygulaması ve ekranlar — `06-ux-flows.md`
-   (prebuild + `['expo-sqlite', { useSQLCipher: true }]`; Expo Go yalnızca UI prototipi)
-2. Progress fotoğrafı depolama ve `OrphanSweeper` — 02 §13.2
-3. App lock / biyometri (AT-19) — §94; iOS'ta ekran görüntüsü engellemesi
-   **vaat edilmeyecek** (R94.6)
-4. Kalan AT senaryolarının E2E karşılıkları (Maestro)
+1. Beslenme besin seed'i (§111 USDA / TR etiket) — şu an yalnızca kullanıcının
+   kendi eklediği besinler aranabiliyor
+2. Progress fotoğrafı ekranı ve `OrphanSweeper` — 02 §13.2, B.14
+3. Öneri kartı (A.7), tarif oluşturucu (B.13), video fallback (B.15)
+4. Kalan AT senaryolarının E2E karşılıkları (Maestro; AT-13 cihaz tz,
+   AT-17/18 video/offline UI, AT-19 biyometri, AT-20 Day 90 raporu)
 
 R124.1 gereği: 20 senaryonun tamamı geçmeden uygulama "complete" sayılmaz.
-Şu an kod seviyesinde karşılananlar: **AT-01, AT-02, AT-03, AT-04, AT-05,
-AT-06, AT-08, AT-09, AT-10, AT-11, AT-12, AT-14, AT-15, AT-16** (14/20).
-Kalanlar cihaz veya henüz yazılmamış katman gerektiriyor: AT-07 (E2E akış),
-AT-13 (cihaz tz), AT-17/18 (video/offline UI), AT-19 (biyometri),
-AT-20 (rapor ekranı).
+Şu an **kod seviyesinde** karşılananlar: AT-01, AT-02, AT-03, AT-04, AT-05,
+AT-06, AT-08, AT-09, AT-10, AT-11, AT-12, AT-14, AT-15, AT-16 (14/20).
+
+Ekranlar yazıldı ama bu, AT sayacını **artırmaz**: kalan altı senaryo gerçek
+cihazda koşan bir E2E (Maestro) gerektirir ve o henüz yok — AT-07 (E2E akış),
+AT-13 (cihaz saat dilimi değişimi), AT-17/18 (video ve çevrimdışı UI),
+AT-19 (biyometri), AT-20 (Day 90 raporu ekranı). Ekran kodunun varlığı
+senaryonun geçtiği anlamına gelmediği için sayaç 14/20'de duruyor.
