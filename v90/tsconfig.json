@@ -25,5 +25,10 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "src/ui/**",
+    "src/platform/**",
+    "node_modules"
   ]
 }

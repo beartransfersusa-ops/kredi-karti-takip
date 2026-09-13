@@ -3,5 +3,5 @@ __pycache__/
 issue_govde.md
 telegram_mesaj.txt
 
-# v90 (Node)
-v90/node_modules/
+# Node
+node_modules/

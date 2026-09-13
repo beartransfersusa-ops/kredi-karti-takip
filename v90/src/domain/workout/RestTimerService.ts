@@ -23,8 +23,15 @@ export const NO_NOTIFICATIONS: NotificationScheduler = {
 
 export interface RestTimerView {
   id: string;
+  /** Görünüm üretildiği ANDAKİ kalan süre. Ekran bunu saymaz. */
   remainingSeconds: number;
   durationSeconds: number;
+  /**
+   * Sayacın biteceği an. UI kalan süreyi her karede BURADAN hesaplar; böylece
+   * `remainingSeconds` bayatlasa bile gösterilen süre doğru kalır ve bellekte
+   * sayaç tutulmaz (R91.1, R91.3, AT-03).
+   */
+  endsAtUtc: string;
   state: RestTimerRow['state'];
   expired: boolean;
 }
@@ -38,8 +45,12 @@ export function remainingSeconds(row: RestTimerRow, now: Date): number {
 export function view(row: RestTimerRow, now: Date): RestTimerView {
   const remaining = remainingSeconds(row, now);
   return {
-    id: row.id, remainingSeconds: remaining, durationSeconds: row.rest_duration_seconds,
-    state: row.state, expired: row.state === 'running' && remaining === 0,
+    id: row.id,
+    remainingSeconds: remaining,
+    durationSeconds: row.rest_duration_seconds,
+    endsAtUtc: new Date(Date.parse(row.rest_started_at_utc) + row.rest_duration_seconds * 1000).toISOString(),
+    state: row.state,
+    expired: row.state === 'running' && remaining === 0,
   };
 }
 

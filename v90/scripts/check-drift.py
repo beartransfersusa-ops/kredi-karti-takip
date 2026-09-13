@@ -10,7 +10,7 @@ import filecmp, pathlib, shutil, subprocess, sys, tempfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GENERATED = ['src/core/db/migrations/001_initial.sql', 'data/exercises.json',
              'data/programs/v90.json', 'data/muscle-volume-targets.json',
-             'data/initial-profile.json']
+             'data/initial-profile.json', 'src/ui/i18n/tr.generated.ts']
 
 snapshot = {}
 with tempfile.TemporaryDirectory() as tmp:
@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory() as tmp:
         shutil.copy2(src, dst)
         snapshot[rel] = dst
 
-    for script in ['extract-migration.py', 'extract-seed.py']:
+    for script in ['extract-migration.py', 'extract-seed.py', 'extract-i18n.py']:
         r = subprocess.run([sys.executable, str(ROOT / 'scripts' / script)],
                            capture_output=True, text=True, cwd=ROOT)
         if r.returncode != 0:

@@ -249,6 +249,8 @@ Bu belge, hareketin **ilk working set'i** için kullanıcı kararı `accepted`/`
 | `active.load` | Ağırlık (kg) | (öneri) |
 | `active.assistance` | Yardım (kg) | (öneri) |
 | `active.assistance.hint` | Daha az yardım = daha zor | (öneri; R101.3) |
+| `active.machineLevel` | Seviye | (öneri; R101 yük alanı tablosu) |
+| `active.band` | Band / Mesafe (cm) | (öneri; R101 yük alanı tablosu) |
 | `active.reps` | Tekrar | 01 R108.2 |
 | `active.rir` | RIR | 01 R108.2 |
 | `active.rir.options` | 0 · 1 · 2 · 3 · 4+ | 01 R108.2 |
@@ -266,10 +268,13 @@ Bu belge, hareketin **ilk working set'i** için kullanıcı kararı `accepted`/`
 | `active.substitute.otherIntent` | Farklı amaç | 02 §8.3 |
 | `active.substitute.doneBefore` | Daha önce yaptın | (öneri) |
 | `active.substitute.editEquipment` | Ekipman profilini düzenle | (öneri) |
-| `active.substitute.reason.*` | Ekipman dolu · Ağrı · Tercih | (öneri) |
+| `active.substitute.reason.equipmentBusy` | Ekipman dolu | (öneri) |
+| `active.substitute.reason.pain` | Ağrı | (öneri) |
+| `active.substitute.reason.preference` | Tercih | (öneri) |
 | `active.unilateral.bothSame` | Both Same | 01 R102.2 |
 | `active.unilateral.separate` | Track Separately | 01 R102.2 |
-| `active.side.left` / `.right` | Sol / Sağ | (öneri) |
+| `active.side.left` | Sol | (öneri) |
+| `active.side.right` | Sağ | (öneri) |
 | `active.skipExercise` | Hareketi Atla | (öneri) |
 | `active.undo` | Geri al | (öneri) |
 | `active.note.add` | Not ekle | (öneri) |
@@ -446,7 +451,8 @@ Dayanıklılık: `journal_mode=WAL`, `synchronous=FULL`; yarım kalan `completeS
 | `pr.type.estimatedPerformancePr` | Tahmini performans PR'ı · e1RM {estimated_1rm} kg | (öneri; `'estimatedPerformancePr'`) |
 | `pr.type.sessionVolumePr` | Oturum hacmi PR'ı · {session_volume} kg | (öneri; `'sessionVolumePr'`) |
 | `pr.estimateBadge` | tahmin | 01 R123.4 |
-| `pr.side.left` / `.right` | (sol) / (sağ) | (öneri) |
+| `pr.side.left` | (sol) | (öneri) |
+| `pr.side.right` | (sağ) | (öneri) |
 | `pr.excludeHint` | Bu set PR hesaplarına dahil edilmeyecek. | (öneri; R107.3) |
 
 **Servis / DB etkileri:** `PrDetector` (`completeSet` ve bitirme transaction'ları içinde) → `personal_records` INSERT/UPDATE (`pr_type`, `side`, `set_log_id`, `session_id`, `effective_load`, `reps`, `estimated_1rm`, `session_volume`, `achieved_at_utc`, `local_date_key`, `superseded_by_id`). UI yalnızca okur.
