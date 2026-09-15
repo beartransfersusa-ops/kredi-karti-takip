@@ -6,63 +6,6 @@ METHOD:PUBLISH
 X-WR-CALNAME:Kredi Kartı Son Ödeme
 X-WR-TIMEZONE:Europe/Istanbul
 BEGIN:VEVENT
-UID:garanti-bonus-business-2026-09-14@kredi-karti-takip
-DTSTAMP:20260101T000000Z
-DTSTART;VALUE=DATE:20260914
-DTEND;VALUE=DATE:20260915
-SUMMARY:💳 Bonus Business son ödeme
-DESCRIPTION:Kesim: 7 Eylül 2026 Pazartesi\nSon ödeme: 14 Eylül 2026 Pazartesi\n(Kaydırıldı — 12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar))
-TRANSP:TRANSPARENT
-BEGIN:VALARM
-ACTION:DISPLAY
-DESCRIPTION:💳 Bonus Business son ödeme — 2 gün kaldı
-TRIGGER:-P2D
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-DESCRIPTION:💳 Bonus Business son ödeme — bugün son gün
-TRIGGER:PT9H
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
-UID:qnb-fix-2026-09-14@kredi-karti-takip
-DTSTAMP:20260101T000000Z
-DTSTART;VALUE=DATE:20260914
-DTEND;VALUE=DATE:20260915
-SUMMARY:💳 Fix son ödeme
-DESCRIPTION:Kesim: 2 Eylül 2026 Çarşamba\nSon ödeme: 14 Eylül 2026 Pazartesi\n(Kaydırıldı — 12 Eylül: hafta sonu (Cumartesi); 13 Eylül: hafta sonu (Pazar))
-TRANSP:TRANSPARENT
-BEGIN:VALARM
-ACTION:DISPLAY
-DESCRIPTION:💳 Fix son ödeme — 2 gün kaldı
-TRIGGER:-P2D
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-DESCRIPTION:💳 Fix son ödeme — bugün son gün
-TRIGGER:PT9H
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
-UID:qnb-go-2026-09-14@kredi-karti-takip
-DTSTAMP:20260101T000000Z
-DTSTART;VALUE=DATE:20260914
-DTEND;VALUE=DATE:20260915
-SUMMARY:💳 GO son ödeme
-DESCRIPTION:Kesim: 3 Eylül 2026 Perşembe\nSon ödeme: 14 Eylül 2026 Pazartesi\n(Kaydırıldı — 13 Eylül: hafta sonu (Pazar))
-TRANSP:TRANSPARENT
-BEGIN:VALARM
-ACTION:DISPLAY
-DESCRIPTION:💳 GO son ödeme — 2 gün kaldı
-TRIGGER:-P2D
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-DESCRIPTION:💳 GO son ödeme — bugün son gün
-TRIGGER:PT9H
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
 UID:garanti-bonus-diji-2026-09-16@kredi-karti-takip
 DTSTAMP:20260101T000000Z
 DTSTART;VALUE=DATE:20260916
